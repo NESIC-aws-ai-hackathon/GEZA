@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEZA プロトタイプ - アバター会話検証</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ヘッダー -->
+        <header class="header">
+            <h1>GEZA <span class="subtitle">プロトタイプ</span></h1>
+            <p class="tagline">謝る前に、怒られておけ。</p>
+        </header>
+
+        <!-- アバター表示エリア -->
+        <div class="avatar-area">
+            <div class="avatar-container">
+                <div id="avatar-display" class="avatar-display anger">
+                    <div id="facesjs-container" class="facesjs-container"></div>
+                    <p id="emotion-label" class="emotion-label">怒り</p>
+                </div>
+            </div>
+
+            <!-- モーション確認ボタン -->
+            <div class="motion-buttons">
+                <button class="motion-btn" onclick="demoEmotion('anger')">😡怒り</button>
+                <button class="motion-btn" onclick="demoEmotion('irritation')">😤苛立ち</button>
+                <button class="motion-btn" onclick="demoEmotion('disappointment')">😞失望</button>
+                <button class="motion-btn" onclick="demoEmotion('surprise')">😲驚き</button>
+                <button class="motion-btn" onclick="demoEmotion('acceptance')">😊納得</button>
+                <button class="motion-btn accent" onclick="demoBlink()">👁 瞬き</button>
+                <button class="motion-btn accent" onclick="demoSpeak()">🗣 発話</button>
+            </div>
+
+            <!-- ステータスゲージ -->
+            <div class="gauges">
+                <div class="gauge-item">
+                    <label>🔥 怒り度</label>
+                    <div class="gauge-bar">
+                        <div id="anger-bar" class="gauge-fill anger" style="width: 80%"></div>
+                    </div>
+                    <span id="anger-value" class="gauge-value">80</span>
+                </div>
+                <div class="gauge-item">
+                    <label>🤝 信頼度</label>
+                    <div class="gauge-bar">
+                        <div id="trust-bar" class="gauge-fill trust" style="width: 20%"></div>
+                    </div>
+                    <span id="trust-value" class="gauge-value">20</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 会話ログ -->
+        <div id="chat-log" class="chat-log">
+            <div class="chat-message system">
+                <p>謝罪練習を開始します。相手は怒っています。謝罪してください。</p>
+            </div>
+        </div>
+
+        <!-- 入力エリア -->
+        <div class="input-area">
+            <div class="input-row">
+                <textarea id="user-input" placeholder="謝罪を入力してください..." rows="2"></textarea>
+                <button id="send-btn" onclick="sendMessage()">送信</button>
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="quickMessage('大変申し訳ございません')">謝罪する</button>
+                <button class="quick-btn" onclick="quickMessage('次から気をつけます')">⚠️ NGワード</button>
+                <button class="quick-btn" onclick="quickMessage('再発防止策として、チェックリストを整備いたします')">再発防止</button>
+            </div>
+        </div>
+
+        <!-- 計測データ表示 -->
+        <div id="metrics-panel" class="metrics-panel" style="display:none;">
+            <h3>📊 計測データ</h3>
+            <div class="metrics-grid">
+                <div class="metric">
+                    <span class="metric-label">Bedrock レイテンシ</span>
+                    <span id="metric-bedrock" class="metric-value">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Polly レイテンシ</span>
+                    <span id="metric-polly" class="metric-value">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">E2E レイテンシ</span>
+                    <span id="metric-e2e" class="metric-value">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">入力トークン</span>
+                    <span id="metric-input-tokens" class="metric-value">-</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">出力トークン</span>
+                    <span id="metric-output-tokens" class="metric-value">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NGワード検知パネル -->
+        <div id="ng-panel" class="ng-panel" style="display:none;">
+            <h3>⚠️ NGワード検知</h3>
+            <div id="ng-words" class="ng-words"></div>
+        </div>
+    </div>
+
+    <script src="config.js" onerror=""></script>
+    <script src="facesjs.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
