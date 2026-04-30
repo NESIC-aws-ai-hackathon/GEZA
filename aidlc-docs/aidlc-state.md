@@ -4,7 +4,7 @@
 - **プロジェクト名**: GEZA（謝罪練習アプリ）
 - **プロジェクトタイプ**: Greenfield
 - **開始日**: 2026-04-29
-- **現在のステージ**: INCEPTION - User Stories（承認待ち）
+- **現在のステージ**: INCEPTION - Workflow Planning
 
 ## ワークスペース状態
 - **既存コード**: prototype/（実現性検証済み・AWS削除済み）
@@ -25,9 +25,9 @@
 ### 🔵 INCEPTION PHASE
 - [x] Workspace Detection
 - [x] Requirements Analysis（完了・承認済み）
-- [ ] User Stories（生成完了・承認待ち） ← **現在位置**
+- [x] User Stories（24ストーリー/154SP・承認済み）
 - [x] **Prototype / Feasibility Verification（実現性プロトタイプ完了）**
-- [ ] Workflow Planning
+- [ ] Workflow Planning ← **現在位置**
 - [ ] Application Design
 - [ ] Units Generation
 

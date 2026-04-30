@@ -73,7 +73,7 @@ flowchart TD
 - [x] **Workspace Detection** — COMPLETED（Greenfield確認）
 - [x] **Reverse Engineering** — SKIPPED（Greenfield）
 - [x] **Requirements Analysis** — COMPLETED（承認済み）
-- [x] **User Stories** — COMPLETED（docs/user-stories.md 参照・承認済み）
+- [x] **User Stories** — COMPLETED（24ストーリー/154SP・承認済み）
 - [x] **Workflow Planning** — IN PROGRESS（本ドキュメント）
 - [ ] **Application Design** — **EXECUTE**
   - 理由: 新規コンポーネント（Lambda×複数, フロントエンドSPA, DynamoDB）が必要。コンポーネント設計・依存関係の定義が必要
@@ -98,16 +98,16 @@ flowchart TD
 
 > 詳細は Application Design / Units Generation フェーズで確定する
 
-| ユニットID | Epic | 主要実装対象 | 依存ユニット |
-|-----------|------|------------|------------|
-| U01 | 共通インフラ | CloudFormation: Lambda+APIGW+S3+DynamoDB+Cognito+CloudFront | なし |
-| U02 | Epic 4: 謝罪練習コア | Lambda(会話評価) + フロントエンド(アバター+入力UI) | U01 |
-| U03 | Epic 1: トップ画面 | フロントエンド(トップ+モード選択) | U02 |
-| U04 | Epic 2: 実案件モード | Lambda(謝罪相手生成+謝罪プラン) + フロントエンド | U02 |
-| U05 | Epic 3: ストーリーモード | Lambda(ストーリー生成+謝罪ボス) + フロントエンド | U02 |
-| U06 | Epic 5: 謝罪後支援 | Lambda(再発防止策+メール生成) + フロントエンド | U02 |
-| U07 | Epic 6: 謝罪カルテ | DynamoDB(履歴保存) + Lambda(分析) + フロントエンド | U02 |
-| U08 | Epic 7: 上司向け | Lambda(上司モード評価) + フロントエンド | U02 |
+| ユニットID | Epic | 主要実装対象 | 依存ユニット | SP |
+|-----------|------|------------|------------|----|
+| U01 | 共通インフラ | CloudFormation: Lambda+APIGW+S3+DynamoDB+Cognito+CloudFront | なし | - |
+| U02 | Epic 4: 謝罪練習コア | Lambda(会話評価) + フロントエンド(アバター+入力UI+フォールバック) | U01 | 51 |
+| U03 | Epic 1: トップ画面 | フロントエンド(トップ+モード選択+Cognito認証) | U02 | 16 |
+| U04 | Epic 2: 実案件モード | Lambda(謝罪相手生成+謝罪プラン+アバターカスタマイズ) + フロントエンド | U02 | 28 |
+| U05 | Epic 3: ストーリーモード | Lambda(ストーリー生成+謝罪ボス) + フロントエンド | U02 | 13 |
+| U06 | Epic 5: 謝罪後支援 | Lambda(再発防止策+メール生成) + フロントエンド | U02 | 10 |
+| U07 | Epic 6: 謝罪カルテ | DynamoDB(履歴保存) + Lambda(分析) + フロントエンド | U02 | 13 |
+| U08 | Epic 7: 上司向け | Lambda(上司モード評価+部下役AI) + フロントエンド | U02 | 23 |
 
 ### 実装優先順序の根拠
 1. **U01（インフラ）** が全ユニットの前提

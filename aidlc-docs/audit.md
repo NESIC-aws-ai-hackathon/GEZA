@@ -118,6 +118,36 @@ prototype/
   - CloudFormationスタック: geza-prototype（削除済み）
 - **検証結論**: 全検証項目クリア。本番実装に向けWorkflow Planningへ移行
 
+## エントリ 009 - User Stories 正式実行・生成完了
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - User Stories
+- **アクション**: AI-DLC正式User Storiesフロー実行
+- **生成物**:
+  - aidlc-docs/inception/user-stories/stories.md（24ストーリー/154SP）
+  - aidlc-docs/inception/user-stories/personas.md（3ペルソナ定義）
+- **主要仕様**:
+  - 30感情定義テーブル（rage/anger/fury...forgiveness）
+  - User Journey 7フロー（Journey 1〜7）
+  - SLA表（APIレスポンス目標値を1箇所に集約）
+  - ペルソナKPI表（Kenta/Misaki/Seiichi 各成功指標）
+  - US-204（アバターカスタマイズ）、US-408（APIフォールバック）追加
+  - SP再見積もり: US-202/US-401/US-702 各8→13
+- **SP合計**: 154 Story Points（Epic別: E1=16, E2=28, E3=13, E4=51, E5=10, E6=13, E7=23）
+
+## エントリ 010 - User Stories 承認
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - User Stories → Workflow Planning
+- **承認者**: プロダクトオーナー（ユーザー）
+- **承認内容**: 24ストーリー/154SP のUser Stories一式を承認
+- **主な変更点（承認セッション中）**:
+  - US-204追加: 謝罪相手アバターカスタマイズ（P1/5SP）
+  - US-404 AC-2補強: Viseme仕様（data-feature/7種/50ms/sil戻り）を明記
+  - US-408追加: API障害時フォールバック（P0/5SP）
+  - ペルソナKPI表追加（デモ説得力向上）
+  - SLA表追加（レスポンス目標一元管理）
+  - SP再見積もり（US-202/401/702: 8→13）
+- **次フェーズ**: Workflow Planning（execution-plan.md更新 → Application Design）
+
 ## エントリ 010 - User Stories 正式実行開始
 - **日時**: 2026-04-30T（本日）
 - **フェーズ**: INCEPTION - User Stories（PART 1: Planning）
