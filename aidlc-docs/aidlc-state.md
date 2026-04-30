@@ -29,8 +29,8 @@
 - [x] User Stories（29ストーリー/180SP・承認済み・コンセプト変更反映済）
 - [x] **Prototype / Feasibility Verification（実現性プロトタイプ完了）**
 - [x] Workflow Planning（execution-plan.md 完成・承認済み）
-- [x] Application Design（成果物5ファイル生成完了・承認待ち）
-- [ ] Units Generation ← **現在位置**
+- [x] Application Design（成果物5ファイル生成完了・承認済み）
+- [x] Units Generation ← **完了・承認待ち**
 
 ### 🟢 CONSTRUCTION PHASE
 - [ ] Functional Design（ユニット毎）

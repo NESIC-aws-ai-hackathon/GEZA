@@ -186,6 +186,34 @@ prototype/
 - **SP合計**: 172 → 180 Story Points（+8SP）
 - **Epic 2 SP**: 41 → 49（+8）
 
+## エントリ 018 - Units Generation 完了
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Units Generation
+- **ユーザー回答サマリー**:
+  - Q1 B: 機能ドメイン単位（6ユニット）
+  - Q2 C: SAM一括デプロイ（全Lambdaスタブ）、ユニット毎に本実装
+  - Q3 C: AuthModule/ApiClient/StateManager/AvatarController を U0 先行
+  - Q4 C+B: デモインパクト × 依存関係順（U0→U1→U2→U3→U4→U5→U6）
+  - Q5 B: E2/E4 並行（実質直列）
+  - Q6 B: 上司モード（E7）は最後
+  - Q7 B: ストーリーモード（E3）は独立ユニット U5（U3完了後）
+  - Q8 A: フラット構成（Application Design 既存構成そのまま）
+- **生成物**:
+  - aidlc-docs/inception/application-design/unit-of-work.md（6ユニット定義・ディレクトリ戦略）
+  - aidlc-docs/inception/application-design/unit-of-work-dependency.md（依存マトリックス・実装順フロー）
+  - aidlc-docs/inception/application-design/unit-of-work-story-map.md（全29ストーリーマッピング・180SP検証）
+- **検証結果**: 全29ストーリー割り当て済み ✅ / SP合計180 ✅ / 依存関係の方向性正常 ✅
+- **次アクション**: ユーザー承認待ち → CONSTRUCTION PHASE
+
+## エントリ 017 - Application Design 承認 + Units Generation 開始
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design → Units Generation
+- **承認者**: プロダクトオーナー（ユーザー）
+- **承認内容**: Application Design 成果物5ファイル（整合性チェック2回・セキュリティ補強・コスト見積もり追加完了）を承認
+- **アクション**: Units Generation PART 1（Planning）開始
+- **生成物**: aidlc-docs/inception/plans/unit-of-work-plan.md（質問8問埋め込み）
+- **次アクション**: ユーザー回答待ち → PART 2 Generation
+
 ## エントリ 016 - 整合性チェック第2回 + セキュリティ・コスト補強
 - **日時**: 2026-04-30
 - **フェーズ**: INCEPTION - Application Design（品質保証）
