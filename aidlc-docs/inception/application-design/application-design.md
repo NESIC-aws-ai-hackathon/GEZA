@@ -95,12 +95,12 @@ GEZAは**総合謝罪支援コンシェルジュ**です。
 | Q1 | フロントエンド構成 | B: 複数HTML + 共通JS/CSS | ページ間の状態をsessionStorageで引き継ぎ、シンプルな構成 |
 | Q2 | 状態管理 | A+C Hybrid: 3層ステート | リアルタイム(AppState) + セッション間(sessionStorage) + 永続(DynamoDB) |
 | Q3 | アバター/感情分離 | C: avatar.js + emotions.js | テスタビリティ・再利用性を確保 |
-| Q4 | Lambda分割粒度 | A: 細粒度13関数 | 独立デプロイ・スケーリング・タイムアウト最適化 |
+| Q4 | Lambda分割粒度 | A: 細粒度14関数 | 独立デプロイ・スケーリング・タイムアウト最適化 |
 | Q5 | Bedrockモデル | A: Nova Lite/Sonnet分離 | コスト最適化（評価はNova Lite、高品質生成はSonnet） |
 | Q6 | 音声認識接続 | A: Transcribe直接WebSocket | Lambda経由は不要、Cognito Identity Poolで安全に認証 |
 | Q7 | DB設計 | A: DynamoDBシングルテーブル | アクセスパターンが明確、コスト効率 |
 | Q8 | 会話履歴保存 | A: 全ターン保存 | カルテ分析・改善追跡に必要 |
-| Q9 | API設計 | A: RESTful（リソースベース） | 直感的な設計、14エンドポイント |
+| Q9 | API設計 | A: RESTful（リソースベース） | 直感的な設計、15エンドポイント |
 | Q10 | 認証方式 | A: API Gateway JWT Authorizer | Cognito統合、Lambda内認証不要 |
 | Q11 | プロンプト管理 | A: backend/prompts/配置 | バージョン管理しやすく、テスト容易 |
 | Q12 | エラーハンドリング | B: @handle_errors デコレーター | 全Lambdaに一貫したエラー処理 |
@@ -279,17 +279,18 @@ GEZA/
 │
 ├── backend/
 │   ├── functions/
-│   │   ├── evaluate-apology/     ├── generate-opponent/
-│   │   ├── generate-story/       ├── generate-plan/
-│   │   ├── text-to-speech/       ├── generate-feedback/
-│   │   ├── generate-prevention/  ├── generate-follow-mail/
-│   │   ├── save-session/         ├── get-karte/
-│   │   ├── analyze-karte/        ├── evaluate-guidance/
+│   │   ├── assess-apology/       ├── evaluate-apology/
+│   │   ├── generate-opponent/    ├── generate-story/
+│   │   ├── generate-plan/        ├── text-to-speech/
+│   │   ├── generate-feedback/    ├── generate-prevention/
+│   │   ├── generate-follow-mail/ ├── save-session/
+│   │   ├── get-karte/            ├── analyze-karte/
+│   │   ├── evaluate-guidance/
 │   │   └── generate-guidance-feedback/
 │   ├── shared/
 │   │   ├── decorators.py / prompt_loader.py / bedrock_client.py
 │   └── prompts/
-│       └── *.txt（10プロンプトテンプレート）
+│       └── *.txt（11プロンプトテンプレート）
 │
 ├── template.yaml    ← SAM テンプレート
 ├── docs/            ← 統合仕様書

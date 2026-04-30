@@ -38,7 +38,8 @@ GEZAは**総合謝罪支援コンシェルジュ**です。
 | Epic 7 | 上司向けフィードバック（注意・指導練習モード） | 3 | 23 |
 | **合計** | | **29** | **180** |
 
-**全Epic P0（必須）・全ユーザーストーリー実装対象。**
+**P0（必須）: Epic 1、2、4、5、6。コア実装対象。**  
+**P1（時間が余れば）: Epic 3（ストーリーモード）・ Epic 7（上司モード）。**
 
 ---
 
@@ -48,13 +49,13 @@ GEZAは**総合謝罪支援コンシェルジュ**です。
 
 | レイヤー | 技術 |
 |----------|------|
-| フロントエンド | HTML/CSS/Vanilla JS（SPA）、スマホ幅375px中央表示 |
+| フロントエンド | HTML/CSS/Vanilla JS（マルチページ構成）、スマホ幅375px中央表示 |
 | バックエンド | AWS Lambda（Python 3.12, 512MB, 30s） + API Gateway HTTP API v2 |
 | LLM | AWS Bedrock（Amazon Nova Lite：軽量用途 / Claude Sonnet：高品質用途）⚠️ |
 | 音声入力 | AWS Transcribe |
 | 音声出力 | Amazon Polly Kazuha（ja-JP, Neural）+ SpeechMarks(Viseme) ⚠️ |
 | アバター | ⚠️ **facesjs v5.0.3（SVGアバター）+ CSS表情制御**（Nova Canvas/Reel 不採用） |
-| 認証 | AWS Cognito（User Pools） |
+| 認証 | Amazon Cognito（User Pool ログイン + Identity Pool Transcribe一時認証） |
 | データベース | Amazon DynamoDB |
 | ホスティング | S3 + CloudFront |
 
@@ -64,9 +65,8 @@ GEZAは**総合謝罪支援コンシェルジュ**です。
 
 | 用途 | モデル |
 |------|--------|
-| 謝罪相手生成・謝罪評価・ストーリー生成 | Claude Sonnet |
-| NGワード検知・感情分類・リアルタイム会話 | Amazon Nova Lite（1〜3秒応答） |
-| メール・再発防止策生成 | Amazon Nova Lite または Claude Haiku |
+| 評価・分類（角度アセスメント・評価・カルテ分析） | Amazon Nova Lite（1〜3秒応答） |
+| 高品質生成（謝罪相手生成・プラン・フィードバック・メール・再発防止策） | Claude Sonnet |
 
 ---
 
@@ -123,6 +123,7 @@ Lambda → Polly Kazuha(Neural) → MP3音声 + SpeechMarks(viseme)
 | セキュリティ | Cognito認証必須（Epic 1から実装） |
 | セキュリティ | シークレット管理：環境変数、.envはgitコミット不可 |
 | セキュリティ | フロントエンドからLLM APIを直接呼ばない |
+| セキュリティ | プロンプトインジェクション対策：input_validator.pyで500文字制限・ブラックリスト検知・制御文字除去 |
 
 ---
 

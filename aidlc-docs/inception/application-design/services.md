@@ -366,7 +366,7 @@ Globals:
 | モデル | 用途 | 月間呼び出し数 | 平均トークン（入力/出力） | 単価（入力 / 出力 per 1M tokens） | 月額概算 |
 |-------|------|:-----------:|:---:|:---:|:---:|
 | Amazon Nova Lite | evaluate-apology, assess-apology, analyze-karte, evaluate-guidance | 5,500回 | 1,500 / 500 | $0.06 / $0.24 | **$0.56** |
-| Claude 3.5 Sonnet | generate-opponent, story, plan, feedback, prevention, mail, guidance-feedback | 1,500回 | 2,000 / 1,500 | $3.00 / $15.00 | **$42.75** |
+| Claude Sonnet (4-5) | generate-opponent, story, plan, feedback, prevention, mail, guidance-feedback | 1,500回 | 2,000 / 1,500 | $3.00 / $15.00 | **$42.75** |
 | | | | | **Bedrock 合計** | **≈ $43.31** |
 
 ### Amazon Polly（TTS）

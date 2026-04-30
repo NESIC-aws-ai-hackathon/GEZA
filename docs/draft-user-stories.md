@@ -1,6 +1,10 @@
 
 # GEZA ユーザーストーリー（事前検討）
 
+> ⚠️ **このファイルは初期検討用の草稿です。**  
+> 正式版（INVEST 準拠・Given/When/Then・29ストーリー/180SP）は  
+> [`aidlc-docs/inception/user-stories/stories.md`](../aidlc-docs/inception/user-stories/stories.md) を参照してください。
+
 ## サービス概要
 
 GEZAは、謝罪・クレーム対応・注意指導など、失敗すると人間関係や信頼関係を壊す高リスクな会話を、AIが生成した仮想相手に対して事前練習できるアプリである。

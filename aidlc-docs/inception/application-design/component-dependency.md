@@ -160,14 +160,14 @@ StateManager.getCurrentSession()
 
 ## コンポーネント結合度マトリックス
 
-| | AvatarController | EmotionDefs | StateManager | ApiClient | TranscribeClient | PollySyncController |
-|---|---|---|---|---|---|---|
-| **PracticePage** | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ |
-| **BossPage** | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ |
-| **InceptionPage** | ★★ | ☆ | ★★★ | ★★★ | ☆ | ☆ |
-| **StoryPage** | ★★ | ☆ | ★★★ | ★★★ | ☆ | ☆ |
-| **CartePage** | ★★ | ☆ | ★★ | ★★★ | ☆ | ☆ |
-| **FeedbackPage** | ☆ | ☆ | ★★ | ★★★ | ☆ | ☆ |
-| **TopPage** | ★★ | ★ | ★ | ☆ | ☆ | ☆ |
+| | AvatarController | EmotionDefs | StateManager | ApiClient | TranscribeClient | PollySyncController | ApologyMeter |
+|---|---|---|---|---|---|---|---|
+| **PracticePage** | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ | ☆ |
+| **BossPage** | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ | ★★★ | ☆ |
+| **InceptionPage** | ★★ | ☆ | ★★★ | ★★★ | ☆ | ☆ | ★★★ |
+| **StoryPage** | ★★ | ☆ | ★★★ | ★★★ | ☆ | ☆ | ☆ |
+| **CartePage** | ★★ | ☆ | ★★ | ★★★ | ☆ | ☆ | ☆ |
+| **FeedbackPage** | ☆ | ☆ | ★★ | ★★★ | ☆ | ☆ | ☆ |
+| **TopPage** | ★★ | ★ | ★ | ☆ | ☆ | ☆ | ☆ |
 
 ★★★ 強依存 / ★★ 中依存 / ★ 弱依存 / ☆ 非依存

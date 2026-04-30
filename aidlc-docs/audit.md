@@ -1,10 +1,11 @@
-# AI-DLC 監査ログ
+﻿# AI-DLC 監査ログ
 
 ## エントリ 001 - ワークスペース検出開始
 - **日時**: 2026-04-29T00:00:00+09:00
 - **フェーズ**: INCEPTION - Workspace Detection
 - **ユーザーリクエスト（原文）**: "AI-DLCに従い開発を進めてほしい。要件はuser-stories.mdに記載している"
 - **アクション**: 新規AI-DLCワークフロー開始
+
 
 ## エントリ 002 - ワークスペース検出完了
 - **日時**: 2026-04-29T00:00:01+09:00
@@ -14,10 +15,12 @@
 - **要件ファイル確認**: docs/user-stories.md（7 Epic、16以上のユーザーストーリー）
 - **次フェーズ**: Requirements Analysis
 
+
 ## エントリ 003 - Requirements Analysis 開始
 - **日時**: 2026-04-29T00:00:02+09:00
 - **フェーズ**: INCEPTION - Requirements Analysis
 - **アクション**: 要件確認質問ファイル作成、ユーザー回答待ち
+
 
 ## エントリ 004 - ユーザー回答受領
 - **日時**: 2026-04-29T00:01:00+09:00
@@ -37,6 +40,7 @@
   - Q12: A+B+C+E（LLM速度コスト・音声精度・動画生成・会話品質調査）
 - **アクション**: 要件文書・実現性調査書・統合ドキュメント作成完了
 
+
 ## エントリ 005 - Requirements Analysis 完了・承認済み
 - **日時**: 2026-04-29T00:01:01+09:00
 - **フェーズ**: INCEPTION - Requirements Analysis
@@ -44,6 +48,7 @@
   - aidlc-docs/inception/requirements/requirements.md
   - aidlc-docs/inception/feasibility/feasibility-study.md
   - docs/requirements.md（統合版）
+
 
 ## エントリ 006 - 実現性プロトタイプ開始
 - **日時**: 2026-04-29T10:00:00+09:00
@@ -54,6 +59,7 @@
   - Amazon Polly（Kazuha）+ SpeechMarks APIでのViseme口パク同期
   - SVGアバターによるリアルタイム表情制御
   - Lambda + API Gateway + S3 による AWS フルデプロイ
+
 
 ## エントリ 007 - プロトタイプ実施経緯
 - **日時**: 2026-04-29〜30
@@ -69,7 +75,7 @@
 
 #### Step 2: Polly音声合成 + SpeechMarks統合（2026-04-29）
 - LambdaにThreadPoolExecutorを追加し、Bedrock + Pollyを並列実行
-- Pollyのaudito（MP3）とviseme（SpeechMarks）を同一レスポンスで返却
+- Pollyのaudio（MP3）とviseme（SpeechMarks）を同一レスポンスで返却
 - Visemeタイムコードによる口パク同期をフロントエンドで実装
 - 実測: Bedrock 1〜3秒 + Polly 並列0.3〜0.8秒追加
 
@@ -109,6 +115,7 @@ prototype/
 └── cfn-template.yaml           # Lambda/APIGW/S3 CFn
 ```
 
+
 ## エントリ 008 - プロトタイプ完了・AWS削除
 - **日時**: 2026-04-30
 - **フェーズ**: INCEPTION - Feasibility Verification → Workflow Planning
@@ -117,6 +124,19 @@ prototype/
   - S3バケット: geza-deploy-XXXXXXXXXXXX（削除済み）
   - CloudFormationスタック: geza-prototype（削除済み）
 - **検証結論**: 全検証項目クリア。本番実装に向けWorkflow Planningへ移行
+
+
+## エントリ 009a - ドキュメント更新
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Workflow Planning
+- **更新ファイル**:
+  - prototype/README.md（プロトタイプ結果・再デプロイ手順・削除手順追記）
+  - aidlc-docs/aidlc-state.md（ステージ進捗・技術確定事項更新）
+  - aidlc-docs/inception/feasibility/feasibility-study.md（全調査項目結果更新）
+  - docs/requirements.md（技術スタック・アバター仕様更新）
+- **次アクション**: Workflow Planning 開始
+
+
 
 ## エントリ 009 - User Stories 正式実行・生成完了
 - **日時**: 2026-04-30
@@ -134,6 +154,15 @@ prototype/
   - SP再見積もり: US-202/US-401/US-702 各8→13
 - **SP合計**: 154 Story Points（Epic別: E1=16, E2=28, E3=13, E4=51, E5=10, E6=13, E7=23）
 
+
+## エントリ 010a - User Stories 正式実行開始
+- **日時**: 2026-04-30T（本日）
+- **フェーズ**: INCEPTION - User Stories（PART 1: Planning）
+- **ユーザーリクエスト（原文）**: 「一度手戻りして、userstorysについて、docsにあるものはあくまで事前に検討したものです。inceptionフェーズに従いしっかりと作りなおして」
+- **アクション**: user-stories-assessment.md 作成、story-generation-plan.md 作成（質問10問埋め込み）
+- **次アクション**: ユーザー回答待ち → PART 2 Generation
+
+
 ## エントリ 010 - User Stories 承認
 - **日時**: 2026-04-30
 - **フェーズ**: INCEPTION - User Stories → Workflow Planning
@@ -147,7 +176,36 @@ prototype/
   - SLA表追加（レスポンス目標一元管理）
   - SP再見積もり（US-202/401/702: 8→13）
 - **次フェーズ**: Workflow Planning（execution-plan.md更新 → Application Design）
-## エントリー 013 - コンセプト変更: 総合謝罪支援コンシェルジュへ再定義
+
+## エントリ 011a - Application Design 開始
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design
+- **ユーザーリクエスト（原文）**: "AI-DLCに従い、開始してください"
+- **アクション**: application-design-plan.md 生成（15質問埋込）
+- **次アクション**: ユーザー回答待ち
+
+
+## エントリ 012a - Application Design 完了
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design
+- **アクション**: 設計成果物5ファイルの生成完了
+- **生成物**:
+  - aidlc-docs/inception/application-design/components.md（全コンポーネントカタログ）
+  - aidlc-docs/inception/application-design/component-methods.md（メソッドシグネチャ定義）
+  - aidlc-docs/inception/application-design/services.md（API/DynamoDB/SAM定義）
+  - aidlc-docs/inception/application-design/component-dependency.md（依存関係・データフロー）
+  - aidlc-docs/inception/application-design/application-design.md（統合設計ドキュメント）
+- **設計決定**: Q1〜Q15 全回答に基づく設計確定
+  - フロントエンド: 複数HTML + 共通JS/CSS（B）
+  - ステート管理: window.AppState + sessionStorage + DynamoDB の3層（A+C Hybrid）
+  - Lambda: 細粒度13関数（A）、Nova Lite/Sonnet分離（A）
+  - Transcribe: フロントエンド直接WebSocket（A）
+  - DB: DynamoDBシングルテーブル（A）
+  - インフラ: SAM（C）
+- **次アクション**: 承認確認 → Units Generation
+
+
+## エントリ 013 - コンセプト変更: 総合謝罪支援コンシェルジュへ再定義
 - **日時**: 2026-04-30
 - **フェーズ**: INCEPTION - Application Design 完了後
 - **ユーザーリクエスト**: 「GEZAは謝罪トレーニングアプリではなく総合謝罪支援コンシェルジュとしたい」
@@ -164,6 +222,7 @@ prototype/
 - **SP合計**: 154 → 172 Story Points（+18SP）
 - **Epic 2 SP**: 28 → 41（+13） / Epic 5 SP: 10 → 15（+5）
 - **次アクション**: Application Design 承認 → Units Generation
+
 
 ## エントリ 014 - User Stories 追加: 謝罪実施日までの継続的支援
 - **日時**: 2026-04-30
@@ -186,46 +245,6 @@ prototype/
 - **SP合計**: 172 → 180 Story Points（+8SP）
 - **Epic 2 SP**: 41 → 49（+8）
 
-## エントリ 018 - Units Generation 完了
-- **日時**: 2026-04-30
-- **フェーズ**: INCEPTION - Units Generation
-- **ユーザー回答サマリー**:
-  - Q1 B: 機能ドメイン単位（6ユニット）
-  - Q2 C: SAM一括デプロイ（全Lambdaスタブ）、ユニット毎に本実装
-  - Q3 C: AuthModule/ApiClient/StateManager/AvatarController を U0 先行
-  - Q4 C+B: デモインパクト × 依存関係順（U0→U1→U2→U3→U4→U5→U6）
-  - Q5 B: E2/E4 並行（実質直列）
-  - Q6 B: 上司モード（E7）は最後
-  - Q7 B: ストーリーモード（E3）は独立ユニット U5（U3完了後）
-  - Q8 A: フラット構成（Application Design 既存構成そのまま）
-- **生成物**:
-  - aidlc-docs/inception/application-design/unit-of-work.md（6ユニット定義・ディレクトリ戦略）
-  - aidlc-docs/inception/application-design/unit-of-work-dependency.md（依存マトリックス・実装順フロー）
-  - aidlc-docs/inception/application-design/unit-of-work-story-map.md（全29ストーリーマッピング・180SP検証）
-- **検証結果**: 全29ストーリー割り当て済み ✅ / SP合計180 ✅ / 依存関係の方向性正常 ✅
-- **次アクション**: ユーザー承認待ち → CONSTRUCTION PHASE
-
-## エントリ 017 - Application Design 承認 + Units Generation 開始
-- **日時**: 2026-04-30
-- **フェーズ**: INCEPTION - Application Design → Units Generation
-- **承認者**: プロダクトオーナー（ユーザー）
-- **承認内容**: Application Design 成果物5ファイル（整合性チェック2回・セキュリティ補強・コスト見積もり追加完了）を承認
-- **アクション**: Units Generation PART 1（Planning）開始
-- **生成物**: aidlc-docs/inception/plans/unit-of-work-plan.md（質問8問埋め込み）
-- **次アクション**: ユーザー回答待ち → PART 2 Generation
-
-## エントリ 016 - 整合性チェック第2回 + セキュリティ・コスト補強
-- **日時**: 2026-04-30
-- **フェーズ**: INCEPTION - Application Design（品質保証）
-- **チェック結果**: 7件の不整合・不足を検出
-- **修正内容**:
-  1. `application-design.md` アーキテクチャ図: typo「asess-apology」→「assess-apology」
-  2. `components.md` InceptionPage対応US: typo「〒」→「〜」
-  3. `component-dependency.md`: InceptionPage→ApologyMeter 依存追加、AvatarCustomizePage→AuthModule 依存追加
-  4. `component-methods.md`: GenerateStoryLambda / GeneratePlanLambda / GenerateFeedbackLambda / GeneratePreventionLambda / GenerateFollowMailLambda / AnalyzeKarteLambda / GenerateGuidanceFeedbackLambda のメソッド定義追加
-  5. セキュリティ強化: `backend/shared/input_validator.py` を components/methods/application-design に追加（文字数制限500文字・インジェクション検知ブラックリスト・JSON出力強制・入力サニタイズ）
-  6. `services.md`: 月額コスト概算セクション追加（MVP 100ユーザー想定 ≈ $93/月 ≈ ¥14,000/月）
-- **次アクション**: Application Design 承認確認 → Units Generation
 
 ## エントリ 015 - 全ドキュメント整合性チェック＋修正
 - **日時**: 2026-04-30
@@ -245,46 +264,132 @@ prototype/
 - **修正完了**: 全9件修正済み。全ドキュメント間で29ストーリー/180SP/14Lambda/15エンドポイントで整合
 - **次アクション**: Application Design 承認確認 → Units Generation
 
-## エントリ 012 - Application Design 完了
-- **日時**: 2026-04-30
-- **フェーズ**: INCEPTION - Application Design
-- **アクション**: 設計成果物5ファイルの生成完了
-- **生成物**:
-  - aidlc-docs/inception/application-design/components.md（全コンポーネントカタログ）
-  - aidlc-docs/inception/application-design/component-methods.md（メソッドシグネチャ定義）
-  - aidlc-docs/inception/application-design/services.md（API/DynamoDB/SAM定義）
-  - aidlc-docs/inception/application-design/component-dependency.md（依存関係・データフロー）
-  - aidlc-docs/inception/application-design/application-design.md（統合設計ドキュメント）
-- **設計決定**: Q1〜Q15 全回答に基づく設計確定
-  - フロントエンド: 複数HTML + 共通JS/CSS（B）
-  - ステート管理: window.AppState + sessionStorage + DynamoDB の3層（A+C Hybrid）
-  - Lambda: 細粒度13関数（A）、Nova Lite/Sonnet分離（A）
-  - Transcribe: フロントエンド直接WebSocket（A）
-  - DB: DynamoDBシングルテーブル（A）
-  - インフラ: SAM（C）
-- **次アクション**: 承認確認 → Units Generation
 
-## エントリ 011 - Application Design 開始
+## エントリ 016 - 整合性チェック第2回 + セキュリティ・コスト補強
 - **日時**: 2026-04-30
-- **フェーズ**: INCEPTION - Application Design
-- **ユーザーリクエスト（原文）**: "AI-DLCに従い、開始してください"
-- **アクション**: application-design-plan.md 生成（15質問埋込）
-- **次アクション**: ユーザー回答待ち
+- **フェーズ**: INCEPTION - Application Design（品質保証）
+- **チェック結果**: 7件の不整合・不足を検出
+- **修正内容**:
+  1. `application-design.md` アーキテクチャ図: typo「asess-apology」→「assess-apology」
+  2. `components.md` InceptionPage対応US: typo「〒」→「〜」
+  3. `component-dependency.md`: InceptionPage→ApologyMeter 依存追加、AvatarCustomizePage→AuthModule 依存追加
+  4. `component-methods.md`: GenerateStoryLambda / GeneratePlanLambda / GenerateFeedbackLambda / GeneratePreventionLambda / GenerateFollowMailLambda / AnalyzeKarteLambda / GenerateGuidanceFeedbackLambda のメソッド定義追加
+  5. セキュリティ強化: `backend/shared/input_validator.py` を components/methods/application-design に追加（文字数制限500文字・インジェクション検知ブラックリスト・JSON出力強制・入力サニタイズ）
+  6. `services.md`: 月額コスト概算セクション追加（MVP 100ユーザー想定 ≈ $93/月 ≈ ¥14,000/月）
+- **次アクション**: Application Design 承認確認 → Units Generation
 
-## エントリ 010 - User Stories 正式実行開始
-- **日時**: 2026-04-30T（本日）
-- **フェーズ**: INCEPTION - User Stories（PART 1: Planning）
-- **ユーザーリクエスト（原文）**: 「一度手戻りして、userstorysについて、docsにあるものはあくまで事前に検討したものです。inceptionフェーズに従いしっかりと作りなおして」
-- **アクション**: user-stories-assessment.md 作成、story-generation-plan.md 作成（質問10問埋め込み）
+
+## エントリ 017 - Application Design 承認 + Units Generation 開始
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design → Units Generation
+- **承認者**: プロダクトオーナー（ユーザー）
+- **承認内容**: Application Design 成果物5ファイル（整合性チェック2回・セキュリティ補強・コスト見積もり追加完了）を承認
+- **アクション**: Units Generation PART 1（Planning）開始
+- **生成物**: aidlc-docs/inception/plans/unit-of-work-plan.md（質問8問埋め込み）
 - **次アクション**: ユーザー回答待ち → PART 2 Generation
 
-## エントリ 009 - ドキュメント更新
-- **日時**: 2026-04-30
-- **フェーズ**: INCEPTION - Workflow Planning
-- **更新ファイル**:
-  - prototype/README.md（プロトタイプ結果・再デプロイ手順・削除手順追記）
-  - aidlc-docs/aidlc-state.md（ステージ進捗・技術確定事項更新）
-  - aidlc-docs/inception/feasibility/feasibility-study.md（全調査項目結果更新）
-  - docs/requirements.md（技術スタック・アバター仕様更新）
-- **次アクション**: Workflow Planning 開始
 
+## エントリ 018 - Units Generation 完了
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Units Generation
+- **ユーザー回答サマリー**:
+  - Q1 B: 機能ドメイン単位（6ユニット）
+  - Q2 C: SAM一括デプロイ（全Lambdaスタブ）、ユニット毎に本実装
+  - Q3 C: AuthModule/ApiClient/StateManager/AvatarController を U0 先行
+  - Q4 C+B: デモインパクト × 依存関係順（U0→U1→U2→U3→U4→U5→U6）
+  - Q5 B: E2/E4 並行（実質直列）
+  - Q6 B: 上司モード（E7）は最後
+  - Q7 B: ストーリーモード（E3）は独立ユニット U5（U3完了後）
+  - Q8 A: フラット構成（Application Design 既存構成そのまま）
+- **生成物**:
+  - aidlc-docs/inception/application-design/unit-of-work.md（6ユニット定義・ディレクトリ戦略）
+  - aidlc-docs/inception/application-design/unit-of-work-dependency.md（依存マトリックス・実装順フロー）
+  - aidlc-docs/inception/application-design/unit-of-work-story-map.md（全29ストーリーマッピング・180SP検証）
+- **検証結果**: 全29ストーリー割り当て済み ✅ / SP合計180 ✅ / 依存関係の方向性正常 ✅
+- **次アクション**: ユーザー承認待ち → CONSTRUCTION PHASE
+
+
+## エントリ 019 - 全横断監査 12件修正完了
+- **日時**: 2026-05-01
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 監査レポート（Critical 4件 + Warning 8件）全修正適用
+- **修正サマリー**:
+  - **C1**: stories.md US-702/703 詳細セクション優先度 P0→P1
+  - **C3**: stories.md ペルソナ誤字「美咏」→「美咲」
+  - **C4**: audit.md エントリ番号重複（009/010）を 009a/010a 等で一意化
+  - **W1**: aidlc-state.md 感情数「5種類で開始」→「30種類（確定）」
+  - **W3**: application-design.md Q4「細粒度13関数」→「14関数」
+  - **W4**: application-design.md ディレクトリ構成に assess-apology/ 追加
+  - **W5**: component-dependency.md 結合度マトリックスに ApologyMeter 列追加
+  - **W6**: requirements.md FR-109/FR-503 に対応 US 注記追加
+  - **W7**: feasibility-study.md 調査方法モデル名を Nova Lite / Claude Sonnet 4-5 に修正
+  - **W8**: services.md コスト概算「Claude 3.5 Sonnet」→「Claude Sonnet (4-5)」に統一
+
+## エントリ 020 - ドキュメント品質修正（文字化け・整合性）
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 全ドキュメント横断精読による文字化け・整合性不一致の修正
+- **修正サマリー**:
+  - stories.md US-210: 「岬り数」→「残り日数」/「ありても」→「あっても」/「仵走機能」→「伴走機能」/「残も24時間以内」→「残り24時間以内」/「あめ24時間」→「あと24時間」
+  - stories.md US-408: 「APIヤネットワーク」→「APIやネットワーク」
+  - stories.md US-209: 優先度 P1 → P0（unit-of-work-story-map.md と整合）
+  - execution-plan.md U2: Lambda に generate-opponent 追加
+  - execution-plan.md U3: Lambda を evaluate-apology/text-to-speech に修正（unit-of-work.md と整合）
+  - execution-plan.md U4: Lambda に generate-feedback 追加（欠落修正）
+  - feasibility-study.md: 調査結果テーブル・料金テーブルのモデル名を Nova Lite / Claude Sonnet (4-5) に統一
+  - feasibility-study.md: 記号化け「3「8秒」→「3〜8秒」/「500「800トークン」→「500〜800トークン」
+
+## エントリ 021 - ドキュメント整合性修正・README強化
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: Critical 2件修正 + Moderate 3件対応
+- **修正サマリー**:
+  - **Critical①**: application-design-plan.md 設計スコープを現状に更新（24ストーリー/154SP/8ユニット → 29ストーリー/180SP/7ユニット、SPA→マルチページ、U01〜U08→U0〜U6、Lambda 13本→14本）
+  - **Critical②**: 同上（ユニット数表記揺れ解消）
+  - **Moderate①**: README.md に「ターゲットユーザー」セクション追加（3ペルソナ表・想定利用シーン・市場背景）
+  - **Moderate②**: docs/user-stories.md（事前検討版）の先頭に「正式版は stories.md を参照」の注記を追加
+  - **Moderate③**: feasibility-study.md 調査項目5の30感情スケーラビリティを明記（CSS追加のみ・追加コストなし）、調査結果テーブルにも30感情スケール行を追加
+
+## エントリ 022 - README ビジネスモデル強化・feasibility 記号修正
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 審査基準「ビジネス意図の明確さ」強化 + 記号化け修正
+- **修正サマリー**:
+  - **README.md**: 「ビジネスモデル・市場ポジション」セクション追加（BtoB研修SaaS/BtoC Freemium/広告の3層マネタイズ戦略、競合4カテゴリ分析、GEZA差別化5ポイント）
+  - **feasibility-study.md**: 記号化け修正 3「8秒→3〜8秒 / 500「800トークン→500〜800トークン / 1「3秒→1〜3秒
+
+## エントリ 023 - コスト内訳・依存関係・SP範囲・ディレクトリ構成修正
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: N4〜N7 修正適用
+- **修正サマリー**:
+  - **N4 README.md**: コスト内訳を services.md に合わせて更新（Polly →、Transcribe →削除、DynamoDB 追加、Bedrock →）
+  - **N5 execution-plan.md**: U2 依存 U0→U0,U1 / U3 依存 U0→U0,U1,U2 / U6 依存 U3→U0,U1,U3 に修正
+  - **N6 stories.md**: INVEST Estimable 行の SP範囲 3〜8→3〜13 に修正
+  - **N7 README.md**: ディレクトリ構成に customize.html/story.html/boss.html を追加
+
+---
+
+## エントリ 024 - 第三者監査対応・README 審査インパクト強化
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 第三者監査5件アクションアイテム適用
+- **修正サマリー**:
+  - **A1 README.md**: MVP ライン vs ストレッチゴール区分を明示するセクション「開発目標とスコープ」を追加（最低限/MVP完全体/フルスコープの3段階と SP 表）
+  - **A2 README.md**: デモシナリオ（5ステップ・3分想定）セクションを追加
+  - **A3 README.md**: 市場背景に「コンプライアンス研修市場 2,000 億円超」を追加。「既存手段との差別化」比較表（4手段 × 3列）を新設
+  - **A4 docs/draft-user-stories.md**: `docs/user-stories.md` を `docs/draft-user-stories.md` にリネーム（草稿であることを明示）。README の参照パスも更新
+  - **A5 feasibility-study.md**: Nova Lite レスポンス時間の「プロトタイプ実計」→「プロトタイプ実機計測（prototype/README.md 参照）」に注記強化
+
+---
+
+## エントリ 025 - MVPスコープ定義統一 + Transcribe 検証状況補足
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 第三者監査 指摘1・指摘2 対応
+- **修正サマリー**:
+  - **指摘1-A README.md**: 最低限スコープを `U0+U2+U3 / 100SP` → `U0+U1+U2+U3 / 116SP` に修正（U1 Cognito 認証は U2/U3 の必須依存）
+  - **指摘1-B README.md**: 箇条書き説明文を「U2+U3が動けば成立」→「U0+U1+U2+U3 が最小セット」に修正
+  - **指摘1-C execution-plan.md**: ハッカソン最低限を `U0+U3` → `U0+U1+U2+U3`（U1必須依存・U2アセスメント必須依存の注記付き）に統一
+  - **指摘2-A feasibility-study.md**: Transcribe 調査結果表に「Cognito Identity Pool 経由 WebSocket 接続」行を追加（INCEPTION で基盤確認済み・U3 で実機検証予定）
+  - **指摘2-B feasibility-study.md**: サマリー表の「本番実装で実機検証」→「U3 実装時に実機検証予定。Cognito Identity Pool 基盤は INCEPTION で確認済み」に変更

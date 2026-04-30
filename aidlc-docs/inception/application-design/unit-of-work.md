@@ -106,11 +106,11 @@ frontend/
 - SAM Layer: shared-utils-layer
 ### U0 完了基準
 
-- [ ] `sam deploy` 成功（兡14 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
+- [ ] `sam deploy` 成功（全14 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
 - [ ] Cognito User Pool でテストユーザー作成・ログイン成功
-- [ ] API Gateway 兡15エンドポイントで 200 レスポンス（スタブ）
+- [ ] API Gateway 全15エンドポイントで 200 レスポンス（スタブ）
 - [ ] CloudFront URL で index.html が表示される
-- [ ] shared-utils-layer のインポートが兡14 Lambda で成功
+- [ ] shared-utils-layer のインポートが全14 Lambda で成功
 - [ ] AuthModule でログイン → JWT取得 → ApiClient で API 呼び出し成功
 - [ ] `backend/prompts/*.txt` スタブ配置（各 Lambda の prompt_loader.py が FileNotFoundError を出さない）
 
