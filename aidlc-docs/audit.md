@@ -147,6 +147,101 @@ prototype/
   - SLA表追加（レスポンス目標一元管理）
   - SP再見積もり（US-202/401/702: 8→13）
 - **次フェーズ**: Workflow Planning（execution-plan.md更新 → Application Design）
+## エントリー 013 - コンセプト変更: 総合謝罪支援コンシェルジュへ再定義
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design 完了後
+- **ユーザーリクエスト**: 「GEZAは謝罪トレーニングアプリではなく総合謝罪支援コンシェルジュとしたい」
+- **変更内容**:
+  - **コンセプト**: 謝罪トレーニングアプリ → 総合謝罪支援コンシェルジュ
+  - **主要機能再定義**: 謝罪角度アセスメント・プランニング・準備サポートがコア、練習シミュレーションはサブ（任意）
+  - **新機能「謝罪の角度」**: 0〜180°の段階判定→SVGメータービジュアル + AI vs 自己申告ギャップ分析
+  - **角度ステージ**: 会釈(0〜15°) / 深謝(16〜45°) / 土下座(46〜90°) / 寝下座(91〜120°) / 焦げ下座(121〜150°) / 焼き寝下座(151〜180°)
+- **成果物更新**:
+  - aidlc-docs/inception/user-stories/stories.md（US-207/208/209追加、SP 154→172、コンセプト更新）
+  - aidlc-docs/inception/application-design/application-design.md（アーキテクチャ図・ApologyMeterモジュール・Lambda 14本化）
+  - aidlc-docs/inception/application-design/services.md（/apology/assess エンドポイント追加）
+  - docs/requirements.md（コンセプト・Epic表更新）
+- **SP合計**: 154 → 172 Story Points（+18SP）
+- **Epic 2 SP**: 28 → 41（+13） / Epic 5 SP: 10 → 15（+5）
+- **次アクション**: Application Design 承認 → Units Generation
+
+## エントリ 014 - User Stories 追加: 謝罪実施日までの継続的支援
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - User Stories（追補）
+- **ユーザーリクエスト（原文）**: 「ストーリーには謝罪実施日までの継続的支援を入れてほしい」
+- **変更内容**:
+  - **US-210追加**: 謝罪実施日を設定し当日までカウントダウン管理する（P0 / 5SP / Epic2 / 依存: US-203）
+    - 実施日登録 → カウントダウン表示
+    - 進捗ダッシュボード（残日数・チェックリスト達成率・練習回数）
+    - 残り24時間アラート + 未完了項目ハイライト
+    - 実施日変更可能
+  - **US-211追加**: 謝罪実施当日の直前サポートを受ける（P1 / 3SP / Epic2 / 依存: US-210）
+    - 当日/前日に「本番当日モード」自動起動 → 最終チェックリスト
+    - AI が相手・角度スコア・準備状況を元に心構え・ブリーフィングアドバイス生成
+    - 直前練習セッション（同一相手・同一プラン）への導線
+- **Journey Map 更新**: US-210・US-211 を Journey 2 に追加
+- **成果物更新**:
+  - aidlc-docs/inception/user-stories/stories.md（US-210/211追加、SP 172→180）
+  - docs/requirements.md（Epic 2 SP 41→49、合計 27→29ストーリー / 172→180SP）
+- **SP合計**: 172 → 180 Story Points（+8SP）
+- **Epic 2 SP**: 41 → 49（+8）
+
+## エントリ 016 - 整合性チェック第2回 + セキュリティ・コスト補強
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design（品質保証）
+- **チェック結果**: 7件の不整合・不足を検出
+- **修正内容**:
+  1. `application-design.md` アーキテクチャ図: typo「asess-apology」→「assess-apology」
+  2. `components.md` InceptionPage対応US: typo「〒」→「〜」
+  3. `component-dependency.md`: InceptionPage→ApologyMeter 依存追加、AvatarCustomizePage→AuthModule 依存追加
+  4. `component-methods.md`: GenerateStoryLambda / GeneratePlanLambda / GenerateFeedbackLambda / GeneratePreventionLambda / GenerateFollowMailLambda / AnalyzeKarteLambda / GenerateGuidanceFeedbackLambda のメソッド定義追加
+  5. セキュリティ強化: `backend/shared/input_validator.py` を components/methods/application-design に追加（文字数制限500文字・インジェクション検知ブラックリスト・JSON出力強制・入力サニタイズ）
+  6. `services.md`: 月額コスト概算セクション追加（MVP 100ユーザー想定 ≈ $93/月 ≈ ¥14,000/月）
+- **次アクション**: Application Design 承認確認 → Units Generation
+
+## エントリ 015 - 全ドキュメント整合性チェック＋修正
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design（品質保証）
+- **ユーザーリクエスト（原文）**: 「全体として整合性があるかチェックして AI-DLCに従いチェック結果を記載、必要なら更新を実施して」
+- **チェック結果**: 9件の不整合を検出
+- **不整合一覧と修正**:
+  1. `aidlc-state.md`: User Stories行「24ストーリー/154SP」→「29ストーリー/180SP・コンセプト変更反映済」に修正
+  2. `docs/requirements.md`: Epic 2 ストーリー数 9→8 に修正（合計29と整合）
+  3. `application-design.md`: 技術スタック表「13関数」→「14関数」に修正
+  4. `application-design.md`: アーキテクチャ図 Nova Lite系に `assess-apology` 追加
+  5. `application-design.md`: プロンプトリストに `assess-apology.txt` 追加
+  6. `components.md`: ApologyMeter共通モジュール + AssessApologyLambda 追加
+  7. `component-methods.md`: ApologyMeter クラスメソッド（init/setDegree/getStageName/showGapAnalysis/reset）追加
+  8. `services.md`: エンドポイント表に `POST /apology/assess` 行追加 + SAM「13関数」→「14関数」修正
+  9. `component-dependency.md`: InceptionPage → `/apology/assess` (AssessApologyLambda) 依存追加 + BE→AWS 依存追加
+- **修正完了**: 全9件修正済み。全ドキュメント間で29ストーリー/180SP/14Lambda/15エンドポイントで整合
+- **次アクション**: Application Design 承認確認 → Units Generation
+
+## エントリ 012 - Application Design 完了
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design
+- **アクション**: 設計成果物5ファイルの生成完了
+- **生成物**:
+  - aidlc-docs/inception/application-design/components.md（全コンポーネントカタログ）
+  - aidlc-docs/inception/application-design/component-methods.md（メソッドシグネチャ定義）
+  - aidlc-docs/inception/application-design/services.md（API/DynamoDB/SAM定義）
+  - aidlc-docs/inception/application-design/component-dependency.md（依存関係・データフロー）
+  - aidlc-docs/inception/application-design/application-design.md（統合設計ドキュメント）
+- **設計決定**: Q1〜Q15 全回答に基づく設計確定
+  - フロントエンド: 複数HTML + 共通JS/CSS（B）
+  - ステート管理: window.AppState + sessionStorage + DynamoDB の3層（A+C Hybrid）
+  - Lambda: 細粒度13関数（A）、Nova Lite/Sonnet分離（A）
+  - Transcribe: フロントエンド直接WebSocket（A）
+  - DB: DynamoDBシングルテーブル（A）
+  - インフラ: SAM（C）
+- **次アクション**: 承認確認 → Units Generation
+
+## エントリ 011 - Application Design 開始
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Application Design
+- **ユーザーリクエスト（原文）**: "AI-DLCに従い、開始してください"
+- **アクション**: application-design-plan.md 生成（15質問埋込）
+- **次アクション**: ユーザー回答待ち
 
 ## エントリ 010 - User Stories 正式実行開始
 - **日時**: 2026-04-30T（本日）
