@@ -45,6 +45,9 @@
 
 以下は、AIによる謝罪シナリオ生成・感情アバター応答・音声同期の事前検証デモです。
 
+> ※ GIFは完成版MVPではなく、INCEPTIONフェーズで技術的実現性を確認するための事前検証プロトタイプです。
+> 予選までに U0+U1+U2 のコア体験として再実装します。
+
 ![GEZA プロトタイプデモ1：AI応答と感情アバター](prototype/videos/GEZA_prototype_1.gif)
 
 ![GEZA プロトタイプデモ2：音声同期と表情変化](prototype/videos/GEZA_prototype_2.gif)
