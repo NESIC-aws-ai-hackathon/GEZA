@@ -1,6 +1,6 @@
 ﻿
 <p align="center">
-  <img src="icons/github_header_title.png" alt="GEZA" width="600">
+  <img src="icons/github_header_title.png" alt="GEZA" width="1000">
 </p>
 
 # GEZA — 謝罪丸投げコンシェルジュ
