@@ -1,4 +1,8 @@
-﻿![alt text](icons/header_logo.png)
+﻿
+<p align="center">
+  <img src="icons/github_header_title.png" alt="GEZA" width="600">
+</p>
+
 # GEZA — 謝罪丸投げコンシェルジュ
 
 > **「土下座はあなたに、誠意はAIに。」**  
