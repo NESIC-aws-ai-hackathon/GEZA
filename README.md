@@ -52,7 +52,7 @@
 
 ![GEZA プロトタイプデモ2：音声同期と表情変化](prototype/videos/GEZA_prototype_2.gif)
 
-- 音声付き動画: `prototype/videos/`
+- 音声付き動画: [prototype/videos/](prototype/videos/)
 - 検証内容: Bedrock Nova Lite応答、Polly音声合成、Viseme口パク同期、facesjs感情表現
 
 ## ドキュメントマップ
@@ -374,7 +374,7 @@ INCEPTION PHASE
 
 設計開始前に不確実性の高い技術を先行検証しました。
 
-prototype/videos
+[prototype/videos/](prototype/videos/)
 に事前検証結果の音声付き動画を配置しています。
 
 | 検証項目 | 結果 | 状態 | 設計への反映 |
