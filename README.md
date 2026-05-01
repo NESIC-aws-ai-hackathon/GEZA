@@ -1,4 +1,5 @@
-﻿# GEZA — 謝罪丸投げコンシェルジュ
+﻿![alt text](icons/header_logo.png)
+# GEZA — 謝罪丸投げコンシェルジュ
 
 > **「土下座はあなたに、誠意はAIに。」**  
 > 「人をダメにするサービス」 — AWS Summit Japan 2026 AI-DLC ハッカソン
@@ -30,7 +31,7 @@
 
 | # | ドキュメント | 所要時間 | 読む目的 |
 |---|--------|:--------:|------|
-| **①** | **README.md**（このファイル） | 3分 | プロダクト概要・デモシナリオ・MVP範囲 |
+| **①** | **README.md**（このファイル） | 10分 | プロダクト概要・デモシナリオ・MVP範囲 |
 | **②** | [requirements.md](aidlc-docs/inception/requirements/requirements.md) | 5分 | 要件定義・非機能要件 |
 | **③** | [stories.md](aidlc-docs/inception/user-stories/stories.md) | 5分 | INVEST済29ストーリー/180SP |
 | **④** | [application-design.md](aidlc-docs/inception/application-design/application-design.md) | 5分 | Lambda構成・アーキテクチャ |
