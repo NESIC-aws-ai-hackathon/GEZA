@@ -10,6 +10,16 @@
 
 ---
 
+## ⚡ 30秒サマリー（審査員の方へ）
+
+| 問い | 答え |
+|------|------|
+| **何を作るのか** | やらかした内容を **一言** 入れると、謝罪の深刻度判定 → 相手分析 → 台本全文生成 → タイミング指示まで AI が全自動で出す「謝罪丸投げコンシェルジュ」 |
+| **なぜ人をダメにするのか** | 謝罪という「自分で考える行為」を完全代行する。使い続けるほど「自分で誠意を形にする力」が静かに失われる設計 |
+| **何が動く予定か** | INCEPTION 完了・プロトタイプ検証済み。予選（5/30）までに「入力→台本完成」のコア体験（U0+U1+U2）を実装予定 |
+
+---
+
 ## コンセプト
 
 **GEZA** は、やらかした内容を一言入れるだけで、  
@@ -31,6 +41,17 @@
 ```
 ---
 
+## 🎬 デモ / 実証プロトタイプ
+
+以下は、AIによる謝罪シナリオ生成・感情アバター応答・音声同期の事前検証デモです。
+
+![alt text](prototype/videos/GEZA_prototype_1.gif)
+
+![alt text](prototype/videos/GEZA_prototype_2.gif)
+
+- 音声付き動画: `prototype/videos/`
+- 検証内容: Bedrock Nova Lite応答、Polly音声合成、Viseme口パク同期、facesjs感情表現
+
 ## ドキュメントマップ
 
 | # | ドキュメント | 所要時間 | 読む目的 |
@@ -41,7 +62,18 @@
 | **④** | [application-design.md](aidlc-docs/inception/application-design/application-design.md) | 5分 | Lambda構成・アーキテクチャ |
 | **⑤** | [feasibility-study.md](aidlc-docs/inception/feasibility/feasibility-study.md) | 3分 | 実証プロトタイプ結果・実機計測値 |
 
+---
 
+## 審査基準対応表
+
+| 審査観点 | 主要参照先 | 補足 |
+|--------|----------|---------|
+| **Intent（意図・テーマ適合性）** | このREADME「ハッカソンテーマとの適合性」セクション / [requirements.md](aidlc-docs/inception/requirements/requirements.md) | 「人をダメにする」3軸の構造を詳述 |
+| **Unit 分解（開発計画）** | [unit-of-work.md](aidlc-docs/inception/application-design/unit-of-work.md) / [unit-of-work-dependency.md](aidlc-docs/inception/application-design/unit-of-work-dependency.md) | U0〜U6・180SP・依存関係・実装順定義済み |
+| **創造性（キラー機能）** | このREADME「キラー機能：謝罪角度アセスメント」/ [application-design.md](aidlc-docs/inception/application-design/application-design.md) | ApologyMeter 0〜180°の定量評価。既存ツールに存在しない指標 |
+| **品質（ドキュメント・設計）** | [aidlc-docs/](aidlc-docs/) 全体 / [feasibility-study.md](aidlc-docs/inception/feasibility/feasibility-study.md) / [audit.md](aidlc-docs/audit.md) | AI-DLC メソドロジー完全遵守・実証プロトタイプ・変更監査ログあり |
+
+---
 
 ### キラー機能：謝罪角度アセスメント（ApologyMeter）
 
@@ -339,24 +371,18 @@ INCEPTION PHASE
 
 設計開始前に不確実性の高い技術を先行検証しました。
 
-以下は、文字入力によりリアルタイムで会話が進行している様子
-
-![alt text](prototype/videos/GEZA_prototype_1.gif)
-
-以下は、感情による表情の変化を検証したものです
-
-![alt text](prototype/videos/GEZA_prototype_2.gif)
-
 prototype/videos
 に事前検証結果の音声付き動画を配置しています。
 
-| 検証項目 | 結果 | 設計への反映 |
-|---------|------|------------|
-| AWS Bedrock Nova Lite のレスポンス速度 | 1〜3 秒（実測） | 評価系 Lambda はすべて Nova Lite で統一 |
-| facesjs SVG アバターの感情表現 | CSS transform で 30 感情を実証 | MP4 動画案を廃棄し SVG 方式を採用 |
-| Amazon Polly SpeechMarks Viseme | 口パク同期 50ms 以内を確認 | TTS Lambda が MP3 + Viseme を 1 レスポンスで返す |
-| Transcribe Streaming WebSocket | Lambda 経由より直接接続が安定 | フロントから Cognito Identity Pool 経由で直接接続 |
-| AWS SAM デプロイ | プロトタイプで全リソース展開確認 | SAM を IaC として採用・template.yaml 一元管理 |
+| 検証項目 | 結果 | 状態 | 設計への反映 |
+|---------|------|:----:|------------|
+| AWS Bedrock **Nova Lite** レスポンス速度 | 1〜3 秒（実測） | ✅ 検証済み | 評価・分類系 Lambda はすべて Nova Lite で統一 |
+| AWS Bedrock **Claude Sonnet** 生成品質 | 台本フル生成・相手分析 | 📋 本実装予定 | generate-plan / generate-opponent Lambda で採用予定 |
+| facesjs SVG アバター視覚感情表現 | CSS transform で **30 感情**を実装確認（フォーク版） | ✅ 検証済み | MP4 動画案を廃棄し SVG 方式を採用 |
+| LLM 感情ラベル分類（プロトタイプ） | Nova Lite が **5 感情**ラベルを返却（怒り/苛立ち/失望/驚き/納得） | ✅ 検証済み | 本実装では 30 感情マッピングに拡張予定 |
+| Amazon Polly SpeechMarks Viseme | 口パク同期 50ms 以内を確認 | ✅ 検証済み | TTS Lambda が MP3 + Viseme を 1 レスポンスで返す |
+| Transcribe Streaming WebSocket | Lambda 経由より直接接続が安定 | ✅ 検証済み | フロントから Cognito Identity Pool 経由で直接接続 |
+| AWS SAM デプロイ | プロトタイプ（CloudFormation）で全リソース展開確認 | ✅ 検証済み | SAM を IaC として採用・template.yaml 一元管理 |
 
 ### 2. コンセプト進化の文書化
 
