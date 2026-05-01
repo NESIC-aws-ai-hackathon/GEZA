@@ -31,7 +31,7 @@ def lambda_handler(event, context):
             "statusCode": 500,
             "body": json.dumps({"error": str(e)}, ensure_ascii=False)
         }
-````
+```
 
 ```javascript
 // DOM挿入は必ず textContent（XSS対策）
@@ -62,8 +62,9 @@ element.innerHTML = userInput;    // ❌
 
 ## 参照ドキュメント
 
-| ドキュメント    | パス                     |
-| --------- | ---------------------- |
-| ユーザーストーリー | `docs/user-stories.md` |
-| AI-DLC状態  | `aidlc-state.md`       |
-| 画像アセット定義 | `icons/README.md`      |
+| ドキュメント | パス | 備考 |
+| --------- | ---- | ---- |
+| ユーザーストーリー（**正式版**） | `aidlc-docs/inception/user-stories/stories.md` | INVEST済29ストーリー/180SP |
+| ユーザーストーリー（草稿） | `docs/draft-user-stories.md` | 初期検討用・参考のみ |
+| AI-DLC状態 | `aidlc-state.md` | フェーズ進捗・ユニット定義 |
+| 画像アセット定義 | `icons/README.md` | アイコン一覧 |

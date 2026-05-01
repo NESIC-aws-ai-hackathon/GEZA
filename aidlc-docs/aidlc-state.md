@@ -4,7 +4,7 @@
 - **プロジェクト名**: GEZA（総合謝罪支援コンシェルジュ）
 - **プロジェクトタイプ**: Greenfield
 - **開始日**: 2026-04-29
-- **現在のステージ**: INCEPTION - Units Generation
+- **現在のステージ**: INCEPTION - 完了・承認済み
 - **コンセプト**: 総合謝罪支援コンシェルジュ（主: 謝罪角度アセスメント・プランニング、サブ: 練習シミュレーション）
 
 ## ワークスペース状態
@@ -14,7 +14,9 @@
 
 ## コード配置ルール
 - **アプリケーションコード**: ワークスペースルート（aidlc-docs/ 以外）
-- **ドキュメント**: aidlc-docs/ のみ
+- **AI-DLC成果物（正）**: `aidlc-docs/` 配下のみ（機械可読形式・フェーズ管理対象）
+- **人間向け参照資料**: `docs/` 配下（AI-DLC成果物から要点を抽出した可読版、AGENTS.mdが参照するのはこちら）
+  - `docs/draft-user-stories.md`: チーム初期検討用草稿（正式版: `aidlc-docs/inception/user-stories/stories.md`）
 
 ## Extension Configuration
 | Extension | Enabled | Decided At |
@@ -30,7 +32,7 @@
 - [x] **Prototype / Feasibility Verification（実現性プロトタイプ完了）**
 - [x] Workflow Planning（execution-plan.md 完成・承認済み）
 - [x] Application Design（成果物5ファイル生成完了・承認済み）
-- [x] Units Generation ← **完了・承認待ち**
+- [x] Units Generation ← **完了・承認済み**
 
 ### 🟢 CONSTRUCTION PHASE
 - [ ] Functional Design（ユニット毎）

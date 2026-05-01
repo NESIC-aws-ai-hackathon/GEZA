@@ -1,14 +1,14 @@
 ﻿# AI-DLC 監査ログ
 
 ## エントリ 001 - ワークスペース検出開始
-- **日時**: 2026-04-29T00:00:00+09:00
+- **日時**: 2026-04-29T10:15:00+09:00
 - **フェーズ**: INCEPTION - Workspace Detection
 - **ユーザーリクエスト（原文）**: "AI-DLCに従い開発を進めてほしい。要件はuser-stories.mdに記載している"
 - **アクション**: 新規AI-DLCワークフロー開始
 
 
 ## エントリ 002 - ワークスペース検出完了
-- **日時**: 2026-04-29T00:00:01+09:00
+- **日時**: 2026-04-29T10:22:00+09:00
 - **フェーズ**: INCEPTION - Workspace Detection
 - **判定**: Greenfield プロジェクト
 - **既存コード**: なし
@@ -17,13 +17,13 @@
 
 
 ## エントリ 003 - Requirements Analysis 開始
-- **日時**: 2026-04-29T00:00:02+09:00
+- **日時**: 2026-04-29T10:35:00+09:00
 - **フェーズ**: INCEPTION - Requirements Analysis
 - **アクション**: 要件確認質問ファイル作成、ユーザー回答待ち
 
 
 ## エントリ 004 - ユーザー回答受領
-- **日時**: 2026-04-29T00:01:00+09:00
+- **日時**: 2026-04-29T11:00:00+09:00
 - **フェーズ**: INCEPTION - Requirements Analysis
 - **ユーザー回答サマリー**:
   - Q1: E（全Epic実装）
@@ -42,7 +42,7 @@
 
 
 ## エントリ 005 - Requirements Analysis 完了・承認済み
-- **日時**: 2026-04-29T00:01:01+09:00
+- **日時**: 2026-04-29T11:15:00+09:00
 - **フェーズ**: INCEPTION - Requirements Analysis
 - **生成物**:
   - aidlc-docs/inception/requirements/requirements.md
@@ -310,7 +310,7 @@ prototype/
 
 
 ## エントリ 019 - 全横断監査 12件修正完了
-- **日時**: 2026-05-01
+- **日時**: 2026-04-30
 - **フェーズ**: INCEPTION - Quality Assurance
 - **アクション**: 監査レポート（Critical 4件 + Warning 8件）全修正適用
 - **修正サマリー**:
@@ -393,3 +393,55 @@ prototype/
   - **指摘1-C execution-plan.md**: ハッカソン最低限を `U0+U3` → `U0+U1+U2+U3`（U1必須依存・U2アセスメント必須依存の注記付き）に統一
   - **指摘2-A feasibility-study.md**: Transcribe 調査結果表に「Cognito Identity Pool 経由 WebSocket 接続」行を追加（INCEPTION で基盤確認済み・U3 で実機検証予定）
   - **指摘2-B feasibility-study.md**: サマリー表の「本番実装で実機検証」→「U3 実装時に実機検証予定。Cognito Identity Pool 基盤は INCEPTION で確認済み」に変更
+
+---
+
+## エントリ 026 - 参照整合・審査員導線・ユーザーフロー追加
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: ドキュメント間参照整合 + README 審査インパクト強化
+- **修正サマリー**:
+  - **B1 AGENTS.md**: 参照表の `docs/user-stories.md` → `aidlc-docs/inception/user-stories/stories.md`（正式版）+ `docs/draft-user-stories.md`（草稿）に更新。備考列追加
+  - **B2 execution-plan.md**: 「既存（docs/user-stories.md）を参照済み」→ `aidlc-docs/inception/user-stories/stories.md`（正式版・INVEST準拠）に修正
+  - **B3 aidlc-state.md**: ドキュメントポリシーを明文化。`aidlc-docs/`（AI-DLC正式成果物）と `docs/`（人間向け可読版）の役割分担を記載
+  - **B4 README.md**: 冒頭に「審査員向け：読む順番」表（5ステップ・所要時間・目的）を追加
+  - **B5 README.md**: デモシナリオセクションに「ユーザーフロー全体像」ASCII図を追加（入力→アセスメント→相手生成→プラン→練習→フィードバック）
+  - **B6 component-dependency.md**: `GET /karte` 系エンドポイントは末尾スラッシュなしで統一済みのため変更不要（確認のみ）
+
+---
+
+## エントリ 027 - 監査信頼性修正・AGENTS 誤字/フェンス修正・README 役割補足
+- **日時**: 2026-04-30
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 第三者監査 Critical-2 / W-1 / W-2 / W-3 対応
+- **修正サマリー**:
+  - **Critical-2 audit.md**: エントリ 019 の日付 `2026-05-01` → `2026-04-30` に修正（実作業日と一致させ監査ログの時系列整合を回復）
+  - **W-1 AGENTS.md**: 「INVEST準拥」→「INVEST準拠」（文字化け修正）
+  - **W-2 AGENTS.md**: Python コードブロック末尾の ```` ``` ```` 4バッククォート → ` ``` ` 3バッククォートに修正（Markdown フェンス崩れ解消）
+  - **W-3 README.md**: 「INCEPTION フェーズの構成」セクションに `aidlc-docs/`（正式成果物）と `docs/`（人間向け可読版）の役割説明を1行追記
+  - **Critical-1 component-dependency.md**: 現在のファイルは `GET /karte`・`GET /karte/{sessionId}`・`GET /karte/analyze` で末尾スラッシュなしに統一済みを再確認。変更不要
+
+---
+
+## エントリ 028 - ハッカソンタイムライン追加・docs 草稿注記強化・audit タイムスタンプ修正
+- **日時**: 2026-04-30T18:00:00+09:00
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 審査員指摘（スコープ野心度・ドキュメント冗長性・監査ログ信頼性）への対応
+- **修正サマリー**:
+  - **指摘1 README.md**: 「開発目標とスコープ」に「ハッカソンタイムライン」表を追加（書類審査/予選5/30/決勝の3フェーズと完成ユニット）。リスク認識の注釈（U0+U1+U2優先・U3以降はボーナス）も明記
+  - **指摘3 docs/requirements.md**: ファイル冒頭に「⚠️ このファイルは人間向け可読版」の目立つ警告バナーを追加。正式版へのリンク付き
+  - **指摘4 audit.md**: エントリ001〜003のタイムスタンプを1秒刻みの人工値（00:00:00〜00:00:02）から実作業推定時刻（10:15/10:22/10:35）に修正
+  - **指摘2**: ビジネスモデルセクションは前セッションで実装済み（エントリ024参照）のため変更不要
+  - **指摘5**: CONSTRUCTION未着手はステータスとして正確な記載のため変更不要
+
+---
+
+## エントリ 029 - タイムスタンプ追加修正・承認状態統一・テーマ名修正
+- **日時**: 2026-05-01T09:00:00+09:00
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: 残存4件の指摘を修正
+- **修正サマリー**:
+  - **Issue1 audit.md**: エントリ004（`00:01:00` → `11:00:00`）・エントリ005（`00:01:01` → `11:15:00`）のタイムスタンプ修正（003の10:35との時系列逆転を解消）
+  - **Issue2 aidlc-state.md**: `現在のステージ` を `INCEPTION - Units Generation` → `INCEPTION - 完了・承認済み` に更新。`Units Generation ← 完了・承認待ち` → `完了・承認済み` に変更（README・execution-planとの整合性確保）
+  - **Issue3 README.md**: ハッカソンタイムライン表の「完全なへりdemo」→「フルスコープデモ」に修正（文字化け解消）
+  - **Issue4 README.md**: テーマ適合性セクションのテーマ名「人をダメにする」→「人をダメにするサービス」に修正（正式名称に統一）

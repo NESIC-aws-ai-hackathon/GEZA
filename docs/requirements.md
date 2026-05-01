@@ -1,5 +1,8 @@
 # GEZA 要件定義（統合版）
 
+> ⚠️ **このファイルは人間向け可読版（要点概要）です。**  
+> 正式版は [`aidlc-docs/inception/requirements/requirements.md`](../aidlc-docs/inception/requirements/requirements.md) を参照してください。
+
 > AI-DLC Requirements Analysis + User Stories に基づき生成。詳細は `aidlc-docs/inception/requirements/requirements.md` を参照。
 > **最終更新**: 2026-04-30（プロトタイプ検証結果 + User Stories 反映）
 
