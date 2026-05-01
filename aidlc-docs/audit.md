@@ -445,3 +445,16 @@ prototype/
   - **Issue2 aidlc-state.md**: `現在のステージ` を `INCEPTION - Units Generation` → `INCEPTION - 完了・承認済み` に更新。`Units Generation ← 完了・承認待ち` → `完了・承認済み` に変更（README・execution-planとの整合性確保）
   - **Issue3 README.md**: ハッカソンタイムライン表の「完全なへりdemo」→「フルスコープデモ」に修正（文字化け解消）
   - **Issue4 README.md**: テーマ適合性セクションのテーマ名「人をダメにする」→「人をダメにするサービス」に修正（正式名称に統一）
+
+---
+
+## エントリ 030 - AWSアカウントID マスク・git履歴書き換え
+- **日時**: 2026-05-01T10:00:00+09:00
+- **フェーズ**: INCEPTION - Security
+- **アクション**: リポジトリ内に混入していたAWSアカウントIDを全除去
+- **修正サマリー**:
+  - **audit.md**: S3バケット名中のアカウントIDを `XXXXXXXXXXXX` プレースホルダーに置換
+  - **prototype/README.md**: S3バケット名中のアカウントID（2箇所）を `XXXXXXXXXXXX` に置換
+  - **AGENTS.md**: 「やらないこと」にAWSアカウントID等の機密情報記載禁止ルールを追加
+  - **git-filter-repo**: 全コミット履歴を書き換え（アカウントIDを `XXXXXXXXXXXX` に置換）
+  - **git push --force**: GitHub origin/main に強制プッシュ完了
