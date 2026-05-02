@@ -10,10 +10,10 @@
 
 | 決定事項 | 内容 |
 |---------|------|
-| 分割粒度 | 機能ドメイン単位（6ユニット） |
+| 分割粒度 | 機能ドメイン単位（8ユニット） |
 | インフラ構築 | SAM一括デプロイ（全14 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）|
 | FE共通モジュール | AuthModule/ApiClient/StateManager/AvatarController を U0 に先行実装、残りは各ユニットで追加 |
-| 実装順序 | U0 → U1 → U2 → U3 → U4 → U5（オプション）→ U6（最終） |
+| 実装順序 | U0 → U1 → U2 → U3 → U4 → U5（オプション）→ U6（最終）→ U7 → U8（将来構想） |
 | ディレクトリ構成 | フラット構成（`backend/functions/<name>/` + `frontend/pages/<page>/` + `frontend/shared/`）|
 
 ---
@@ -31,7 +31,9 @@
 | **U4** | 謝罪後支援 + カルテ | E5 + E6 | 28 | P0 | 未着手 |
 | **U5** | ストーリーモード | E3 | 13 | P1 | 未着手（U3完了後） |
 | **U6** | 上司モード | E7 | 23 | P1 | 未着手（最終・時間が余れば） |
-| | **合計** | | **180** | | |
+| **U7** | 送る前GEZAチェック・返信分析 | E8 | 21 | P2 | 未着手（将来構想） |
+| **U8** | 謝罪カルテ拡張・謝罪傾向診断 | E9 | 20 | P2 | 未着手（将来構想） |
+| | **合計** | | **221** | | |
 
 ---
 
@@ -400,6 +402,113 @@ frontend/
 - AuthModule, ApiClient, AvatarController (U0)
 - 認証済みユーザー (U1)
 - TextToSpeechLambda（US-702で上司が音声発話、U0スタブ → U3で実装済み）
+
+---
+
+## U7: 送る前GEZAチェック・返信分析（P2・将来構想）
+
+### 責務
+- 送信予定の謝罪文・返信文の炎上リスク診断
+- 相手から届いた返信の怒り残量・許され度・再炎上リスク分析
+- 次の一手の提案と追加謝罪角度の再計算
+- 謝罪ケースへの紐づけと怒り残量推移の追跡
+
+### バックエンド成果物（Lambda実装）
+
+```
+backend/functions/
+  check-draft/lambda_function.py       # Nova Lite: 送信前文面チェック（炎上リスク・NGワード・責任逃れ検出）
+  analyze-reply/lambda_function.py     # Claude Sonnet: 返信分析（怒り残量・許され度・次の一手）
+backend/prompts/
+  check-draft.txt
+  analyze-reply.txt
+```
+
+### フロントエンド成果物
+
+```
+frontend/
+  pages/
+    check.html       # CheckPage HTML（送る前GEZAチェック）
+    check.js         # CheckPage ロジック
+    reply.html       # ReplyPage HTML（返信GEZA分析）
+    reply.js         # ReplyPage ロジック
+```
+
+### ユーザーストーリー
+
+| US | タイトル | SP |
+|----|---------|:--:|
+| US-801 | 送信前の謝罪文をGEZAにチェックしてもらう | 8 |
+| US-802 | 相手から返ってきた返信をGEZAに分析してもらう | 8 |
+| US-803 | 謝罪対応を継続的に追跡する | 5 |
+| **合計** | | **21** |
+
+### 主な機能
+- 送信予定文面の火に油表現チェック
+- 責任逃れ表現・NGワードの検出と修正提案
+- 相手返信の怒り残量分析（0〜100%）
+- 許され度の算出（0〜100%）
+- 再炎上リスク判定（高/中/低）
+- 次の一手の提案
+- 追加謝罪角度の再計算
+
+### 依存 U0/U1/U4 成果物
+- AuthModule, ApiClient (U0)
+- Cognito認証 (U1)
+- 謝罪カルテ（SaveSessionLambda, DynamoDBスキーマ）(U4)
+
+---
+
+## U8: 謝罪カルテ拡張・謝罪傾向診断（P2・将来構想）
+
+### 責務
+- 謝罪カルテの詳細記録（怒り残量推移・許され度推移・対応結果）
+- ストーリーモードのログを疑似謝罪データとして保存
+- 実際の謝罪履歴とストーリーモードログの統合分析
+- ユーザーの謝罪傾向・性格傾向の診断
+
+### バックエンド成果物（Lambda実装）
+
+```
+backend/functions/
+  save-story-log/lambda_function.py       # DynamoDB: ストーリーモードログ保存
+  diagnose-tendency/lambda_function.py    # Claude Sonnet: 謝罪傾向診断
+backend/prompts/
+  diagnose-tendency.txt
+```
+
+### フロントエンド成果物
+
+```
+frontend/
+  pages/
+    diagnosis.html   # DiagnosisPage HTML（謝罪傾向診断結果）
+    diagnosis.js     # DiagnosisPage ロジック
+  shared/
+    # carte.js を拡張（推移グラフ表示・傾向診断セクション追加）
+```
+
+### ユーザーストーリー
+
+| US | タイトル | SP |
+|----|---------|:--:|
+| US-901 | ストーリーモードの選択や文面も分析対象にする | 8 |
+| US-902 | 自分の謝罪傾向を診断してもらう | 12 |
+| **合計** | | **20** |
+
+### 主な機能
+- 謝罪ケースの詳細保存（やらかし内容・相手との関係性・初回謝罪文・返信・怒り残量推移・最終結果）
+- ストーリーモードログの保存（選択・自由入力・AI相手の反応・結果）
+- 疑似謝罪データの蓄積と分析対象統合
+- 謝罪傾向診断（言い訳先行型・責任回避型・共感不足型・再発防止ふわふわ型・過剰土下座型・沈黙逃亡型・逆ギレ予備軍型・許されかけ自爆型）
+- 次回謝罪時の個別アドバイス生成
+
+### 依存 U0/U1/U4/U5 成果物
+- AuthModule, ApiClient (U0)
+- Cognito認証 (U1)
+- 謝罪カルテ基盤（DynamoDBスキーマ・CartePage）(U4)
+- ストーリーモード（StoryPage・PracticePage連携）(U5)
 
 ---
 

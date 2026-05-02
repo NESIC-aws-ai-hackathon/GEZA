@@ -10,7 +10,7 @@
 ### プロジェクト種別・範囲
 - **プロジェクト種別**: Greenfield（新規開発）
 - **リバースエンジニアリング**: スキップ（既存コードなし、プロトタイプは検証用のみ）
-- **ユーザーストーリー**: `aidlc-docs/inception/user-stories/stories.md`（正式版・INVEST済29ストーリー/180SP）
+- **ユーザーストーリー**: `aidlc-docs/inception/user-stories/stories.md`（正式版・INVEST済３４ストーリー/221SP）
 
 ### 変更影響評価
 - **ユーザー向け変更**: Yes — 全 Epic（1〜7）がユーザー体験に直接影響
@@ -35,7 +35,7 @@ flowchart TD
     subgraph INCEPTION["🔵 INCEPTION PHASE"]
         WD["Workspace Detection<br/>COMPLETED"]
         RA["Requirements Analysis<br/>COMPLETED"]
-        US["User Stories<br/>COMPLETED (29ストーリー/180SP)"]
+        US["User Stories<br/>COMPLETED (34ストーリー/221SP)"]
         WP["Workflow Planning<br/>COMPLETED"]
         AD["Application Design<br/>COMPLETED"]
         UG["Units Generation<br/>COMPLETED"]
@@ -73,7 +73,7 @@ flowchart TD
 - [x] **Workspace Detection** — COMPLETED（Greenfield確認）
 - [x] **Reverse Engineering** — SKIPPED（Greenfield）
 - [x] **Requirements Analysis** — COMPLETED（承認済み）
-- [x] **User Stories** — COMPLETED（29ストーリー/180SP・承認済み）
+- [x] **User Stories** — COMPLETED（34ストーリー/221SP・承認済み）
 - [x] **Workflow Planning** — COMPLETED（本ドキュメント）
 - [x] **Application Design** — COMPLETED（承認済み）
   - 成果物: application-design.md / components.md / component-methods.md / services.md / component-dependency.md

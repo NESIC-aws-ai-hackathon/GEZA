@@ -518,3 +518,37 @@ prototype/
   - **README.md 市場背景**: 「謝罪の失敗が与えるビジネス影響」統計表（クレーム失注コスト5倍・ハラスメント相談9.3万件超・カスハラ対策コスト1500億円超・パワハラ法対象50万社）を追加。TAM→SAM推計表追加（コンプライアンス研修2,000億円・謝罪対応専門300億円・GEZA追求可能市場50億円〜）
   - **README.md 競合比較表**: 「ChatGPT相談/マナー本elearning/ロールプレイ研修/GEZA」の8軸比較表追加（入力量・相手分析・台本生成・角度アセスメント・リアルタイム反応・利用時間・ユーザー思考量・テーマ適合）。GEZAのみが「丸投げで考えなくなる」構造を明示
   - **README.md 最初の10ユーザー獲得計画**: 4チャネル（社内デモ/ハッカソン展示/SNSバズ/Qiita記事）×ペルソナ×アプローチ表を追加
+
+---
+
+## エントリ 035 - 継続的謝罪支援・返信分析・ストーリーモード分析・謝罪傾向診断の新構想追加
+- **日時**: 2026-05-02T10:00:00+09:00
+- **フェーズ**: INCEPTION - コンセプト拡張
+- **アクション**: GEZAのコンセプトを「単発の謝罪文生成」から「怒られる前から許されるまでの継続的謝罪コンシェルジュ」へ拡張
+- **追加コンセプト**:
+  - 送る前GEZAチェック（炎上リスク・責任逃れ表現・NGワード検出）
+  - 返信GEZA分析（怒り残量・許され度・再炎上リスク・次の一手）
+  - 謝罪カルテ拡張（対応履歴蓄積・怒り残量推移・類似ケース参照）
+  - ストーリーモード分析（疑似謝罪データとしての行動ログ蓄積）
+  - 謝罪傾向・性格傾向診断（言い訳先行型・責任回避型・共感不足型等）
+- **変更ファイル一覧**:
+  1. **README.md**: 30秒サマリー更新、コンセプト欄拡充、「継続的謝罪支援」新セクション追加、軸4追加、ユニット構成・差別化ポイント・スコープ更新、数値参照を29ストーリー/180SP→34ストーリー/221SPに全箇所修正
+  2. **aidlc-docs/inception/requirements/requirements.md**: Epic 8（FR-701〜709）・Epic 9（FR-801〜807）追加、MVPスコープ表を9 Epic/34ストーリー/221SPに更新
+  3. **aidlc-docs/inception/user-stories/stories.md**: Journey 8（US-801〜803）・Journey 9（US-901〜902）追加、User Journey マップ更新、合計34ストーリー/221SP
+  4. **aidlc-docs/inception/application-design/unit-of-work.md**: U7（送る前GEZAチェック・返信分析, 21SP）・U8（謝罪カルテ拡張・謝罪傾向診断, 20SP）追加、ユニット合計9個/221SP
+  5. **aidlc-docs/inception/application-design/unit-of-work-story-map.md**: U7/U8のストーリーマッピング・Epic×Unit表・Journey×Unit表追加、割り当て検証更新
+  6. **aidlc-docs/inception/domain-model/data-model.md**: 新規作成。ApologyCase/ApologyMessage/ReplyAnalysis/StoryModeLog/ApologyProfileのDynamoDBデータモデル定義
+  7. **aidlc-docs/aidlc-state.md**: コンセプト欄・ストーリー数更新
+  8. **AGENTS.md**: 参照テーブルのストーリー数更新
+  9. **aidlc-docs/inception/plans/execution-plan.md**: ストーリー数参照更新（2箇所）
+  10. **aidlc-docs/inception/plans/application-design-plan.md**: 対象スコープ参照更新
+  11. **docs/draft-user-stories.md**: 正式版への参照更新
+- **数値変更サマリー**:
+  - ストーリー数: 29 → **34**（+5ストーリー）
+  - SP合計: 180 → **221**（+41SP）
+  - Epic数: 7 → **9**（+2 Epic: E8, E9）
+  - ユニット数: 7(U0-U6) → **9(U0-U8)**（+2ユニット: U7, U8）
+  - Lambda数: 14 → **18**（+4: check-draft, analyze-reply, save-story-log, diagnose-tendency）
+- **整合性検証**: 全ドキュメント間で34ストーリー/221SP/9ユニット/9Epicで整合確認済み
+- **テーマ接続強化**: 「人をダメにする」構造に第4軸「反省パターンすらAIに分析させる」を追加。GEZAが「謝罪文を作るサービス」ではなく「人間の反省を代行するサービス」であることを明示
+  - **README.md 最初の10ユーザー獲得計画**: 4チャネル（社内デモ/ハッカソン展示/SNSバズ/Qiita記事）×ペルソナ×アプローチ表を追加

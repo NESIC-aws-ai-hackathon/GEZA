@@ -2,7 +2,7 @@
 # GEZA ユーザーストーリー（事前検討）
 
 > ⚠️ **このファイルは初期検討用の草稿です。**  
-> 正式版（INVEST 準拠・Given/When/Then・29ストーリー/180SP）は  
+> 正式版（INVEST 準拠・Given/When/Then・34ストーリー/221SP）は  
 > [`aidlc-docs/inception/user-stories/stories.md`](../aidlc-docs/inception/user-stories/stories.md) を参照してください。
 
 ## サービス概要
