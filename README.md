@@ -41,7 +41,7 @@ GEZAは単発の謝罪文生成ツールではありません。
 
 ```
 コア機能（入力一つで全自動）
-  謝罪角度アセスメント  ← やらかしの深刻度を AI が 0〜180° の角度で数値化
+  謝罪角度アセスメント  ← やらかしの深刻度を AI が 0〜180° の角度で数値化・ピクトグラム+スタンプ+SE音で演出
   謝罪台本フル生成      ← 相手分析 → NGワード → 第一声 → 全セリフ台本
   タイミング・手土産    ← いつ・どこで・何を持って行くかまで指示
   準備サポート          ← チェックリスト・フォローメール・再発防止策
@@ -91,7 +91,7 @@ GEZAは単発の謝罪文生成ツールではありません。
 |--------|----------|---------|
 | **Intent（意図・テーマ適合性）** | このREADME「ハッカソンテーマとの適合性」セクション / [requirements.md](aidlc-docs/inception/requirements/requirements.md) | 「人をダメにする」4軸の構造を詳述 |
 | **Unit 分解（開発計画）** | [unit-of-work.md](aidlc-docs/inception/application-design/unit-of-work.md) / [unit-of-work-dependency.md](aidlc-docs/inception/application-design/unit-of-work-dependency.md) | U0〜U8・221SP・依存関係・実装順定義済み |
-| **創造性（キラー機能）** | このREADME「キラー機能：謝罪角度アセスメント」/ [application-design.md](aidlc-docs/inception/application-design/application-design.md) | ApologyMeter 0〜180°の定量評価。既存ツールに存在しない指標 |
+| **創造性（キラー機能）** | このREADME「キラー機能：謝罪角度アセスメント」/ [application-design.md](aidlc-docs/inception/application-design/application-design.md) | ApologyMeter 0〜180°の定量評価。ピクトグラム+スタンプ+SE音による演出。既存ツールに存在しない指標 |
 | **品質（ドキュメント・設計）** | [aidlc-docs/](aidlc-docs/) 全体 / [feasibility-study.md](aidlc-docs/inception/feasibility/feasibility-study.md) / [audit.md](aidlc-docs/audit.md) | AI-DLC メソドロジー完全遵守・実証プロトタイプ・変更監査ログあり |
 
 ---
@@ -99,7 +99,7 @@ GEZAは単発の謝罪文生成ツールではありません。
 ### キラー機能：謝罪角度アセスメント（ApologyMeter）
 
 やらかしの内容を入力するだけで、AI が謝罪の深刻度を **0〜180° の角度** で即座に数値化。  
-「会釈（5°）」から「焼き寝下座（175°）」まで 6 ステージで表現し、SVG アニメーションで可視化。  
+「会釈（5°）」から「焼き寝下座（175°）」まで 6 ステージで表現し、**ステージ別ピクトグラム画像＋スタンプ演出（ドン！と打ち付け表示）＋SE音（効果音）** で可視化。  
 さらに **AI 判定 vs 自己申告のギャップ分析** で「自分が思うより相手はもっと怒っている」ことに気づかせます――そしてその対応も全部AIが作ります。
 
 ```
@@ -513,7 +513,7 @@ INCEPTION PHASE
 
 謝罪角度アセスメント（US-207/208）は後から追加した機能ですが、  
 **デモインパクト最大のキラー機能** と位置づけ、U2（コンシェルジュコア）の中心に据えました。  
-ApologyMeter（SVG メーター）の設計とメソッドシグネチャは Application Design で完全定義済みです。
+ApologyMeter（ピクトグラム＋スタンプ＋SE音演出）の設計とメソッドシグネチャは Application Design で完全定義済みです。
 
 ### 4. セキュリティの設計込み込み
 
@@ -563,7 +563,7 @@ GEZA/
 │       ├── state.js          # StateManager（3層ステート）
 │       ├── avatar.js         # AvatarController（facesjs + 30感情）
 │       ├── emotions.js       # EmotionDefinitions
-│       ├── apology-meter.js  # ApologyMeter（SVG 0〜180°メーター）
+│       ├── apology-meter.js  # ApologyMeter（ピクトグラム+スタンプ+SE音演出）
 │       ├── transcribe.js     # TranscribeClient（音声入力）
 │       └── polly-sync.js     # PollySyncController（Viseme 口パク同期）
 │
@@ -634,7 +634,7 @@ GEZA/
 
 ```
 ① 謝罪特化 × 定量評価（ApologyMeter 0〜180°）
-   → 「どのくらいやばいか」を角度で可視化。既存ツールにない指標
+   → 「どのくらいやばいか」を角度+ピクトグラム+スタンプ+SE音で可視化。既存ツールにない指標
 
 ② 相手生成 × 感情アバター 30種類
    → 入力した状況から相手の性格・怒りポイントを AI が生成
@@ -662,7 +662,7 @@ GEZA/
 ```
 1. [Top] アプリ起動 → Cognito サインイン
 2. [InceptionPage] やらかし内容を入力
-   → ApologyMeter が 0〜180° でアニメーション表示（例: 土下座ゾーン = 62°）
+   → ApologyMeter が 0〜180° でピクトグラム+スタンプ+SE音演出（例: 土下座ゾーン = 62°）
    → AI vs 自己申告ギャップを可視化
 3. [InceptionPage] 謝罪相手（ボス）が生成される
    → facesjs アバターが登場、名前・性格・怒りポイントが表示
@@ -680,7 +680,7 @@ GEZA/
   やらかし内容入力
        ↓
 [アセスメント（キラー機能）]
-  AIが深刻度を評価 → 謝罪角度 72°（土下座ゾーン）
+  AIが深刻度を評価 → 謝罪角度 72°（土下座ゾーン）ピクトグラム+スタンプ+SE音で演出
   自己申告 45° vs AI 72° → 「甘く見がち」アラート
        ↓
 [相手生成]

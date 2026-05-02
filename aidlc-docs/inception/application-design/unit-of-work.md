@@ -164,7 +164,7 @@ frontend/
 ### 責務
 - 謝罪の全体プランニング支援（GEZAのコア機能）
 - やらかし入力 → 角度アセスメント → 相手生成 → プラン作成 → 実施日管理
-- SVG 角度メーター表示・ギャップ分析
+- ピクトグラム画像+スタンプ演出+SE音で角度表示・ギャップ分析
 
 ### バックエンド成果物（Lambda実装）
 
@@ -189,7 +189,7 @@ frontend/
     customize.html     # AvatarCustomizePage HTML
     customize.js       # AvatarCustomizePage ロジック
   shared/
-    apology-meter.js   # ApologyMeter（SVG 0〜180° メーター）
+    apology-meter.js   # ApologyMeter（ピクトグラム+スタンプ+SE音演出）
 ```
 
 ### ユーザーストーリー

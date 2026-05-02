@@ -97,7 +97,7 @@ E) Other (please describe after [Answer]: tag below)
 
 [Answer]: B
 コンセプト的には E2（コンシェルジュ）がコアだが、デモ的にはE4（練習）が見栄えする
-E2の「角度アセスメント」は API + SVGメーター表示で完結するので比較的速い
+E2の「角度アセスメント」は API + ピクトグラム・スタンプ・SE音演出で完結するので比較的速い
 E4の「アバター対話」は技術的に複雑（facesjs + Polly Viseme + Transcribe）なので早めに着手したい
 E2のInceptionPage完了 → E4のPracticePageに自然に流れるので、並行といっても実質は直列に近い
 

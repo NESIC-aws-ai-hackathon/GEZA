@@ -19,7 +19,7 @@
 | **AuthModule** | `frontend/shared/auth.js` | Cognito User Pool 認証（サインアップ・ログイン・トークン管理・未認証リダイレクト） |
 | **TranscribeClient** | `frontend/shared/transcribe.js` | Cognito Identity Pool で取得した一時認証情報を使い、AWS Transcribe Streaming へ直接WebSocket接続。リアルタイム文字起こし結果をコールバックで通知 |
 | **PollySyncController** | `frontend/shared/polly-sync.js` | Polly MP3（Base64）の音声再生と SpeechMarks viseme タイムコードを同期し、AvatarController.applyViseme() を呼び出す（50ms以内） |
-| **ApologyMeter** | `frontend/shared/apology-meter.js` | 謝罪角度（0〜180°）のSVGメーター描画・アニメーション・ステージ名表示・AI vs 自己申告ギャップ分析表示 |
+| **ApologyMeter** | `frontend/shared/apology-meter.js` | 謝罪角度（0〜180°）のステージ別ピクトグラム画像表示・スタンプ演出・SE音再生・ステージ名表示・AI vs 自己申告ギャップ分析表示 |
 
 ### ページ コンポーネント
 

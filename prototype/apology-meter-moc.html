@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEZA - 謝罪角度アセスメント MOC（ピクトグラム+スタンプ+SE）</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#1a1a2e;color:#eee;min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:430px;min-height:100vh;background:#16213e;display:flex;flex-direction:column;align-items:center;padding-bottom:40px}
+.header{text-align:center;padding:16px;width:100%;background:linear-gradient(135deg,#0f3460,#533483)}
+.header h1{font-size:28px;color:#e94560;letter-spacing:4px}
+.header .sub{font-size:12px;color:#aaa;letter-spacing:1px}
+.tagline{font-size:12px;color:#888;margin-top:4px}
+.meter-title{font-size:14px;color:#e94560;letter-spacing:2px;margin-top:18px}
+
+/* ピクトグラム表示エリア */
+.picto-area{width:100%;height:280px;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden;margin-top:8px}
+.picto-container{position:relative;width:320px;height:260px;display:flex;justify-content:center;align-items:center}
+.picto-img{width:200px;height:200px;object-fit:contain;opacity:0;transform:scale(2.5) rotate(-12deg);transition:none;position:absolute;filter:drop-shadow(0 0 0 transparent)}
+.picto-img.stamped{opacity:1;transform:scale(1) rotate(0deg);filter:drop-shadow(0 4px 16px rgba(233,69,96,0.4))}
+.picto-img.stamping{animation:stampIn .35s cubic-bezier(.17,.89,.32,1.28) forwards}
+@keyframes stampIn{
+  0%{opacity:0;transform:scale(2.5) rotate(-12deg)}
+  50%{opacity:1;transform:scale(.88) rotate(3deg)}
+  70%{transform:scale(1.08) rotate(-1deg)}
+  100%{opacity:1;transform:scale(1) rotate(0deg)}
+}
+
+/* 衝撃波 */
+.shockwave{position:absolute;width:240px;height:240px;border-radius:50%;border:3px solid rgba(233,69,96,.6);opacity:0;pointer-events:none}
+.shockwave.active{animation:shockAnim .6s ease-out forwards}
+@keyframes shockAnim{0%{transform:scale(.3);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+
+/* ステージラベル */
+.stage-label-display{text-align:center;margin-top:4px}
+.stage-name{font-size:28px;font-weight:bold;color:#e94560;opacity:0;transform:translateY(20px);transition:all .4s ease}
+.stage-name.visible{opacity:1;transform:translateY(0)}
+.stage-desc{font-size:13px;color:#888;margin-top:2px}
+
+/* 角度表示 */
+.angle-display{text-align:center;margin:8px 0 4px}
+.angle-value{font-size:52px;font-weight:bold;color:#e94560;text-shadow:0 0 20px rgba(233,69,96,.5);transition:color .3s}
+.angle-unit{font-size:22px;color:#aaa}
+
+/* 半円ゲージ */
+.gauge-container{width:300px;height:155px;margin-top:4px}
+
+/* スライダー */
+.slider-area{width:100%;padding:0 24px;margin-top:10px}
+.slider-area input[type="range"]{width:100%;-webkit-appearance:none;appearance:none;height:8px;border-radius:4px;background:linear-gradient(90deg,#00cc66 0%,#88aa00 17%,#cc8800 33%,#dd4400 50%,#cc1111 67%,#7700aa 83%,#440055 100%);outline:none}
+.slider-area input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.slider-area input[type="range"]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;cursor:pointer;border:none}
+.slider-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:#555}
+
+/* ステージバー */
+.stages{width:100%;padding:12px 16px 0}
+.stages-title{font-size:11px;color:#aaa;margin-bottom:6px}
+.stage-bar{display:flex;width:100%;height:28px;border-radius:6px;overflow:hidden;gap:1px}
+.stage-seg{display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,.7);transition:all .3s;cursor:pointer;flex:1;opacity:.4}
+.stage-seg.active{opacity:1;box-shadow:inset 0 0 0 2px rgba(255,255,255,.9);font-weight:bold}
+.stage-seg:nth-child(1){background:#00cc66}
+.stage-seg:nth-child(2){background:#88aa00}
+.stage-seg:nth-child(3){background:#cc8800}
+.stage-seg:nth-child(4){background:#dd4400}
+.stage-seg:nth-child(5){background:#cc1111}
+.stage-seg:nth-child(6){background:#7700aa}
+
+/* デモボタン */
+.demo-controls{width:100%;padding:14px 16px}
+.demo-btn{width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,#e94560,#533483);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;letter-spacing:2px;transition:transform .1s,box-shadow .2s}
+.demo-btn:active{transform:scale(.97)}
+.demo-btn:hover{box-shadow:0 4px 20px rgba(233,69,96,.4)}
+.demo-btn.running{background:linear-gradient(135deg,#333,#555);cursor:not-allowed}
+
+/* ギャップ分析 */
+.gap-analysis{width:100%;padding:10px 16px}
+.gap-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px}
+.gap-card h3{font-size:12px;color:#e94560;margin-bottom:10px}
+.gap-row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+.gap-label{font-size:11px;color:#aaa}
+.gap-value{font-size:18px;font-weight:bold}
+.gap-value.ai{color:#e94560}
+.gap-value.self{color:#00ee77}
+.gap-message{font-size:11px;color:#ffcc00;margin-top:10px;padding:8px;background:rgba(255,204,0,.08);border-radius:8px;text-align:center}
+
+/* SE音マーク */
+.se-indicator{position:absolute;top:10px;right:16px;font-size:20px;opacity:0;transition:opacity .3s}
+.se-indicator.playing{opacity:1;animation:sePulse .4s ease}
+@keyframes sePulse{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <h1>GEZA <span class="sub">プロトタイプ</span></h1>
+    <p class="tagline">土下座はあなたに、誠意はAIに。</p>
+  </header>
+  <div class="meter-title">― 謝罪角度アセスメント ―</div>
+
+  <div class="picto-area">
+    <div class="picto-container">
+      <div class="shockwave" id="shockwave"></div>
+      <svg id="picto-svg" class="picto-img" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="se-indicator" id="se-indicator">🔊</div>
+    </div>
+  </div>
+
+  <div class="stage-label-display">
+    <div class="stage-name" id="stage-name">直立</div>
+    <div class="stage-desc" id="stage-desc">まだ何もしていない</div>
+  </div>
+
+  <div class="angle-display">
+    <span id="angle-value" class="angle-value">0</span><span class="angle-unit">°</span>
+  </div>
+
+  <div class="gauge-container">
+    <svg viewBox="0 0 300 155" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 25 140 A 120 120 0 0 1 275 140" fill="none" stroke="#222" stroke-width="18" stroke-linecap="round"/>
+      <path d="M 25 140 A 120 120 0 0 1 66 59" fill="none" stroke="#00cc66" stroke-width="14" stroke-linecap="round"/>
+      <path d="M 66 59 A 120 120 0 0 1 108 30" fill="none" stroke="#88aa00" stroke-width="14"/>
+      <path d="M 108 30 A 120 120 0 0 1 150 22" fill="none" stroke="#cc8800" stroke-width="14"/>
+      <path d="M 150 22 A 120 120 0 0 1 192 30" fill="none" stroke="#dd4400" stroke-width="14"/>
+      <path d="M 192 30 A 120 120 0 0 1 234 59" fill="none" stroke="#cc1111" stroke-width="14"/>
+      <path d="M 234 59 A 120 120 0 0 1 275 140" fill="none" stroke="#7700aa" stroke-width="14" stroke-linecap="round"/>
+      <g id="meter-needle" transform="rotate(-90,150,140)">
+        <line x1="150" y1="140" x2="150" y2="32" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="150" cy="140" r="6" fill="#e94560"/>
+      </g>
+      <text x="18" y="153" font-size="9" fill="#555">0°</text>
+      <text x="150" y="14" font-size="9" fill="#555" text-anchor="middle">90°</text>
+      <text x="282" y="153" font-size="9" fill="#555" text-anchor="end">180°</text>
+    </svg>
+  </div>
+
+  <div class="slider-area">
+    <input type="range" id="angle-slider" min="0" max="180" value="0">
+    <div class="slider-labels"><span>0°</span><span>30°</span><span>60°</span><span>90°</span><span>120°</span><span>150°</span><span>180°</span></div>
+  </div>
+
+  <div class="stages">
+    <div class="stages-title">深刻度ステージ</div>
+    <div class="stage-bar">
+      <div class="stage-seg active" data-idx="0">会釈</div>
+      <div class="stage-seg" data-idx="1">深謝</div>
+      <div class="stage-seg" data-idx="2">土下座</div>
+      <div class="stage-seg" data-idx="3">寝下座</div>
+      <div class="stage-seg" data-idx="4">焦げ下座</div>
+      <div class="stage-seg" data-idx="5">焼寝下座</div>
+    </div>
+  </div>
+
+  <div class="demo-controls">
+    <button id="demo-btn" class="demo-btn" onclick="startDemo()">▶ デモ再生（スタンプ+SE演出）</button>
+  </div>
+
+  <div class="gap-analysis">
+    <div class="gap-card">
+      <h3>⚡ AI判定 vs 自己申告 ギャップ分析</h3>
+      <div class="gap-row"><span class="gap-label">AI 判定角度</span><span class="gap-value ai">72°</span></div>
+      <div class="gap-row"><span class="gap-label">自己申告角度</span><span class="gap-value self">45°</span></div>
+      <div class="gap-message">⚠️ あなたは事態を甘く見ています。AI判定では「土下座ゾーン」です。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // =========================================================
+  // ステージ定義
+  // =========================================================
+  const stages = [
+    { min:0,   max:15,  name:'会釈',       desc:'まだ謝罪の入口',     color:'#00cc66' },
+    { min:16,  max:45,  name:'深謝',       desc:'ちゃんと謝る領域',   color:'#88aa00' },
+    { min:46,  max:90,  name:'土下座',     desc:'床との交渉開始',     color:'#cc8800' },
+    { min:91,  max:120, name:'寝下座',     desc:'反省が水平化',       color:'#dd4400' },
+    { min:121, max:150, name:'焦げ下座',   desc:'床の温度が上がる',   color:'#cc1111' },
+    { min:151, max:180, name:'焼き寝下座', desc:'謝罪が炭火焼きになる', color:'#7700aa' }
+  ];
+
+  // =========================================================
+  // ピクトグラムSVG（ステージ別）
+  // 各ステージで異なるポーズの人物シルエット
+  // =========================================================
+  function generatePictogram(stageIdx) {
+    const svgs = [
+      // 0: 会釈（軽く頭を下げる）
+      `<g fill="#e8e8e8" stroke="#999" stroke-width="1.5" stroke-linejoin="round">
+        <circle cx="100" cy="42" r="16" fill="#f0f0f0"/>
+        <path d="M100 58 L100 120" stroke-width="4" stroke-linecap="round"/>
+        <path d="M100 75 L68 100" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 75 L132 100" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 120 L80 170" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 120 L120 170" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="75" y1="170" x2="88" y2="170" stroke-width="3" stroke-linecap="round"/>
+        <line x1="112" y1="170" x2="125" y2="170" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <g transform="rotate(-15, 100, 58)">
+        <circle cx="100" cy="42" r="16" fill="#333"/>
+        <path d="M100 58 L100 100" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+      </g>`,
+      
+      // 1: 深謝（深くお辞儀）
+      `<g fill="#e8e8e8" stroke="#999" stroke-width="1.5">
+        <path d="M100 120 L85 170" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 120 L115 170" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="80" y1="170" x2="93" y2="170" stroke-width="3" stroke-linecap="round"/>
+        <line x1="107" y1="170" x2="120" y2="170" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <g transform="rotate(-50, 100, 120)" fill="#333" stroke="#555" stroke-width="1.5">
+        <circle cx="100" cy="42" r="16"/>
+        <path d="M100 58 L100 120" stroke-width="4" stroke-linecap="round"/>
+        <path d="M100 75 L68 100" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 75 L132 100" stroke-width="3.5" stroke-linecap="round"/>
+      </g>`,
+      
+      // 2: 土下座（膝をついて両手をつく）
+      `<g fill="#333" stroke="#555" stroke-width="1.5">
+        <circle cx="130" cy="105" r="14"/>
+        <path d="M118 112 Q100 125 85 135" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M85 135 L65 145" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M85 135 L80 150" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 128 L110 155" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M110 155 L100 170" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 128 L125 150" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M125 150 L135 170" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="63" cy="148" rx="5" ry="3" fill="#555"/>
+        <ellipse cx="78" cy="153" rx="5" ry="3" fill="#555"/>
+      </g>
+      <line x1="40" y1="170" x2="160" y2="170" stroke="#444" stroke-width="2"/>`,
+      
+      // 3: 寝下座（体をほぼ水平に）
+      `<g fill="#333" stroke="#555" stroke-width="1.5">
+        <circle cx="148" cy="130" r="13"/>
+        <path d="M136 136 L65 145" stroke-width="4" stroke-linecap="round"/>
+        <path d="M80 142 L55 155" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M90 143 L70 158" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="53" cy="158" rx="5" ry="3" fill="#555"/>
+        <ellipse cx="68" cy="161" rx="5" ry="3" fill="#555"/>
+        <path d="M65 145 L50 170" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M65 145 L80 170" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+      <line x1="30" y1="170" x2="170" y2="170" stroke="#444" stroke-width="2"/>`,
+      
+      // 4: 焦げ下座（完全平伏＋焦げエフェクト）
+      `<g fill="#333" stroke="#555" stroke-width="1.5">
+        <circle cx="150" cy="147" r="12"/>
+        <path d="M139 150 L55 155" stroke-width="4" stroke-linecap="round"/>
+        <path d="M80 153 L60 162" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M90 154 L75 163" stroke-width="3.5" stroke-linecap="round"/>
+        <ellipse cx="58" cy="165" rx="4" ry="2.5" fill="#555"/>
+        <ellipse cx="73" cy="166" rx="4" ry="2.5" fill="#555"/>
+        <path d="M55 155 L42 170" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M55 155 L68 170" stroke-width="3.5" stroke-linecap="round"/>
+      </g>
+      <line x1="25" y1="170" x2="175" y2="170" stroke="#444" stroke-width="2"/>
+      <g opacity=".7">
+        <text x="80" y="140" font-size="18" fill="#cc4400">🔥</text>
+        <text x="110" y="135" font-size="14" fill="#cc4400">🔥</text>
+        <text x="65" y="148" font-size="12" fill="#aa3300">🔥</text>
+      </g>`,
+      
+      // 5: 焼き寝下座（完全平伏＋大炎上）
+      `<g fill="#222" stroke="#444" stroke-width="1.5">
+        <circle cx="150" cy="152" r="11"/>
+        <path d="M140 155 L55 158" stroke-width="4" stroke-linecap="round"/>
+        <path d="M80 157 L62 164" stroke-width="3" stroke-linecap="round"/>
+        <path d="M90 157 L78 165" stroke-width="3" stroke-linecap="round"/>
+        <path d="M55 158 L42 170" stroke-width="3" stroke-linecap="round"/>
+        <path d="M55 158 L68 170" stroke-width="3" stroke-linecap="round"/>
+      </g>
+      <line x1="25" y1="170" x2="175" y2="170" stroke="#444" stroke-width="2"/>
+      <g>
+        <text x="55" y="140" font-size="24" fill="#ff4400">🔥</text>
+        <text x="85" y="130" font-size="28" fill="#ff6600">🔥</text>
+        <text x="115" y="138" font-size="22" fill="#ff4400">🔥</text>
+        <text x="140" y="133" font-size="18" fill="#cc3300">🔥</text>
+        <text x="70" y="152" font-size="16" fill="#aa2200">🔥</text>
+        <text x="100" y="148" font-size="20" fill="#ff5500">🔥</text>
+      </g>
+      <text x="50" y="120" font-size="10" fill="#ff6600" font-weight="bold" opacity=".8">修復困難</text>`
+    ];
+    return svgs[stageIdx] || svgs[0];
+  }
+
+  // =========================================================
+  // SE音生成（Web Audio API）
+  // =========================================================
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playSE(stageIdx) {
+    const ctx = getAudioCtx();
+    const now = ctx.currentTime;
+
+    // ドン！スタンプ音
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(120 - stageIdx * 10, now);
+    osc1.frequency.exponentialRampToValueAtTime(40, now + 0.15);
+    gain1.gain.setValueAtTime(0.5 + stageIdx * 0.08, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.3);
+
+    // 衝撃ノイズ
+    const bufferSize = ctx.sampleRate * 0.15;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.15 + stageIdx * 0.05, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    noise.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+    noise.start(now);
+
+    // 高ステージ: 追加の低音ドーン
+    if (stageIdx >= 3) {
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(60, now);
+      osc2.frequency.exponentialRampToValueAtTime(25, now + 0.4);
+      gain2.gain.setValueAtTime(0.3 + (stageIdx - 3) * 0.1, now);
+      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now);
+      osc2.stop(now + 0.5);
+    }
+
+    // 最高ステージ: 炎の音
+    if (stageIdx >= 4) {
+      const fire = ctx.createOscillator();
+      const fg = ctx.createGain();
+      fire.type = 'sawtooth';
+      fire.frequency.setValueAtTime(200, now + 0.1);
+      fire.frequency.linearRampToValueAtTime(80, now + 0.6);
+      fg.gain.setValueAtTime(0.08, now + 0.1);
+      fg.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+      fire.connect(fg);
+      fg.connect(ctx.destination);
+      fire.start(now + 0.1);
+      fire.stop(now + 0.6);
+    }
+
+    // SE表示
+    const seEl = document.getElementById('se-indicator');
+    seEl.classList.remove('playing');
+    void seEl.offsetWidth;
+    seEl.classList.add('playing');
+    setTimeout(() => seEl.classList.remove('playing'), 500);
+  }
+
+  // =========================================================
+  // UI要素
+  // =========================================================
+  const slider = document.getElementById('angle-slider');
+  const angleValueEl = document.getElementById('angle-value');
+  const stageNameEl = document.getElementById('stage-name');
+  const stageDescEl = document.getElementById('stage-desc');
+  const meterNeedle = document.getElementById('meter-needle');
+  const stageSegs = document.querySelectorAll('.stage-seg');
+  const pictoSvg = document.getElementById('picto-svg');
+  const shockwave = document.getElementById('shockwave');
+
+  let currentStageIdx = -1;
+  let isRunning = false;
+
+  function getStageIdx(angle) {
+    for (let i = 0; i < stages.length; i++) {
+      if (angle >= stages[i].min && angle <= stages[i].max) return i;
+    }
+    return stages.length - 1;
+  }
+
+  function stampPictogram(idx, withSE) {
+    // ピクトグラム画像を更新
+    pictoSvg.innerHTML = generatePictogram(idx);
+    
+    // スタンプアニメーション
+    pictoSvg.classList.remove('stamped', 'stamping');
+    void pictoSvg.offsetWidth;
+    pictoSvg.classList.add('stamping');
+    setTimeout(() => {
+      pictoSvg.classList.remove('stamping');
+      pictoSvg.classList.add('stamped');
+    }, 350);
+
+    // 衝撃波
+    shockwave.classList.remove('active');
+    void shockwave.offsetWidth;
+    shockwave.classList.add('active');
+
+    // SE音
+    if (withSE) {
+      playSE(idx);
+    }
+
+    // ステージラベルアニメーション
+    stageNameEl.classList.remove('visible');
+    setTimeout(() => {
+      stageNameEl.textContent = stages[idx].name;
+      stageNameEl.style.color = stages[idx].color;
+      stageDescEl.textContent = stages[idx].desc;
+      stageNameEl.classList.add('visible');
+    }, 150);
+  }
+
+  function updateUI(angle, withSE) {
+    const a = Math.round(angle);
+    angleValueEl.textContent = a;
+    meterNeedle.setAttribute('transform', `rotate(${-90 + angle},150,140)`);
+
+    // 色変更
+    const idx = getStageIdx(a);
+    angleValueEl.style.color = stages[idx].color;
+
+    // ステージバー
+    stageSegs.forEach((seg, i) => seg.classList.toggle('active', i === idx));
+
+    // ステージが変わった場合のみスタンプ発動
+    if (idx !== currentStageIdx) {
+      currentStageIdx = idx;
+      stampPictogram(idx, withSE !== false);
+    }
+  }
+
+  // スライダー操作
+  slider.addEventListener('input', e => {
+    updateUI(parseInt(e.target.value), true);
+  });
+
+  // ステージバークリック
+  stageSegs.forEach((seg, i) => {
+    seg.addEventListener('click', () => {
+      const mid = Math.round((stages[i].min + stages[i].max) / 2);
+      slider.value = mid;
+      updateUI(mid, true);
+    });
+  });
+
+  // =========================================================
+  // デモ再生
+  // =========================================================
+  window.startDemo = function() {
+    if (isRunning) return;
+    isRunning = true;
+    const btn = document.getElementById('demo-btn');
+    btn.textContent = '再生中...';
+    btn.classList.add('running');
+
+    // 各ステージの中間角度を順にスタンプ表示
+    const demoAngles = [8, 30, 68, 105, 135, 165];
+    let step = 0;
+
+    function nextStamp() {
+      if (step >= demoAngles.length) {
+        // 逆再生
+        setTimeout(() => {
+          let revStep = demoAngles.length - 2;
+          function revStamp() {
+            if (revStep < 0) {
+              // 最後に0°に戻す
+              slider.value = 0;
+              currentStageIdx = -1;
+              updateUI(0, false);
+              pictoSvg.classList.remove('stamped');
+              pictoSvg.innerHTML = '';
+              stageNameEl.textContent = '直立';
+              stageNameEl.style.color = '#888';
+              stageDescEl.textContent = 'まだ何もしていない';
+              stageNameEl.classList.add('visible');
+              isRunning = false;
+              btn.textContent = '▶ デモ再生（スタンプ+SE演出）';
+              btn.classList.remove('running');
+              return;
+            }
+            slider.value = demoAngles[revStep];
+            currentStageIdx = -1; // 強制発動
+            updateUI(demoAngles[revStep], true);
+            revStep--;
+            setTimeout(revStamp, 900);
+          }
+          revStamp();
+        }, 1500);
+        return;
+      }
+      slider.value = demoAngles[step];
+      currentStageIdx = -1; // 強制発動
+      updateUI(demoAngles[step], true);
+      step++;
+      setTimeout(nextStamp, 1200);
+    }
+
+    nextStamp();
+  };
+
+  // 初期表示
+  stageNameEl.textContent = '直立';
+  stageNameEl.style.color = '#888';
+  stageDescEl.textContent = 'スライダーを動かすかデモ再生で体験';
+  stageNameEl.classList.add('visible');
+})();
+</script>
+</body>
+</html>

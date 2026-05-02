@@ -212,7 +212,7 @@ prototype/
 - **変更内容**:
   - **コンセプト**: 謝罪トレーニングアプリ → 総合謝罪支援コンシェルジュ
   - **主要機能再定義**: 謝罪角度アセスメント・プランニング・準備サポートがコア、練習シミュレーションはサブ（任意）
-  - **新機能「謝罪の角度」**: 0〜180°の段階判定→SVGメータービジュアル + AI vs 自己申告ギャップ分析
+  - **新機能「謝罪の角度」**: 0〜180°の段階判定→ピクトグラム+スタンプ+SE音演出 + AI vs 自己申告ギャップ分析
   - **角度ステージ**: 会釈(0〜15°) / 深謝(16〜45°) / 土下座(46〜90°) / 寝下座(91〜120°) / 焦げ下座(121〜150°) / 焼き寝下座(151〜180°)
 - **成果物更新**:
   - aidlc-docs/inception/user-stories/stories.md（US-207/208/209追加、SP 154→172、コンセプト更新）
@@ -563,3 +563,25 @@ prototype/
   - **docs/requirements.md**: Epic合計行 `29 / 180` → `34 / 221` に更新。E8（送る前GEZAチェック・返信GEZA分析、3話/21SP）・E9（謝罪カルテ拡張・謝罪傾向診断、2話/20SP）の行を追加
   - **aidlc-docs/inception/plans/unit-of-work-plan.md**: 検証チェック項目 `公29ストーリーがユニットに割り当て済` → `全34ストーリーがユニットに割り当て済` に修正
 - **整合性確認**: README.md ドキュメントマップ（③ stories.md行）は既に `３４ストーリー/221SP` で正しい状態を確認済み
+
+---
+
+## エントリ 037 - ApologyMeter演出方式変更（SVGアニメーション→ピクトグラム+スタンプ+SE音）
+- **日時**: 2026-05-02T18:00:00+09:00
+- **フェーズ**: INCEPTION - Design Change
+- **トリガー**: SVGのみでのクオリティ面の不安。ピクトグラム画像＋スタンプ演出（ドン！と打ち付ける表示）＋SE音（効果音）での演出に切り替え
+- **変更方針**:
+  - **角度概念は維持**: AI が 0〜180° の角度を算出し、6ステージに分類する仕組みは変更なし
+  - **表示方式の変更**: SVGリアルタイムアニメーション（人物がお辞儀→土下座→平伏するSVG描画）を廃止
+  - **新演出**: ステージ別ピクトグラム画像をスタンプ演出（拡大→縮小の打ち付けアニメーション）で表示 + Web Audio API によるSE音再生
+- **修正サマリー**:
+  - **README.md**: キラー機能説明・差別化ポイント・デモシナリオ・ディレクトリ構成内のApologyMeter記述を「ピクトグラム+スタンプ+SE音演出」に更新（8箇所）
+  - **aidlc-docs/inception/application-design/application-design.md**: 設計概要・ApologyMeterクラス定義を更新（2箇所）
+  - **aidlc-docs/inception/application-design/components.md**: ApologyMeterコンポーネント責務を「ピクトグラム画像表示・スタンプ演出・SE音再生」に更新
+  - **aidlc-docs/inception/application-design/component-methods.md**: ApologyMeterクラスのメソッドコメントを更新（init/setDegree/getStageName）
+  - **aidlc-docs/inception/application-design/unit-of-work.md**: U2責務・フロントエンド成果物のApologyMeter記述を更新（2箇所）
+  - **aidlc-docs/inception/user-stories/stories.md**: コンセプト欄・ジャーニーマップ・US-207本文・AC-2受け入れ条件を更新（4箇所）
+  - **aidlc-docs/inception/requirements/requirements.md**: FR-113を「ピクトグラム+スタンプ+SE音でビジュアル化」に更新
+  - **docs/requirements.md**: コア機能欄を「ピクトグラム+スタンプ+SE音で演出」に更新
+  - **prototype/apology-meter-moc.html**: SVGアニメーションMOCを全面作り直し → ピクトグラム+スタンプ+SE音のMOCに置換
+- **変更なし**: APIスキーマ（services.md）、データモデル（data-model.md）、依存関係（component-dependency.md）— 角度の算出・保存ロジックには変更なし
