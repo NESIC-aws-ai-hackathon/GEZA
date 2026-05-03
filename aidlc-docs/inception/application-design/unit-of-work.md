@@ -10,10 +10,10 @@
 
 | 決定事項 | 内容 |
 |---------|------|
-| 分割粒度 | 機能ドメイン単位（8ユニット） |
-| インフラ構築 | SAM一括デプロイ（全14 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）|
+| 分割粒度 | 機能ドメイン単位（9ユニット + 基盤） |
+| インフラ構築 | SAM一括デプロイ（全16 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）|
 | FE共通モジュール | AuthModule/ApiClient/StateManager/AvatarController を U0 に先行実装、残りは各ユニットで追加 |
-| 実装順序 | U0 → U1 → U2 → U3 → U4 → U5（オプション）→ U6（最終）→ U7 → U8（将来構想） |
+| 実装順序 | U0 → U1 → U2 → U3 → U4 → U5（オプション）→ U6（最終）→ U7 → U8（将来構想）→ U9（決勝拡張） |
 | ディレクトリ構成 | フラット構成（`backend/functions/<name>/` + `frontend/pages/<page>/` + `frontend/shared/`）|
 
 ---
@@ -33,7 +33,8 @@
 | **U6** | 上司モード | E7 | 23 | P1 | 未着手（最終・時間が余れば） |
 | **U7** | 送る前GEZAチェック・返信分析 | E8 | 21 | P2 | 未着手（将来構想） |
 | **U8** | 謝罪カルテ拡張・謝罪傾向診断 | E9 | 20 | P2 | 未着手（将来構想） |
-| | **合計** | | **221** | | |
+| **U9** | 謝罪中支援（怒り残量スキャナー・GEZA耳打ちモード） | E10 | 24 | P3 | 未着手（決勝拡張） |
+| | **合計** | | **245** | | |
 
 ---
 
@@ -110,11 +111,11 @@ frontend/
 - SAM Layer: shared-utils-layer
 ### U0 完了基準
 
-- [ ] `sam deploy` 成功（全14 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
+- [ ] `sam deploy` 成功（全16 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
 - [ ] Cognito User Pool でテストユーザー作成・ログイン成功
 - [ ] API Gateway 全15エンドポイントで 200 レスポンス（スタブ）
 - [ ] CloudFront URL で index.html が表示される
-- [ ] shared-utils-layer のインポートが全14 Lambda で成功
+- [ ] shared-utils-layer のインポートが全16 Lambda で成功
 - [ ] AuthModule でログイン → JWT取得 → ApiClient で API 呼び出し成功
 - [ ] `backend/prompts/*.txt` スタブ配置（各 Lambda の prompt_loader.py が FileNotFoundError を出さない）
 
@@ -509,6 +510,125 @@ frontend/
 - Cognito認証 (U1)
 - 謝罪カルテ基盤（DynamoDBスキーマ・CartePage）(U4)
 - ストーリーモード（StoryPage・PracticePage連携）(U5)
+
+---
+
+## U9: 謝罪中支援 — 怒り残量スキャナー・GEZA耳打ちモード（P3・決勝拡張）
+
+### 責務
+- 謝罪中の相手の発言をリアルタイム分析し、怒り残量・失望度・許容余地・反論危険度を推定・表示
+- ユーザー自身の発話を監視し、言い訳・逆ギレ・責任転嫁・NGワードを検知して短い助言を返す
+- 怒り残量ゲージ・助言を統合した謝罪中ダッシュボードの表示
+- セッション終了後のサマリー生成・謝罪カルテへの保存
+
+### バックエンド成果物（Lambda実装）
+
+```
+backend/functions/
+  analyze-anger/lambda_function.py         # Nova Lite: 怒り残量リアルタイム分析（Timeout: 10s）
+  detect-danger-speech/lambda_function.py  # Nova Lite: 危険発言検知・助言生成（Timeout: 10s）
+backend/prompts/
+  analyze-anger.txt                        # 怒り残量分析プロンプト
+  detect-danger-speech.txt                 # 危険発言検知プロンプト
+```
+
+### フロントエンド成果物
+
+```
+frontend/
+  pages/
+    during-support.html   # DuringSupportPage HTML
+    during-support.js     # DuringSupportPage ロジック
+  shared/
+    anger-gauge.js        # AngerGauge コンポーネント（怒り残量ゲージ）
+    whisper-advisor.js    # WhisperAdvisor コンポーネント（耳打ち助言表示）
+```
+
+### API エンドポイント（+2本）
+
+| メソッド | パス | Lambda | Timeout |
+|---------|-----|--------|---------|
+| POST | `/during/analyze-anger` | analyze-anger | 10s |
+| POST | `/during/detect-danger` | detect-danger-speech | 10s |
+
+### SAM テンプレート追加（template.yaml）
+
+```yaml
+AnalyzeAngerFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    FunctionName: geza-analyze-anger
+    Handler: lambda_function.lambda_handler
+    CodeUri: backend/functions/analyze-anger/
+    Timeout: 10  # リアルタイム分析のため短縮
+    Events:
+      Api:
+        Type: HttpApi
+        Properties:
+          Path: /during/analyze-anger
+          Method: POST
+          ApiId: !Ref GezaApi
+
+DetectDangerSpeechFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    FunctionName: geza-detect-danger-speech
+    Handler: lambda_function.lambda_handler
+    CodeUri: backend/functions/detect-danger-speech/
+    Timeout: 10  # リアルタイム検知のため短縮
+    Events:
+      Api:
+        Type: HttpApi
+        Properties:
+          Path: /during/detect-danger
+          Method: POST
+          ApiId: !Ref GezaApi
+```
+
+### DynamoDB アクセスパターン
+
+| パターン | PK | SK | 説明 |
+|--------|----|----|------|
+| 謝罪中セッション | `USER#<userId>` | `DURING#<ts>#<sid>` | セッションサマリー |
+| 怒り残量推移 | `DURING#<sessionId>` | `ANGER#<timestamp>` | 時系列データ |
+| 危険発言ログ | `DURING#<sessionId>` | `DANGER#<timestamp>` | 検知記録 |
+
+### ユーザーストーリー
+
+| US | タイトル | SP |
+|----|---------|:--:|
+| US-1001 | 怒り残量スキャナー | 8 |
+| US-1002 | GEZA耳打ちモード | 8 |
+| US-1003 | 謝罪中ダッシュボード | 8 |
+| **合計** | | **24** |
+
+### 主な機能
+- 怒り残量リアルタイム推定（0〜100%）+ トレンド表示
+- 失望度・許容余地・反論危険度の推定
+- 言い訳・逆ギレ・責任転嫁・NGワード検知
+- 短い助言のリアルタイム表示（キュー管理・自動消去）
+- 統合ダッシュボード表示（4ゲージ + 助言エリア + 会話ログ）
+- セッション終了後サマリー生成・カルテ保存
+- 音声入力フォールバック（テキスト手動入力対応）
+
+### フォールバック設計
+
+| 障害 | 動作 |
+|-----|------|
+| Transcribe接続失敗（相手音声） | テキスト手動入力エリアを表示 |
+| Transcribe接続失敗（ユーザー音声） | 耳打ちモード無効化通知 |
+| analyze-anger タイムアウト | 前回結果を維持、「分析中...」表示 |
+| detect-danger-speech タイムアウト | スキップ、次回発話で再試行 |
+
+### 将来デバイス構想
+- WhisperAdvisor の出力インターフェースを抽象化（TEXT/AUDIO/DEVICE 3モード）
+- イヤホンやARグラスとの連携を想定した設計
+
+### 依存 U0/U1/U3/U4 成果物
+- AuthModule, ApiClient, StateManager (U0)
+- Cognito認証 + Identity Pool (U1)
+- TranscribeClient・会話コア・音声入力 (U3: US-401, US-403)
+- SaveSessionLambda・謝罪カルテ保存基盤 (U4)
 
 ---
 

@@ -502,3 +502,172 @@ def invoke_nova_lite(prompt, system_prompt, max_tokens=1000)
 # 戻り値: dict（パースされたJSONレスポンス）
 def invoke_claude_sonnet(prompt, system_prompt, max_tokens=2000)
 ```
+
+---
+
+## 謝罪中支援 コンポーネント（Epic 10 / U9）
+
+### AngerGauge (`frontend/shared/anger-gauge.js`)
+
+```javascript
+class AngerGauge {
+  // 怒り残量ゲージを指定コンテナに初期描画する
+  // containerEl: ゲージを描画するコンテナ要素
+  init(containerEl)
+
+  // 怒り残量分析結果を受け取り、4つのゲージを更新する
+  // data: { anger_remaining, disappointment, tolerance_remaining, counterattack_risk, trend, summary }
+  update(data)
+
+  // 各指標のトレンド矢印を更新する（↑上昇 / ↓下降 / →横ばい）
+  // indicator: "anger" | "disappointment" | "tolerance" | "counterattack"
+  // trend: "rising" | "falling" | "stable"
+  setTrend(indicator, trend)
+
+  // 推移データをメモリ内配列に追加する（セッション終了後サマリー用）
+  // entry: { timestamp, anger_remaining, disappointment, tolerance_remaining, counterattack_risk }
+  pushHistory(entry)
+
+  // 推移データ配列を返す（CartePage保存・サマリー表示用）
+  // 戻り値: Array<{ timestamp, anger_remaining, disappointment, tolerance_remaining, counterattack_risk }>
+  getHistory()
+
+  // 推移データをクリアする（セッション終了時）
+  clearHistory()
+
+  // ゲージ全体をリセット（全指標0、推移データクリア）
+  reset()
+}
+```
+
+---
+
+### WhisperAdvisor (`frontend/shared/whisper-advisor.js`)
+
+```javascript
+// 出力モード定義
+const OUTPUT_MODE = {
+  TEXT: 'text',      // 画面テキスト表示（MVP）
+  AUDIO: 'audio',    // Polly音声読み上げ（決勝デモ）
+  DEVICE: 'device'   // 外部デバイス連携（将来）
+};
+
+class WhisperAdvisor {
+  // 助言表示領域を初期化する
+  // containerEl: 助言を表示するコンテナ要素
+  // mode: OUTPUT_MODE のいずれか（デフォルト: TEXT）
+  init(containerEl, mode = OUTPUT_MODE.TEXT)
+
+  // 危険発言検知結果を受け取り、助言を表示する
+  // result: { dangers_detected: [...], overall_risk, short_whisper }
+  showAdvice(result)
+
+  // 助言をキューに追加する（複数の危険発言が同時検知された場合の順次表示用）
+  // advice: { type, phrase, severity, advice, alternative }
+  enqueueAdvice(advice)
+
+  // 助言キューから次の助言を取り出して表示する
+  dequeueAndShow()
+
+  // 表示中の助言を自動消去する（表示後N秒で消去）
+  // durationMs: 表示持続時間（デフォルト: 5000ms）
+  setAutoDismiss(durationMs)
+
+  // 全助言をクリアする
+  clearAll()
+
+  // 出力モードを切り替える
+  // mode: OUTPUT_MODE のいずれか
+  setOutputMode(mode)
+
+  // セッション中に検知された全危険発言のログを返す
+  // 戻り値: Array<{ timestamp, type, phrase, severity, advice }>
+  getDangerLog()
+}
+```
+
+---
+
+### DuringSupportPage (`frontend/pages/during-support.html` + `during-support.js`)
+
+```javascript
+// 謝罪中支援セッションを開始する
+// opponentProfile: InceptionPage で生成済みの謝罪相手プロフィール
+async startDuringSupport(opponentProfile)
+
+// 相手の音声ストリームを開始する（Transcribe → analyze-anger API）
+// onAngerUpdate: 怒り残量分析結果を受信するコールバック
+async startOpponentStream(onAngerUpdate)
+
+// ユーザーの音声ストリームを開始する（Transcribe → detect-danger API）
+// onDangerDetected: 危険発言検知結果を受信するコールバック
+async startUserStream(onDangerDetected)
+
+// 相手発言のテキストを手動入力する（音声入力フォールバック用）
+// text: 相手の発言テキスト
+async submitOpponentText(text)
+
+// ユーザー発言のテキストを手動入力する（音声入力フォールバック用）
+// text: ユーザーの発言テキスト
+async submitUserText(text)
+
+// 謝罪中支援セッションを終了し、サマリーを生成する
+// 戻り値: { angerHistory, dangersDetected, summary }
+async endDuringSupport()
+
+// セッションサマリーを謝罪カルテに保存する
+// summary: endDuringSupport の戻り値
+async saveDuringSupportToCarte(summary)
+```
+
+---
+
+### AnalyzeAngerLambda (`backend/functions/analyze-anger/lambda_function.py`)
+
+```python
+# Lambda エントリポイント（@handle_errors、Timeout 10s）
+@handle_errors
+def lambda_handler(event, context):
+    # body: { opponent_text, opponent_profile, conversation_context, session_id }
+    # 戻り値: { anger_remaining, disappointment, tolerance_remaining,
+    #           counterattack_risk, trend, summary, timestamp }
+    pass
+
+# Bedrock Nova Lite で相手発言の感情分析を行う（低レイテンシ必須）
+# 戻り値: dict（anger_remaining / disappointment / tolerance_remaining / counterattack_risk）
+def analyze_anger(opponent_text, opponent_profile, conversation_context)
+
+# 直前の分析結果と比較してトレンド（上昇/下降/横ばい）を判定する
+# 戻り値: "rising" | "falling" | "stable"
+def determine_trend(current_anger, previous_anger)
+
+# 4指標を統合した1行サマリーを生成する
+# 戻り値: str（例: "怒りが収まっていません。具体的な再発防止策の提示が必要です。"）
+def generate_summary(analysis_result)
+```
+
+---
+
+### DetectDangerSpeechLambda (`backend/functions/detect-danger-speech/lambda_function.py`)
+
+```python
+# Lambda エントリポイント（@handle_errors、Timeout 10s）
+@handle_errors
+def lambda_handler(event, context):
+    # body: { user_text, opponent_profile, session_id }
+    # 戻り値: { dangers_detected: [...], overall_risk, short_whisper, timestamp }
+    pass
+
+# Bedrock Nova Lite でユーザー発話の危険パターンを検知する
+# 検知対象: 言い訳(excuse) / 逆ギレ(backlash) / 責任転嫁(responsibility_shift) / NGワード(ng_word)
+# 戻り値: list of { type, phrase, severity, advice, alternative }
+def detect_dangers(user_text, opponent_profile)
+
+# 検知結果から耳打ち用の短い助言を生成する（1行、15文字以内目安）
+# 戻り値: str（例: "責任転嫁！「チームの管理体制」に言い換えて"）
+def generate_short_whisper(dangers_detected)
+
+# 検知結果の全体リスクレベルを判定する
+# 戻り値: "none" | "low" | "medium" | "high"
+def assess_overall_risk(dangers_detected)
+```

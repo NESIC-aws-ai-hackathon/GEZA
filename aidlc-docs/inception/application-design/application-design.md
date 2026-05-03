@@ -22,7 +22,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | アバター描画 | facesjs v5.0.3（フォーク版・IIFE Bundle）|
 | 音声合成 | Amazon Polly（Kazuha, ja-JP, Neural, MP3 + SpeechMarks） |
 | 音声認識 | Amazon Transcribe Streaming（WebSocket 直接接続, ja-JP） |
-| バックエンド | AWS Lambda (Python 3.12, 512MB, 30s) × 14関数 |
+| バックエンド | AWS Lambda (Python 3.12, 512MB, 30s) × 16関数 |
 | LLM | Amazon Nova Lite（評価・分類）/ Claude Sonnet（生成） |
 | DB | DynamoDB シングルテーブル（PAY_PER_REQUEST） |
 | 認証 | Amazon Cognito User Pool（ログイン） + Identity Pool（Transcribe 一時認証） |
@@ -59,7 +59,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 └──────────┬───────────┘
            │
      ┌─────┴──────────────────────────────────┐
-     │           Lambda 関数群（14本）           │
+     │           Lambda 関数群（16本）           │
      │                                         │
      │  Nova Lite 系              Sonnet 系     │
      │  ・assess-apology         ・generate-opponent │
@@ -124,6 +124,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | フィードバック | `frontend/feedback.html` | 練習結果・改善提案 |
 | カルテ | `frontend/carte.html` | 練習履歴・傾向分析 |
 | ボス（上司モード） | `frontend/boss.html` | 指導練習対話 |
+| 謝罪中支援 | `frontend/during-support.html` | 怒り残量スキャナー・耳打ちモード・統合ダッシュボード |
 
 ### 4.3 新共通モジュール: ApologyMeter
 
@@ -184,6 +185,8 @@ Layer 3: DynamoDB API経由（永続化）
 | 12 | analyze-karte | Nova Lite | 512MB | 30s |
 | 13 | evaluate-guidance | Nova Lite | 512MB | 30s |
 | 14 | generate-guidance-feedback | Claude Sonnet | 512MB | 30s |
+| 15 | **analyze-anger** | **Nova Lite** | **512MB** | **10s** |
+| 16 | **detect-danger-speech** | **Nova Lite** | **512MB** | **10s** |
 
 ### 5.2 共有 Lambda Layer
 
@@ -290,7 +293,7 @@ GEZA/
 │   ├── shared/
 │   │   ├── decorators.py / prompt_loader.py / bedrock_client.py
 │   └── prompts/
-│       └── *.txt（11プロンプトテンプレート）
+│       └── *.txt（13プロンプトテンプレート）
 │
 ├── template.yaml    ← SAM テンプレート
 ├── docs/            ← 統合仕様書
@@ -308,3 +311,236 @@ GEZA/
 | API/DB/インフラ定義 | `aidlc-docs/inception/application-design/services.md` |
 | 依存関係・データフロー | `aidlc-docs/inception/application-design/component-dependency.md` |
 | 設計Q&A記録 | `aidlc-docs/inception/plans/application-design-plan.md` |
+
+---
+
+## 11. 決勝向け拡張：謝罪中支援（Epic 10 / U9）
+
+### 11.1 コンセプト
+
+「AIが考え、人間が詫びる」Human-in-the-Loop を謝罪の本番中にまで拡張する。  
+謝罪ライフサイクル（Before → During → After）のうち、**During**（謝罪中）をカバーすることで、GEZAが謝罪の全フェーズを支援する唯一のAIサービスとなる。
+
+### 11.2 アーキテクチャ拡張図
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         ブラウザ（謝罪中支援）                              │
+│                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────────┐ │
+│  │                    DuringSupportPage                                │ │
+│  │                                                                     │ │
+│  │  ┌──────────────┐  ┌────────────────┐  ┌────────────────────────┐  │ │
+│  │  │ AngerGauge   │  │ WhisperAdvisor │  │ DuringSupportDashboard │  │ │
+│  │  │ (怒り残量)    │  │ (耳打ち助言)    │  │ (統合ダッシュボード)     │  │ │
+│  │  └──────────────┘  └────────────────┘  └────────────────────────┘  │ │
+│  └────────────────────────────────┬────────────────────────────────────┘ │
+│                                   │                                      │
+│  ┌────────────────────────────────────────────────────────────────────┐  │
+│  │                   共通モジュール（既存）                              │  │
+│  │  TranscribeClient │ StateManager │ ApiClient │ AuthModule         │  │
+│  └────────────────────────────────────────────────────────────────────┘  │
+└──────────┬────────────────────────────────┬──────────────────────────────┘
+           │ HTTPS (JWT Auth)               │ WebSocket + 一時認証
+           ▼                                ▼
+┌──────────────────────┐      ┌──────────────────────────────────────────┐
+│   API Gateway        │      │   Amazon Transcribe Streaming            │
+│   HTTP API v2        │      │   相手音声ストリーム（怒り残量分析用）      │
+│                      │      │   ユーザー音声ストリーム（耳打ちモード用）  │
+└──────────┬───────────┘      └──────────────────────────────────────────┘
+           │
+     ┌─────┴──────────────────────────────────────┐
+     │       Lambda 関数（+2本 → 計16本）             │
+     │                                               │
+     │  Nova Lite 系（追加）                           │
+     │  ・analyze-anger         ← 怒り残量リアルタイム分析│
+     │  ・detect-danger-speech  ← 危険発言検知・助言生成  │
+     └─────┬────────────────────────────────────────┘
+           │
+           ▼
+┌───────────────┐  ┌─────────────────────────────┐
+│   DynamoDB    │  │   Amazon Bedrock             │
+│   geza-data   │  │   ・Nova Lite (感情分析)      │
+│               │  │   （低レイテンシ必須）         │
+└───────────────┘  └─────────────────────────────┘
+```
+
+### 11.3 フロントエンド追加コンポーネント
+
+#### 新規共通モジュール
+
+| コンポーネント | ファイル | 責務 |
+|-------------|---------|------|
+| **AngerGauge** | `frontend/shared/anger-gauge.js` | 怒り残量（0〜100%）・失望度・許容余地・反論危険度をリアルタイムゲージ表示。推移データをメモリに蓄積 |
+| **WhisperAdvisor** | `frontend/shared/whisper-advisor.js` | 言い訳・逆ギレ・責任転嫁・NGワード検知結果を短い助言として表示。出力インターフェースを抽象化（テキスト/音声/将来デバイス） |
+
+#### 新規ページ
+
+| コンポーネント | ファイル | 対応Journey / US | 責務 |
+|-------------|---------|-----------------|------|
+| **DuringSupportPage** | `frontend/pages/during-support.html` + `during-support.js` | Journey 10 / US-1001〜1003 | 謝罪中支援統合画面。相手音声→怒り残量分析、ユーザー音声→危険発言検知、統合ダッシュボード表示、セッション終了後サマリー生成 |
+
+### 11.4 バックエンド追加コンポーネント
+
+#### Lambda 関数（+2本）
+
+| # | 関数名 | Bedrockモデル | メモリ | Timeout | 責務 |
+|---|--------|-------------|--------|---------|------|
+| 15 | **analyze-anger** | Nova Lite | 512MB | 10s | 相手の発言テキストから怒り残量・失望度・許容余地・反論危険度を推定 |
+| 16 | **detect-danger-speech** | Nova Lite | 512MB | 10s | ユーザーの発話テキストから言い訳・逆ギレ・責任転嫁・NGワードを検知し、短い助言を生成 |
+
+> **Timeout 10s**: 謝罪中のリアルタイム支援のため、既存 Lambda（30s）より短い応答が必須。Nova Lite の 1〜3 秒応答をプロトタイプで実証済み。
+
+#### プロンプトテンプレート（+2本）
+
+```
+backend/prompts/
+  analyze-anger.txt         # 怒り残量分析プロンプト
+  detect-danger-speech.txt  # 危険発言検知プロンプト
+```
+
+### 11.5 API Gateway 追加エンドポイント（+2本）
+
+| メソッド | パス | Lambda | 説明 |
+|---------|-----|--------|------|
+| **POST** | **`/during/analyze-anger`** | analyze-anger | 相手発言の怒り残量リアルタイム分析 |
+| **POST** | **`/during/detect-danger`** | detect-danger-speech | ユーザー発話の危険発言検知・助言生成 |
+
+### 11.6 リクエスト/レスポンス スキーマ
+
+#### POST `/during/analyze-anger`
+
+**Request:**
+```json
+{
+  "opponent_text": "それで済む話だと思っているのか？何度同じことを繰り返すんだ。",
+  "opponent_profile": {
+    "type": "厳格な上司",
+    "anger_level": 70,
+    "trust_level": 30
+  },
+  "conversation_context": [
+    { "role": "opponent", "content": "...", "timestamp": "..." },
+    { "role": "user", "content": "...", "timestamp": "..." }
+  ],
+  "session_id": "uuid-v4"
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "body": {
+    "anger_remaining": 78,
+    "disappointment": 45,
+    "tolerance_remaining": 22,
+    "counterattack_risk": 65,
+    "trend": "rising",
+    "summary": "怒りが収まっていません。具体的な再発防止策の提示が必要です。",
+    "timestamp": "2026-05-03T14:30:00+09:00"
+  }
+}
+```
+
+#### POST `/during/detect-danger`
+
+**Request:**
+```json
+{
+  "user_text": "いや、それは担当の山田が確認を怠ったせいで...",
+  "opponent_profile": {
+    "type": "厳格な上司",
+    "ng_words": ["忙しくて", "確認不足で"]
+  },
+  "session_id": "uuid-v4"
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "body": {
+    "dangers_detected": [
+      {
+        "type": "responsibility_shift",
+        "phrase": "担当の山田が確認を怠った",
+        "severity": "high",
+        "advice": "他人のせいにしています。「チームとしての管理体制に問題があった」に言い換えてください",
+        "alternative": "チームとしての確認プロセスに不備がありました"
+      }
+    ],
+    "overall_risk": "high",
+    "short_whisper": "責任転嫁！「チームの管理体制」に言い換えて",
+    "timestamp": "2026-05-03T14:30:05+09:00"
+  }
+}
+```
+
+### 11.7 DynamoDB 追加アクセスパターン
+
+| パターン | PK | SK | 説明 |
+|--------|----|----|------|
+| 謝罪中セッション保存 | `USER#<userId>` | `DURING#<timestamp>#<sessionId>` | 謝罪中支援セッションサマリー |
+| 怒り残量推移 | `DURING#<sessionId>` | `ANGER#<timestamp>` | 怒り残量・失望度等の時系列データ |
+| 危険発言ログ | `DURING#<sessionId>` | `DANGER#<timestamp>` | 検知された危険発言と助言の記録 |
+
+#### 追加属性
+
+```
+geza-data（追加属性）
+├── sessionType: "DURING"（謝罪中支援セッション識別用）
+├── angerRemaining (Number) - 怒り残量 (0-100)
+├── disappointment (Number) - 失望度 (0-100)
+├── toleranceRemaining (Number) - 許容余地 (0-100)
+├── counterattackRisk (Number) - 反論危険度 (0-100)
+├── dangerType (String) - "excuse" | "backlash" | "responsibility_shift" | "ng_word"
+├── detectedPhrase (String) - 検知されたフレーズ
+├── advice (String) - 表示した助言テキスト
+└── severity (String) - "low" | "medium" | "high"
+```
+
+### 11.8 3層ステート拡張
+
+```
+Layer 1: window.AppState（ページ内リアルタイム）追加キー
+  angerRemaining: 78      ← 最新の怒り残量
+  disappointment: 45      ← 最新の失望度
+  toleranceRemaining: 22  ← 最新の許容余地
+  counterattackRisk: 65   ← 最新の反論危険度
+  angerHistory: [{t, v}]  ← 怒り残量の推移データ
+  dangersDetected: [...]  ← 検知済み危険発言一覧
+  whisperQueue: [...]     ← 表示待ち助言キュー
+
+Layer 2: sessionStorage 追加キー
+  duringSupportSessionId  ← 現在の謝罪中支援セッションID
+  opponentStreamActive    ← 相手音声ストリーム状態
+  userStreamActive        ← ユーザー音声ストリーム状態
+```
+
+### 11.9 フォールバック設計（謝罪中支援）
+
+| 障害シナリオ | フォールバック動作 |
+|------------|-----------------|
+| Transcribe 接続失敗（相手音声） | テキスト手動入力エリアを表示、相手発言を手入力で怒り残量分析 |
+| Transcribe 接続失敗（ユーザー音声） | 耳打ちモード無効化通知、テキスト入力のみで対応 |
+| analyze-anger タイムアウト | 前回の分析結果を維持、「分析中...」表示 |
+| detect-danger-speech タイムアウト | 危険発言検知をスキップ、次回発話で再試行 |
+| 両ストリーム同時接続不可 | 相手音声優先、ユーザー発話はテキスト入力にフォールバック |
+
+### 11.10 将来デバイス構想
+
+イヤホンやARグラスとの連携により、対面謝罪中にリアルタイムで耳元に助言が届く体験を想定。  
+`WhisperAdvisor` の出力インターフェースを以下の3モードで抽象化：
+
+```javascript
+// 出力モード（将来拡張を想定した抽象化）
+const OUTPUT_MODE = {
+  TEXT: 'text',           // 画面テキスト表示（MVP）
+  AUDIO: 'audio',         // Polly音声読み上げ（決勝デモ）
+  DEVICE: 'device'        // 外部デバイス連携（将来）
+};
+```
+
+Inception段階では `TEXT` モードのみ実装し、`AUDIO` / `DEVICE` は出力インターフェースの定義にとどめる。

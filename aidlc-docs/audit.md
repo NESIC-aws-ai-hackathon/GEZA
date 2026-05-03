@@ -212,7 +212,7 @@ prototype/
 - **変更内容**:
   - **コンセプト**: 謝罪トレーニングアプリ → 総合謝罪支援コンシェルジュ
   - **主要機能再定義**: 謝罪角度アセスメント・プランニング・準備サポートがコア、練習シミュレーションはサブ（任意）
-  - **新機能「謝罪の角度」**: 0〜180°の段階判定→ピクトグラム+スタンプ+SE音演出 + AI vs 自己申告ギャップ分析
+  - **新機能「謝罪の角度」**: 0〜180°の段階判定→SVGメータービジュアル + AI vs 自己申告ギャップ分析
   - **角度ステージ**: 会釈(0〜15°) / 深謝(16〜45°) / 土下座(46〜90°) / 寝下座(91〜120°) / 焦げ下座(121〜150°) / 焼き寝下座(151〜180°)
 - **成果物更新**:
   - aidlc-docs/inception/user-stories/stories.md（US-207/208/209追加、SP 154→172、コンセプト更新）
@@ -585,3 +585,27 @@ prototype/
   - **docs/requirements.md**: コア機能欄を「ピクトグラム+スタンプ+SE音で演出」に更新
   - **prototype/apology-meter-moc.html**: SVGアニメーションMOCを全面作り直し → ピクトグラム+スタンプ+SE音のMOCに置換
 - **変更なし**: APIスキーマ（services.md）、データモデル（data-model.md）、依存関係（component-dependency.md）— 角度の算出・保存ロジックには変更なし
+
+
+## エントリ 038 - コンセプト拡張「謝罪行動支援AI」+ 謝罪中支援（決勝構想）
+- **日時**: 2026-05-03T10:00:00+09:00
+- **フェーズ**: INCEPTION - Concept Expansion + Detailed Design
+- **トリガー**: GEZAを「謝罪文生成アプリ」から「Human-in-the-Loop 謝罪行動支援AI」へ再定義。謝罪ライフサイクル（Before/During/After）の完全カバーを構想。決勝デモのインパクト最大化のため、謝罪中支援（怒り残量スキャナー・GEZA耳打ちモード）を追加。
+- **変更方針**:
+  - **コンセプト拡張**: 「AIが考え、人間が詫びる」Human-in-the-Loop を謝罪本番中にまで拡張
+  - **新規追加**: Epic 10（謝罪中支援）、Journey 10、US-1001〜1003、Unit U9
+  - **スコープ区分**: P3（決勝拡張）として明確に分離。MVP/予選スコープには影響なし
+  - **設計粒度**: 既存ユニットと同等の粒度で詳細設計（Lambda/API/DB/コンポーネント/メソッド/依存関係/データフロー）
+- **数値変更**: 34ストーリー/221SP → **37ストーリー/245SP**、9 Epic → **10 Epic**、Lambda 14本 → **16本**、U0〜U8 → **U0〜U9**
+- **修正サマリー**:
+  - **README.md**: タグライン追加、30秒サマリー更新、コンセプトセクション書き換え（HIL+謝罪ライフサイクル図）、機能リスト4分類化、スコープ表にU9・フェーズ列追加、タイムライン更新、軸5追加、継続支援セクション更新（謝罪中支援詳細追加）、差別化ポイント⑦追加、ユニット構成U9追加、ドキュメントマップ数値更新
+  - **aidlc-docs/inception/requirements/requirements.md**: Epic 10セクション（FR-901〜908）追加、MVPスコープ表にEpic 10行追加、数値更新、LLMモデル選定に怒り残量・耳打ち用途追加
+  - **aidlc-docs/inception/user-stories/stories.md**: Journey 10追加（US-1001〜1003）、ジャーニーマップ更新、ストーリーサマリー表更新、合計更新
+  - **aidlc-docs/inception/application-design/application-design.md**: セクション11「決勝向け拡張」詳細設計（アーキテクチャ図・FEコンポーネント・Lambda 2本・APIエンドポイント2本・リクエスト/レスポンススキーマ・DynamoDBパターン・3層ステート拡張・フォールバック設計・将来デバイス構想）、Lambda数14→16更新、ページ一覧・ディレクトリ構成更新
+  - **aidlc-docs/inception/application-design/components.md**: AngerGauge・WhisperAdvisor共通モジュール追加、DuringSupportPageページ追加、AnalyzeAngerLambda・DetectDangerSpeechLambdaバックエンド追加
+  - **aidlc-docs/inception/application-design/component-methods.md**: AngerGauge・WhisperAdvisor・DuringSupportPage・AnalyzeAngerLambda・DetectDangerSpeechLambdaの全メソッドシグネチャ追加
+  - **aidlc-docs/inception/application-design/services.md**: APIエンドポイント2本追加、リクエスト/レスポンススキーマ追加、DynamoDBアクセスパターン3件追加、属性追加、SAMテンプレート追加、コスト概算更新
+  - **aidlc-docs/inception/application-design/component-dependency.md**: DuringSupportPage依存関係追加、API呼び出し関係追加、Lambda→AWSサービス依存追加、謝罪中支援データフロー図追加
+  - **aidlc-docs/inception/application-design/unit-of-work.md**: U9詳細設計（Lambda・API・SAMテンプレート・DynamoDB・フォールバック・将来デバイス構想）、Lambda数14→16更新
+  - **docs/requirements.md**: Epic 10行追加、合計・優先度説明更新
+  - **aidlc-docs/aidlc-state.md**: コンセプト行・ストーリー数更新

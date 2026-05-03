@@ -19,6 +19,7 @@
 | FeedbackPage (feedback.js) | AuthModule, ApiClient, StateManager, AvatarController |
 | CartePage (carte.js) | AuthModule, ApiClient, AvatarController, StateManager |
 | BossPage (boss.js) | AuthModule, ApiClient, AvatarController, EmotionDefinitions, StateManager, TranscribeClient, PollySyncController |
+| DuringSupportPage (during-support.js) | AuthModule, ApiClient, StateManager, TranscribeClient, AngerGauge, WhisperAdvisor |
 
 ### フロントエンド → バックエンド（API 呼び出し）
 
@@ -42,6 +43,10 @@
 | BossPage | POST /tts/synthesize | TextToSpeechLambda |
 | BossPage | POST /sessions | SaveSessionLambda |
 | BossPage | POST /guidance/feedback | GenerateGuidanceFeedbackLambda |
+| DuringSupportPage | POST /during/analyze-anger | AnalyzeAngerLambda |
+| DuringSupportPage | POST /during/detect-danger | DetectDangerSpeechLambda |
+| DuringSupportPage | POST /sessions | SaveSessionLambda |
+| DuringSupportPage（音声入力） | Transcribe Streaming（直接） | — |
 
 ### バックエンド → AWS サービス
 
@@ -61,6 +66,8 @@
 | GetKarteLambda | DynamoDB | カルテ取得 |
 | EvaluateGuidanceLambda | Bedrock (Nova Lite) | 指導評価 |
 | GenerateGuidanceFeedbackLambda | Bedrock (Claude Sonnet) | 改善スクリプト生成 |
+| AnalyzeAngerLambda | Bedrock (Nova Lite), DynamoDB | 怒り残量リアルタイム分析 |
+| DetectDangerSpeechLambda | Bedrock (Nova Lite), DynamoDB | 危険発言検知・助言生成 |
 | 全 Lambda | S3 (prompts/) | プロンプトテンプレート読み込み |
 
 ---
@@ -131,6 +138,83 @@ StateManager.getCurrentSession()
           │ save_turn() × Nターン → DynamoDB PK="USER#<userId>" SK="TURN#<sid>#<n>"
           ↓
         { saved: true, session_id }
+```
+
+---
+
+### 謝罪中支援フロー（US-1001〜1003）
+
+```
+対面謝罪の場（相手＋ユーザー）
+  │
+  ├─── 相手の発言 ───────────────────────────────────────────────┐
+  │                                                              │
+  │  [DuringSupportPage - during-support.js]                     │
+  │    │                                                         │
+  │    ├─[相手音声]─→ [TranscribeClient]                         │
+  │    │               │ Cognito Identity Pool 一時認証取得        │
+  │    │               │ WebSocket → Transcribe Streaming (ja-JP) │
+  │    │               │ リアルタイム文字起こし → コールバック        │
+  │    │               ↓                                         │
+  │    │            確定テキスト（相手発言）                        │
+  │    │               │                                         │
+  │    │    ├─→ ApiClient.post("/during/analyze-anger",           │
+  │    │    │     { opponent_text, opponent_profile, context })   │
+  │    │    │       │                                            │
+  │    │    │       ▼ API Gateway (JWT Auth)                     │
+  │    │    │       ▼ AnalyzeAngerLambda (Timeout: 10s)          │
+  │    │    │         │ PromptLoader → analyze-anger.txt          │
+  │    │    │         │ BedrockClient.invoke_nova_lite()          │
+  │    │    │         │ determine_trend() + generate_summary()    │
+  │    │    │         ↓                                          │
+  │    │    │       { anger_remaining, disappointment,            │
+  │    │    │         tolerance_remaining, counterattack_risk,    │
+  │    │    │         trend, summary }                            │
+  │    │    │       │                                            │
+  │    │    │       ↓                                            │
+  │    │    ├─→ AngerGauge.update(data)  ← ゲージ更新             │
+  │    │    ├─→ AngerGauge.pushHistory(entry) ← 推移データ蓄積    │
+  │    │    └─→ StateManager.setAppState({ angerRemaining, ... })│
+  │    │                                                         │
+  │    ├─[ユーザー音声]─→ [TranscribeClient]                      │
+  │    │                   │ 別ストリームで接続                     │
+  │    │                   ↓                                     │
+  │    │                確定テキスト（ユーザー発話）                 │
+  │    │                   │                                     │
+  │    │    ├─→ ApiClient.post("/during/detect-danger",           │
+  │    │    │     { user_text, opponent_profile })                │
+  │    │    │       │                                            │
+  │    │    │       ▼ API Gateway (JWT Auth)                     │
+  │    │    │       ▼ DetectDangerSpeechLambda (Timeout: 10s)    │
+  │    │    │         │ PromptLoader → detect-danger-speech.txt   │
+  │    │    │         │ BedrockClient.invoke_nova_lite()          │
+  │    │    │         │ detect_dangers() + generate_short_whisper()│
+  │    │    │         ↓                                          │
+  │    │    │       { dangers_detected, overall_risk,             │
+  │    │    │         short_whisper }                             │
+  │    │    │       │                                            │
+  │    │    │       ↓                                            │
+  │    │    ├─→ WhisperAdvisor.showAdvice(result) ← 助言表示      │
+  │    │    └─→ StateManager.setAppState({ dangersDetected, ... })│
+  │    │                                                         │
+  │    └─[セッション終了]                                         │
+  │         │ endDuringSupport()                                  │
+  │         │ angerHistory = AngerGauge.getHistory()              │
+  │         │ dangerLog = WhisperAdvisor.getDangerLog()           │
+  │         │                                                    │
+  │         └─→ ApiClient.post("/sessions",                      │
+  │               { session_type: "DURING", data: {              │
+  │                   angerHistory, dangerLog, summary } })       │
+  │               │                                              │
+  │               ▼ SaveSessionLambda                            │
+  │                 │ save_session() → DynamoDB                   │
+  │                 │   PK="USER#<userId>"                       │
+  │                 │   SK="DURING#<ts>#<sid>"                   │
+  │                 │ 推移データ → ANGER#<ts>                     │
+  │                 │ 危険発言ログ → DANGER#<ts>                  │
+  │                 ↓                                            │
+  │               { saved: true, session_id }                    │
+  └──────────────────────────────────────────────────────────────┘
 ```
 
 ---

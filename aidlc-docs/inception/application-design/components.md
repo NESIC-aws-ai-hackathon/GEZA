@@ -20,6 +20,8 @@
 | **TranscribeClient** | `frontend/shared/transcribe.js` | Cognito Identity Pool で取得した一時認証情報を使い、AWS Transcribe Streaming へ直接WebSocket接続。リアルタイム文字起こし結果をコールバックで通知 |
 | **PollySyncController** | `frontend/shared/polly-sync.js` | Polly MP3（Base64）の音声再生と SpeechMarks viseme タイムコードを同期し、AvatarController.applyViseme() を呼び出す（50ms以内） |
 | **ApologyMeter** | `frontend/shared/apology-meter.js` | 謝罪角度（0〜180°）のステージ別ピクトグラム画像表示・スタンプ演出・SE音再生・ステージ名表示・AI vs 自己申告ギャップ分析表示 |
+| **AngerGauge** | `frontend/shared/anger-gauge.js` | 怒り残量（0〜100%）・失望度・許容余地・反論危険度のリアルタイムゲージ表示。推移データをメモリに蓄積。トレンド矢印（↑↓→）表示 |
+| **WhisperAdvisor** | `frontend/shared/whisper-advisor.js` | 危険発言検知結果を短い助言として表示。出力インターフェースを抽象化（TEXT/AUDIO/DEVICEの3モード）。助言キュー管理・自動消去 |
 
 ### ページ コンポーネント
 
@@ -33,6 +35,7 @@
 | **FeedbackPage** | `frontend/pages/feedback.html` + `feedback.js` | Journey 4〜5 / US-407, US-501〜502 | 謝罪フィードバック・改善謝罪文・再発防止策・フォローメール |
 | **CartePage** | `frontend/pages/carte.html` + `carte.js` | Journey 6 / US-601〜602 | 謝罪カルテ一覧・傾向分析・保存済みアバター復元 |
 | **BossPage** | `frontend/pages/boss.html` + `boss.js` | Journey 7 / US-701〜703 | 上司モード（指導内容入力・部下役AI対話・建設性スコア・パワハラリスク） |
+| **DuringSupportPage** | `frontend/pages/during-support.html` + `during-support.js` | Journey 10 / US-1001〜1003 | 謝罪中支援統合画面。相手音声→怒り残量分析、ユーザー音声→危険発言検知、統合ダッシュボード、セッションサマリー生成 |
 
 ---
 
@@ -46,6 +49,8 @@
 | **EvaluateApologyLambda** | `backend/functions/evaluate-apology/` | Nova Lite | 謝罪評価・感情分類（30種）・NGワード検知・追撃質問生成・怒り度/信頼度更新 |
 | **AnalyzeKarteLambda** | `backend/functions/analyze-karte/` | Nova Lite | カルテ傾向分析（NGワード傾向・スコア推移・弱点カテゴリ） |
 | **EvaluateGuidanceLambda** | `backend/functions/evaluate-guidance/` | Nova Lite | 上司モード指導評価・建設性スコア・パワハラリスク・部下リアクション生成 |
+| **AnalyzeAngerLambda** | `backend/functions/analyze-anger/` | Nova Lite | 相手の発言テキストから怒り残量・失望度・許容余地・反論危険度を推定（謝罪中支援） |
+| **DetectDangerSpeechLambda** | `backend/functions/detect-danger-speech/` | Nova Lite | ユーザーの発話テキストから言い訳・逆ギレ・責任転嫁・NGワードを検知し、短い助言を生成（謝罪中支援） |
 
 ### 高品質生成系（Claude Sonnet 使用）
 

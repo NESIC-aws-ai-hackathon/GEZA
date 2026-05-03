@@ -27,6 +27,8 @@
 | GET | `/karte/analyze` | analyze-karte | 傾向分析（NGワード傾向・スコア推移） |
 | POST | `/guidance/evaluate` | evaluate-guidance | 指導評価・建設性スコア・部下リアクション生成 |
 | POST | `/guidance/feedback` | generate-guidance-feedback | 指導フィードバック + 改善スクリプト生成 |
+| **POST** | **`/during/analyze-anger`** | **analyze-anger** | **相手発言の怒り残量リアルタイム分析（謝罪中支援）** |
+| **POST** | **`/during/detect-danger`** | **detect-danger-speech** | **ユーザー発話の危険発言検知・助言生成（謝罪中支援）** |
 
 ---
 
@@ -204,6 +206,80 @@
 
 ---
 
+### POST `/during/analyze-anger`（謝罪中支援）
+
+**Request:**
+```json
+{
+  "opponent_text": "それで済む話だと思っているのか？何度同じことを繰り返すんだ。",
+  "opponent_profile": {
+    "type": "厳格な上司",
+    "anger_level": 70,
+    "trust_level": 30
+  },
+  "conversation_context": [
+    { "role": "opponent", "content": "...", "timestamp": "2026-05-03T14:28:00+09:00" },
+    { "role": "user", "content": "...", "timestamp": "2026-05-03T14:29:00+09:00" }
+  ],
+  "session_id": "uuid-v4"
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "body": {
+    "anger_remaining": 78,
+    "disappointment": 45,
+    "tolerance_remaining": 22,
+    "counterattack_risk": 65,
+    "trend": "rising",
+    "summary": "怒りが収まっていません。具体的な再発防止策の提示が必要です。",
+    "timestamp": "2026-05-03T14:30:00+09:00"
+  }
+}
+```
+
+---
+
+### POST `/during/detect-danger`（謝罪中支援）
+
+**Request:**
+```json
+{
+  "user_text": "いや、それは担当の山田が確認を怠ったせいで...",
+  "opponent_profile": {
+    "type": "厳格な上司",
+    "ng_words": ["忙しくて", "確認不足で"]
+  },
+  "session_id": "uuid-v4"
+}
+```
+
+**Response:**
+```json
+{
+  "statusCode": 200,
+  "body": {
+    "dangers_detected": [
+      {
+        "type": "responsibility_shift",
+        "phrase": "担当の山田が確認を怠った",
+        "severity": "high",
+        "advice": "他人のせいにしています。「チームとしての管理体制に問題があった」に言い換えてください",
+        "alternative": "チームとしての確認プロセスに不備がありました"
+      }
+    ],
+    "overall_risk": "high",
+    "short_whisper": "責任転嫁！「チームの管理体制」に言い換えて",
+    "timestamp": "2026-05-03T14:30:05+09:00"
+  }
+}
+```
+
+---
+
 ## DynamoDB シングルテーブル設計
 
 **テーブル名**: `geza-data`  
@@ -218,6 +294,9 @@
 | セッションの全ターン | `SESSION#<sessionId>` | `TURN#<turnNumber>` | 会話履歴取得 |
 | ユーザープロファイル | `USER#<userId>` | `PROFILE#` | ユーザー設定・傾向メモ |
 | 上司モードセッション | `USER#<userId>` | `GUIDANCE#<timestamp>#<sessionId>` | 指導練習履歴 |
+| 謝罪中支援セッション | `USER#<userId>` | `DURING#<timestamp>#<sessionId>` | 謝罪中支援セッションサマリー |
+| 怒り残量推移 | `DURING#<sessionId>` | `ANGER#<timestamp>` | 怒り残量・失望度等の時系列データ |
+| 危険発言ログ | `DURING#<sessionId>` | `DANGER#<timestamp>` | 検知された危険発言と助言の記録 |
 
 ### 主要属性
 
@@ -239,6 +318,14 @@ geza-data
 ├── role (String) - "user" | "assistant"（ターン用）
 ├── constructivenessScore (Number) - 建設性スコア（指導用）
 ├── harassmentRisk (String) - "低" | "中" | "高"（指導用）
+├── angerRemaining (Number) - 怒り残量 0-100（謝罪中支援用）
+├── disappointment (Number) - 失望度 0-100（謝罪中支援用）
+├── toleranceRemaining (Number) - 許容余地 0-100（謝罪中支援用）
+├── counterattackRisk (Number) - 反論危険度 0-100（謝罪中支援用）
+├── dangerType (String) - "excuse" | "backlash" | "responsibility_shift" | "ng_word"（謝罪中支援用）
+├── detectedPhrase (String) - 検知されたフレーズ（謝罪中支援用）
+├── advice (String) - 表示した助言テキスト（謝罪中支援用）
+├── severity (String) - "low" | "medium" | "high"（謝罪中支援用）
 └── ttl (Number) - TTL（将来の自動削除用・現在は未使用）
 ```
 
@@ -307,6 +394,10 @@ Resources:
   EvaluateGuidanceFunction: ...
   GenerateGuidanceFeedbackFunction: ...
 
+  # 謝罪中支援 Lambda 関数（Timeout 10s）
+  AnalyzeAngerFunction: ...
+  DetectDangerSpeechFunction: ...
+
   # API Gateway HTTP API v2
   GezaApi:
     Type: AWS::Serverless::HttpApi
@@ -365,9 +456,9 @@ Globals:
 
 | モデル | 用途 | 月間呼び出し数 | 平均トークン（入力/出力） | 単価（入力 / 出力 per 1M tokens） | 月額概算 |
 |-------|------|:-----------:|:---:|:---:|:---:|
-| Amazon Nova Lite | evaluate-apology, assess-apology, analyze-karte, evaluate-guidance | 5,500回 | 1,500 / 500 | $0.06 / $0.24 | **$0.56** |
+| Amazon Nova Lite | evaluate-apology, assess-apology, analyze-karte, evaluate-guidance, **analyze-anger, detect-danger-speech** | 5,500回 + 3,000回 = 8,500回 | 1,500 / 500 | $0.06 / $0.24 | **$0.87** |
 | Claude Sonnet (4-5) | generate-opponent, story, plan, feedback, prevention, mail, guidance-feedback | 1,500回 | 2,000 / 1,500 | $3.00 / $15.00 | **$42.75** |
-| | | | | **Bedrock 合計** | **≈ $43.31** |
+| | | | | **Bedrock 合計** | **≈ $43.62** |
 
 ### Amazon Polly（TTS）
 
