@@ -240,9 +240,10 @@ def update_gauges(current_levels, evaluation_result)
 def lambda_handler(event, context):
     # body: { incident_summary, categories, relationship, deadline }
     # 戻り値: { opponent_profile, avatar_seed, first_message }
+    # opponent_profile には gender（"male" | "female"）を含む
 
 # Bedrock Claude Sonnet で謝罪相手を生成する
-# 戻り値: dict（type / personality / anger_level / trust_level / tolerance /
+# 戻り値: dict（type / personality / gender / anger_level / trust_level / tolerance /
 #              anger_points / ng_words / first_message）
 def generate_opponent(incident_summary, context)
 
@@ -371,10 +372,16 @@ def generate_guidance_feedback(conversation_history, subordinate_profile, final_
 ```python
 @handle_errors
 def lambda_handler(event, context):
-    # body: { text }
+    # body: { text, voice_id? }
+    # voice_id 省略時は "Kazuha"（女性）をデフォルト使用
     # 戻り値: { audio_base64, visemes: [{time, value}, ...] }
 
+# gender 文字列（"male" | "female"）から Polly voice_id を選択する
+# 戻り値: "Takumi"（男性）または "Kazuha"（女性・デフォルト）
+def select_voice_id(gender)
+
 # Polly でMP3音声とSpeechMarksを並列取得する（ThreadPoolExecutor使用）
+# voice_id: "Kazuha"（女性, ja-JP, Neural）または "Takumi"（男性, ja-JP, Neural）
 # 戻り値: (audio_bytes, viseme_list)
 def synthesize_with_visemes(text, voice_id="Kazuha")
 

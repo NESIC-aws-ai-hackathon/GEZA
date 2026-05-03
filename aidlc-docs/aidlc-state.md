@@ -53,7 +53,7 @@
 | フロントエンド | HTML/CSS/Vanilla JS + facesjs SVGアバター | SVGアバターがMP4動画より柔軟・低コスト |
 | バックエンド | Lambda（Python 3.12, 512MB, 30s） | 実測OK |
 | LLM | Amazon Nova Lite（軽量）/ Claude Sonnet（高品質） | Nova Liteで1〜3秒・十分な品質確認 |
-| 音声合成 | Amazon Polly Kazuha（ja-JP, Neural） + SpeechMarks | Viseme口パク同期実証済み |
+| 音声合成 | Amazon Polly（女性: Kazuha / 男性: Takumi, ja-JP, Neural） + SpeechMarks | Viseme口パク同期実証済み |
 | アバター | facesjs v5.0.3（フォーク・data-feature属性追加） | CSS表情制御実証済み |
 
 ### 変更確定事項（要件更新が必要）

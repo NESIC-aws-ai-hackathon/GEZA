@@ -2,7 +2,7 @@
 
 > AI-DLC INCEPTION - Units Generation 成果物  
 > 生成日: 2026-04-30  
-> 分割方針: 機能ドメイン単位（6ユニット + インフラ基盤）
+> 分割方针: 機能ドメイン単位（9ユニット + インフラ基盤）
 
 ---
 
@@ -11,7 +11,7 @@
 | 決定事項 | 内容 |
 |---------|------|
 | 分割粒度 | 機能ドメイン単位（9ユニット + 基盤） |
-| インフラ構築 | SAM一括デプロイ（全16 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）|
+| インフラ構築 | SAM一括デプロイ（全20 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）|
 | FE共通モジュール | AuthModule/ApiClient/StateManager/AvatarController を U0 に先行実装、残りは各ユニットで追加 |
 | 実装順序 | U0 → U1 → U2 → U3 → U4 → U5（オプション）→ U6（最終）→ U7 → U8（将来構想）→ U9（決勝拡張） |
 | ディレクトリ構成 | フラット構成（`backend/functions/<name>/` + `frontend/pages/<page>/` + `frontend/shared/`）|
@@ -42,7 +42,7 @@
 
 ### 責務
 - AWS インフラ全体の初回デプロイ（SAM）
-- 全 Lambda スタブ（14本）のデプロイ（空の handler、ルーティング確立）
+- 全 Lambda スタブ（20本）のデプロイ（空の handler、ルーティング確立）
 - フロントエンドコア共通モジュール実装
 
 ### バックエンド成果物
@@ -65,6 +65,12 @@ backend/
     analyze-karte/lambda_function.py       # スタブ
     evaluate-guidance/lambda_function.py   # スタブ
     generate-guidance-feedback/lambda_function.py # スタブ
+    check-draft/lambda_function.py         # スタブ
+    analyze-reply/lambda_function.py       # スタブ
+    save-story-log/lambda_function.py      # スタブ
+    diagnose-tendency/lambda_function.py   # スタブ
+    analyze-anger/lambda_function.py       # スタブ
+    detect-danger-speech/lambda_function.py # スタブ
   shared/
     decorators.py        # @handle_errors デコレーター
     input_validator.py   # 入力バリデーション・プロンプトインジェクション対策
@@ -82,6 +88,11 @@ backend/
     analyze-karte.txt
     evaluate-guidance.txt
     generate-guidance-feedback.txt
+    check-draft.txt
+    analyze-reply.txt
+    diagnose-tendency.txt
+    analyze-anger.txt
+    detect-danger-speech.txt
 ```
 
 ### フロントエンド成果物
@@ -94,6 +105,8 @@ frontend/
     state.js     # StateManager（3層ステート管理）
     avatar.js    # AvatarController（facesjs SVG + 30感情 + viseme + エフェクト）
     emotions.js  # EmotionDefinitions（30感情定義シングルトン）
+    anger-gauge.js  # AngerGauge（怒り残量ゲージコンポーネント）
+    whisper-advisor.js  # WhisperAdvisor（耳打ちアドバイス表示コンポーネント）
   assets/
     facesjs.min.js  # facesjs フォーク版 IIFE バンドル
 ```
@@ -102,20 +115,20 @@ frontend/
 なし（インフラ基盤・共通処理 / 技術的前提条件）
 
 ### AWS リソース
-- API Gateway HTTP API v2（全15エンドポイント定義済み）
+- API Gateway HTTP API v2（全20エンドポイント定義済み）
 - Cognito User Pool + Identity Pool
 - DynamoDB シングルテーブル（geza-data）
 - S3（静的ホスティングバケット + prompts用）
 - CloudFront ディストリビューション
-- Lambda × 14（スタブ）
+- Lambda × 20（スタブ）
 - SAM Layer: shared-utils-layer
 ### U0 完了基準
 
-- [ ] `sam deploy` 成功（全16 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
+- [ ] `sam deploy` 成功（全20 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
 - [ ] Cognito User Pool でテストユーザー作成・ログイン成功
-- [ ] API Gateway 全15エンドポイントで 200 レスポンス（スタブ）
+- [ ] API Gateway 全20エンドポイントで 200 レスポンス（スタブ）
 - [ ] CloudFront URL で index.html が表示される
-- [ ] shared-utils-layer のインポートが全16 Lambda で成功
+- [ ] shared-utils-layer のインポートが全20 Lambda で成功
 - [ ] AuthModule でログイン → JWT取得 → ApiClient で API 呼び出し成功
 - [ ] `backend/prompts/*.txt` スタブ配置（各 Lambda の prompt_loader.py が FileNotFoundError を出さない）
 
@@ -685,7 +698,12 @@ GEZA/
 │       ├── generate-follow-mail.txt     # U4 で作成
 │       ├── analyze-karte.txt            # U4 で作成
 │       ├── evaluate-guidance.txt        # U6 で作成
-│       └── generate-guidance-feedback.txt # U6 で作成
+        ├── generate-guidance-feedback.txt # U6 で作成
+        ├── check-draft.txt              # U7 で作成
+        ├── analyze-reply.txt            # U7 で作成
+        ├── diagnose-tendency.txt        # U8 で作成
+        ├── analyze-anger.txt            # U9 で作成
+        └── detect-danger-speech.txt     # U9 で作成
 └── frontend/
     ├── pages/
     │   ├── index.html + top.js          # U1 で実装
@@ -695,7 +713,11 @@ GEZA/
     │   ├── feedback.html + feedback.js  # U3/U4 で実装
     │   ├── carte.html + carte.js        # U4 で実装
     │   ├── story.html + story.js        # U5 で実装
-    │   └── boss.html + boss.js          # U6 で実装
+    │   ├── boss.html + boss.js          # U6 で実装
+    │   ├── check.html + check.js        # U7 で実装
+    │   ├── reply.html + reply.js        # U7 で実装
+    │   ├── diagnosis.html + diagnosis.js # U8 で実装
+    │   └── during-support.html + during-support.js # U9 で実装
     ├── shared/
     │   ├── auth.js                      # U0 で実装
     │   ├── api.js                       # U0 で実装
@@ -704,7 +726,9 @@ GEZA/
     │   ├── emotions.js                  # U0 で実装
     │   ├── apology-meter.js             # U2 で実装
     │   ├── transcribe.js                # U3 で実装
-    │   └── polly-sync.js                # U3 で実装
+    │   ├── polly-sync.js                # U3 で実装
+    │   ├── anger-gauge.js               # U9 で実装
+    │   └── whisper-advisor.js           # U9 で実装
     └── assets/
         ├── facesjs.min.js               # U0 で配置
         └── style.css                    # 各ユニットで追加

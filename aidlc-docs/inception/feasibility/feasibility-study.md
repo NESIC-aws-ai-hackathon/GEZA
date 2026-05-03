@@ -138,7 +138,7 @@ UXに影響するレスポンス速度と、ハッカソン期間のコストが
 | 1動画の生成時間（Nova Reel） | 未実施（同上） | **スキップ** |
 | 1動画の生成コスト（Nova Reel） | 未実施（同上） | **スキップ** |
 | 感情別動画生成コスト見積もり | 不要（facesjs SVGで無コスト） | **スキップ** |
-| AWS Polly 日本語音声の自然さ | ✅ Kazuha（ja-JP, Neural）：自然で女性的な声。謝罪ボスとして十分な品質 | **OK** |
+| AWS Polly 日本語音声の自然さ | ✅ Kazuha（ja-JP, Neural）：自然で女性的な声。✅ Takumi（ja-JP, Neural）：自然で男性的な声。次欠はopponent_profile.genderで自動選択 | **OK** |
 | S3 + CloudFront での動画再生確認 | 不要（SVGアバター採用） | **スキップ** |
 | Lambda → Nova Reel → S3 パイプライン | 不要（SVGアバター採用） | **スキップ** |
 

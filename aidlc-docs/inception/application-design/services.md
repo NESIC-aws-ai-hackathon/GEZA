@@ -27,6 +27,9 @@
 | GET | `/karte/analyze` | analyze-karte | 傾向分析（NGワード傾向・スコア推移） |
 | POST | `/guidance/evaluate` | evaluate-guidance | 指導評価・建設性スコア・部下リアクション生成 |
 | POST | `/guidance/feedback` | generate-guidance-feedback | 指導フィードバック + 改善スクリプト生成 |
+| POST | `/draft/check` | check-draft | 送信前文面の炎上リスク・NGワード・責任逃れ表現チェック（継続支援） |
+| POST | `/reply/analyze` | analyze-reply | 相手からの返信分析（怒り残量・許され度・次の一手）（継続支援） |
+| GET | `/karte/diagnose` | diagnose-tendency | 謝罪傾向診断（言い訳先行型・責任回避型など）（継続支援） |
 | **POST** | **`/during/analyze-anger`** | **analyze-anger** | **相手発言の怒り残量リアルタイム分析（謝罪中支援）** |
 | **POST** | **`/during/detect-danger`** | **detect-danger-speech** | **ユーザー発話の危険発言検知・助言生成（謝罪中支援）** |
 
@@ -128,6 +131,7 @@
     "opponent_profile": {
       "type": "冷静だが厳格なPM",
       "personality": "論理的で感情表現は少ないが、約束破りには厳しい",
+      "gender": "male",
       "anger_level": 65,
       "trust_level": 40,
       "tolerance": 30,
@@ -145,6 +149,17 @@
 ### POST `/tts/synthesize`
 
 **Request:**
+```json
+{
+  "text": "連絡が遅すぎる。こちらはどれだけ迷惑を受けたと思っているんですか。",
+  "voice_id": "Kazuha"
+}
+```
+
+> **voice_id** には `"Kazuha"`（女性, ja-JP, Neural）または `"Takumi"`（男性, ja-JP, Neural）を指定する。  
+> 省略時のデフォルト: `"Kazuha"`。値は opponent_profile の `gender` フィールド（`"female"` → `"Kazuha"`、`"male"` → `"Takumi"`）からフロントエンドが自動選択して渡す。
+
+**Request（voice_id 省略時の旧形式—後方互換）:**
 ```json
 {
   "text": "連絡が遅すぎる。こちらはどれだけ迷惑を受けたと思っているんですか。"
@@ -378,7 +393,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Resources:
-  # Lambda 関数（14関数）- SAM::Function
+  # Lambda 関数（20関数）- SAM::Function
   AssessApologyFunction: ...
   EvaluateApologyFunction: ...
   GenerateOpponentFunction: ...
@@ -393,6 +408,12 @@ Resources:
   AnalyzeKarteFunction: ...
   EvaluateGuidanceFunction: ...
   GenerateGuidanceFeedbackFunction: ...
+
+  # 継続支援 Lambda 関数（P2: U7/U8）
+  CheckDraftFunction: ...
+  AnalyzeReplyFunction: ...
+  SaveStoryLogFunction: ...
+  DiagnoseTendencyFunction: ...
 
   # 謝罪中支援 Lambda 関数（Timeout 10s）
   AnalyzeAngerFunction: ...
@@ -440,6 +461,8 @@ Globals:
         TABLE_NAME: !Ref GezaTable
         NOVA_LITE_MODEL_ID: "amazon.nova-lite-v1:0"
         CLAUDE_SONNET_MODEL_ID: "anthropic.claude-sonnet-4-5"
+        POLLY_VOICE_FEMALE: "Kazuha"
+        POLLY_VOICE_MALE: "Takumi"
     Layers:
       - !Ref SharedUtilsLayer  # decorators.py / prompt_loader.py / bedrock_client.py / input_validator.py
 ```
@@ -464,7 +487,7 @@ Globals:
 
 | 音声エンジン | 月間文字数 | 単価 | 月額概算 |
 |------------|:---------:|:---:|:---:|
-| Neural (Kazuha) — 音声 + SpeechMarks | 5,000ターン × 200文字 × 2（音声+Marks） = 200万文字 | $16.00 / 100万文字 | **$32.00** |
+| Neural (Kazuha / Takumi) — 音声 + SpeechMarks | 5,000ターン × 200文字 × 2（音声+Marks） = 200万文字 | $16.00 / 100万文字 | **$32.00** |
 
 ### DynamoDB On-Demand（東京）
 

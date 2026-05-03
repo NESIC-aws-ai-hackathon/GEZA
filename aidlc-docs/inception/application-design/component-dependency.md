@@ -57,7 +57,7 @@
 | GenerateOpponentLambda | Bedrock (Claude Sonnet) | 謝罪相手プロフィール生成 |
 | GenerateStoryLambda | Bedrock (Claude Sonnet) | ストーリー生成 |
 | GeneratePlanLambda | Bedrock (Claude Sonnet) | 謝罪プラン生成 |
-| TextToSpeechLambda | Polly (Kazuha Neural) | MP3 + SpeechMarks |
+| TextToSpeechLambda | Polly (Kazuha Neural / Takumi Neural) | MP3 + SpeechMarks（genderで音声切り替え） |
 | GenerateFeedbackLambda | Bedrock (Claude Sonnet) | フィードバック生成 |
 | GeneratePreventionLambda | Bedrock (Claude Sonnet) | 再発防止策生成 |
 | GenerateFollowMailLambda | Bedrock (Claude Sonnet) | メール生成 |

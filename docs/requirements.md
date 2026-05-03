@@ -62,7 +62,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | バックエンド | AWS Lambda（Python 3.12, 512MB, 30s） + API Gateway HTTP API v2 |
 | LLM | AWS Bedrock（Amazon Nova Lite：軽量用途 / Claude Sonnet：高品質用途）⚠️ |
 | 音声入力 | AWS Transcribe |
-| 音声出力 | Amazon Polly Kazuha（ja-JP, Neural）+ SpeechMarks(Viseme) ⚠️ |
+| 音声出力 | Amazon Polly（女性: Kazuha / 男性: Takumi, ja-JP, Neural）+ SpeechMarks(Viseme) ⚠️ |
 | アバター | ⚠️ **facesjs v5.0.3（SVGアバター）+ CSS表情制御**（Nova Canvas/Reel 不採用） |
 | 認証 | Amazon Cognito（User Pool ログイン + Identity Pool Transcribe一時認証） |
 | データベース | Amazon DynamoDB |
@@ -113,7 +113,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 
 **口パクフロー**:
 ```
-Lambda → Polly Kazuha(Neural) → MP3音声 + SpeechMarks(viseme)
+Lambda → Polly Kazuha(Neural)（女性）/ Takumi(Neural)（男性）→ MP3音声 + SpeechMarks(viseme)
                                      ↓
 フロントエンド: タイムコードに合わせてSVG pathを動的書き換え
 ```

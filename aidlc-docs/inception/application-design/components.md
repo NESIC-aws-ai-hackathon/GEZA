@@ -68,7 +68,7 @@
 
 | コンポーネント | ディレクトリ | 外部サービス | 責務 |
 |-------------|------------|------------|------|
-| **TextToSpeechLambda** | `backend/functions/text-to-speech/` | Amazon Polly Kazuha | テキスト → MP3（Base64）+ SpeechMarks visemes を並列取得して返却 |
+| **TextToSpeechLambda** | `backend/functions/text-to-speech/` | Amazon Polly Kazuha（女性）/ Takumi（男性） | テキスト + voice_id → MP3（Base64）+ SpeechMarks visemes を並列取得して返却。genderに応じてKazuha（女）/ Takumi（男）を自動選択 |
 | **SaveSessionLambda** | `backend/functions/save-session/` | DynamoDB | 謝罪セッション・会話ターン・指導セッションをシングルテーブルに保存 |
 | **GetKarteLambda** | `backend/functions/get-karte/` | DynamoDB | ユーザーのカルテ一覧・セッション詳細取得（avatarSeed含む） |
 
@@ -94,5 +94,5 @@
 | **S3StaticHosting** | Amazon S3 | フロントエンド静的ファイル（HTML/CSS/JS/facesjs.min.js）ホスティング |
 | **CloudFront** | Amazon CloudFront | S3 + API Gateway の CDN 配信。HTTPS強制。 |
 | **BedrockService** | Amazon Bedrock | Nova Lite / Claude Sonnet モデル呼び出し |
-| **PollyService** | Amazon Polly | Kazuha Neural TTS + SpeechMarks 音声合成 |
+| **PollyService** | Amazon Polly | Kazuha（女性, Neural）/ Takumi（男性, Neural）TTS + SpeechMarks 音声合成 |
 | **TranscribeStreaming** | Amazon Transcribe Streaming | ブラウザから直接WebSocket接続による日本語リアルタイム文字起こし |

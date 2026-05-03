@@ -596,16 +596,47 @@ prototype/
   - **新規追加**: Epic 10（謝罪中支援）、Journey 10、US-1001〜1003、Unit U9
   - **スコープ区分**: P3（決勝拡張）として明確に分離。MVP/予選スコープには影響なし
   - **設計粒度**: 既存ユニットと同等の粒度で詳細設計（Lambda/API/DB/コンポーネント/メソッド/依存関係/データフロー）
-- **数値変更**: 34ストーリー/221SP → **37ストーリー/245SP**、9 Epic → **10 Epic**、Lambda 14本 → **16本**、U0〜U8 → **U0〜U9**
+- **数値変更**: 34ストーリー/221SP → **37ストーリー/245SP**、9 Epic → **10 Epic**、Lambda 18本 → **20本**（+2: analyze-anger, detect-danger-speech）、U0〜U8 → **U0〜U9**
 - **修正サマリー**:
   - **README.md**: タグライン追加、30秒サマリー更新、コンセプトセクション書き換え（HIL+謝罪ライフサイクル図）、機能リスト4分類化、スコープ表にU9・フェーズ列追加、タイムライン更新、軸5追加、継続支援セクション更新（謝罪中支援詳細追加）、差別化ポイント⑦追加、ユニット構成U9追加、ドキュメントマップ数値更新
   - **aidlc-docs/inception/requirements/requirements.md**: Epic 10セクション（FR-901〜908）追加、MVPスコープ表にEpic 10行追加、数値更新、LLMモデル選定に怒り残量・耳打ち用途追加
   - **aidlc-docs/inception/user-stories/stories.md**: Journey 10追加（US-1001〜1003）、ジャーニーマップ更新、ストーリーサマリー表更新、合計更新
-  - **aidlc-docs/inception/application-design/application-design.md**: セクション11「決勝向け拡張」詳細設計（アーキテクチャ図・FEコンポーネント・Lambda 2本・APIエンドポイント2本・リクエスト/レスポンススキーマ・DynamoDBパターン・3層ステート拡張・フォールバック設計・将来デバイス構想）、Lambda数14→16更新、ページ一覧・ディレクトリ構成更新
+  - **aidlc-docs/inception/application-design/application-design.md**: セクション11「決勝向け拡張」詳細設計（アーキテクチャ図・FEコンポーネント・Lambda 2本・APIエンドポイント2本・リクエスト/レスポンススキーマ・DynamoDBパターン・3層ステート拡張・フォールバック設計・将来デバイス構想）、Lambda数 18→ 20更新、ページ一覧・ディレクトリ構成更新
   - **aidlc-docs/inception/application-design/components.md**: AngerGauge・WhisperAdvisor共通モジュール追加、DuringSupportPageページ追加、AnalyzeAngerLambda・DetectDangerSpeechLambdaバックエンド追加
   - **aidlc-docs/inception/application-design/component-methods.md**: AngerGauge・WhisperAdvisor・DuringSupportPage・AnalyzeAngerLambda・DetectDangerSpeechLambdaの全メソッドシグネチャ追加
   - **aidlc-docs/inception/application-design/services.md**: APIエンドポイント2本追加、リクエスト/レスポンススキーマ追加、DynamoDBアクセスパターン3件追加、属性追加、SAMテンプレート追加、コスト概算更新
   - **aidlc-docs/inception/application-design/component-dependency.md**: DuringSupportPage依存関係追加、API呼び出し関係追加、Lambda→AWSサービス依存追加、謝罪中支援データフロー図追加
-  - **aidlc-docs/inception/application-design/unit-of-work.md**: U9詳細設計（Lambda・API・SAMテンプレート・DynamoDB・フォールバック・将来デバイス構想）、Lambda数14→16更新
+  - **aidlc-docs/inception/application-design/unit-of-work.md**: U9詳細設計（Lambda・API・SAMテンプレート・DynamoDB・フォールバック・将来デバイス構想）、Lambda数 18→20更新
   - **docs/requirements.md**: Epic 10行追加、合計・優先度説明更新
   - **aidlc-docs/aidlc-state.md**: コンセプト行・ストーリー数更新
+
+---
+
+## エントリ 039 - 数値整合性修正（C-1〜C-4）・HITL注釈・リハーサル位置づけ明確化（W-1/W-3）
+- **日時**: 2026-05-03T22:00:00+09:00
+- **フェーズ**: INCEPTION - Quality Assurance
+- **アクション**: エントリ038で誤記されたLambda数（14→16 → 正しくは18→20）の修正、README.md全体の数値不整合解消、E035追加Lambda4本のapplication-design/services.mdへの反映漏れ追加
+- **修正サマリー**:
+  - **README.md**:
+    - ドキュメントマップ③: `INVEST済３４ストーリー/221SP` → `INVEST済37ストーリー/245SP`
+    - 審査基準対応表: `U0〜U8・221SP` → `U0〜U9・245SP`
+    - 技術スタック: `Lambda × 14 関数` → `Lambda × 20 関数`
+    - 技術スタック: `15 エンドポイント` → `20 エンドポイント`
+    - アーキテクチャ概要図: `Lambda × 14` → `Lambda × 20`（Nova Lite系/Sonnet系を更新）
+    - INCEPTIONフェーズ構成: `9ユニット定義(U0-U8)` → `10ユニット定義(U0-U9)`
+    - INCEPTIONフェーズ構成: `全34ストーリー → ユニット マッピング` → `全37ストーリー`
+    - スコープ表: `**フルスコープ** | U0〜U6 | 180 | 全機能実装 | 決勝` → `**P1完全体** | U0〜U6 | 180 | 上司モードまで全実装 | 決勝`（混乱解消）
+    - W-3 HITL注釈追加: GEZAにおけるHITL独自解釈（AIが設計・人間が実行）を明記
+    - W-1 リハーサル位置づけ: 「U2コアの追加オプション（U3）」であることを明記
+  - **aidlc-docs/audit.md（エントリ038）**: `Lambda 14本 → 16本` → `Lambda 18本 → 20本`（+2 の基点誤りを修正）
+  - **aidlc-docs/inception/application-design/application-design.md**:
+    - Lambda一覧5.1: E035追加4本（#15 check-draft, #16 analyze-reply, #17 save-story-log, #18 diagnose-tendency）追加
+    - セクション11.4 Lambda番号: 15/16 → 19/20 に修正（通し番号整合）
+  - **aidlc-docs/inception/application-design/services.md**:
+    - APIエンドポイント表: E035追加3本（POST /draft/check, POST /reply/analyze, GET /karte/diagnose）追加（合計20エンドポイント）
+    - SAMテンプレート: `Lambda 関数（14関数）` → `Lambda 関数（20関数）`、CheckDraft/AnalyzeReply/SaveStoryLog/DiagnoseTendency Function追加
+- **数値変更サマリー**:
+  - Lambda数: **20本**（14基本 + 4本E035 + 2本E038）で全ドキュメント統一
+  - APIエンドポイント: **20本**（15基本 + 3本E035 + 2本E038）で全ドキュメント統一
+  - ユーザーストーリー: **37ストーリー / 245 SP / 10 Epic** で全ドキュメント統一
+- **整合性確認**: README.md・audit.md・application-design.md・services.mdの数値が全て一致

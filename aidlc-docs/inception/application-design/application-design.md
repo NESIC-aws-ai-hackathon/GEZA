@@ -20,9 +20,9 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 |------|------|
 | フロントエンド | HTML5 + 共通 JS/CSS モジュール（複数ページ構成） |
 | アバター描画 | facesjs v5.0.3（フォーク版・IIFE Bundle）|
-| 音声合成 | Amazon Polly（Kazuha, ja-JP, Neural, MP3 + SpeechMarks） |
+| 音声合成 | Amazon Polly（Kazuha：女性 / Takumi：男性, ja-JP, Neural, MP3 + SpeechMarks） |
 | 音声認識 | Amazon Transcribe Streaming（WebSocket 直接接続, ja-JP） |
-| バックエンド | AWS Lambda (Python 3.12, 512MB, 30s) × 16関数 |
+| バックエンド | AWS Lambda (Python 3.12, 512MB, 30s) × 20関数 |
 | LLM | Amazon Nova Lite（評価・分類）/ Claude Sonnet（生成） |
 | DB | DynamoDB シングルテーブル（PAY_PER_REQUEST） |
 | 認証 | Amazon Cognito User Pool（ログイン） + Identity Pool（Transcribe 一時認証） |
@@ -59,7 +59,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 └──────────┬───────────┘
            │
      ┌─────┴──────────────────────────────────┐
-     │           Lambda 関数群（16本）           │
+     │           Lambda 関数群（20本）           │
      │                                         │
      │  Nova Lite 系              Sonnet 系     │
      │  ・assess-apology         ・generate-opponent │
@@ -81,8 +81,8 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
                                  │
                    ┌─────────────┴───────┐
                    │   Amazon Polly      │
-                   │   Kazuha Neural     │
-                   │   MP3 + SpeechMarks │
+                   │   Kazuha / Takumi Neural │
+                   │   MP3 + SpeechMarks     │
                    └─────────────────────┘
 ```
 
@@ -95,12 +95,12 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | Q1 | フロントエンド構成 | B: 複数HTML + 共通JS/CSS | ページ間の状態をsessionStorageで引き継ぎ、シンプルな構成 |
 | Q2 | 状態管理 | A+C Hybrid: 3層ステート | リアルタイム(AppState) + セッション間(sessionStorage) + 永続(DynamoDB) |
 | Q3 | アバター/感情分離 | C: avatar.js + emotions.js | テスタビリティ・再利用性を確保 |
-| Q4 | Lambda分割粒度 | A: 細粒度14関数 | 独立デプロイ・スケーリング・タイムアウト最適化 |
+| Q4 | Lambda分割粒度 | A: 細粒度20関数 | 独立デプロイ・スケーリング・タイムアウト最適化（初期14関数、E035/E038拡張で計全20本） |
 | Q5 | Bedrockモデル | A: Nova Lite/Sonnet分離 | コスト最適化（評価はNova Lite、高品質生成はSonnet） |
 | Q6 | 音声認識接続 | A: Transcribe直接WebSocket | Lambda経由は不要、Cognito Identity Poolで安全に認証 |
 | Q7 | DB設計 | A: DynamoDBシングルテーブル | アクセスパターンが明確、コスト効率 |
 | Q8 | 会話履歴保存 | A: 全ターン保存 | カルテ分析・改善追跡に必要 |
-| Q9 | API設計 | A: RESTful（リソースベース） | 直感的な設計、15エンドポイント |
+| Q9 | API設計 | A: RESTful（リソースベース） | 直感的な設計。0エンドポイント（初期15、E035+E038拡張で計全20本） |
 | Q10 | 認証方式 | A: API Gateway JWT Authorizer | Cognito統合、Lambda内認証不要 |
 | Q11 | プロンプト管理 | A: backend/prompts/配置 | バージョン管理しやすく、テスト容易 |
 | Q12 | エラーハンドリング | B: @handle_errors デコレーター | 全Lambdaに一貫したエラー処理 |
@@ -185,8 +185,12 @@ Layer 3: DynamoDB API経由（永続化）
 | 12 | analyze-karte | Nova Lite | 512MB | 30s |
 | 13 | evaluate-guidance | Nova Lite | 512MB | 30s |
 | 14 | generate-guidance-feedback | Claude Sonnet | 512MB | 30s |
-| 15 | **analyze-anger** | **Nova Lite** | **512MB** | **10s** |
-| 16 | **detect-danger-speech** | **Nova Lite** | **512MB** | **10s** |
+| 15 | check-draft | Nova Lite | 512MB | 30s |
+| 16 | analyze-reply | Claude Sonnet | 512MB | 30s |
+| 17 | save-story-log | — | 512MB | 30s |
+| 18 | diagnose-tendency | Claude Sonnet | 512MB | 30s |
+| **19** | **analyze-anger** | **Nova Lite** | **512MB** | **10s** |
+| **20** | **detect-danger-speech** | **Nova Lite** | **512MB** | **10s** |
 
 ### 5.2 共有 Lambda Layer
 
@@ -275,9 +279,12 @@ GEZA/
 │   ├── index.html / inception.html / customize.html
 │   ├── story.html / practice.html / feedback.html
 │   ├── carte.html / boss.html
+│   ├── check.html / reply.html / diagnosis.html
+│   ├── during-support.html
 │   └── shared/
 │       ├── avatar.js / emotions.js / state.js
 │       ├── api.js / transcribe.js / polly-sync.js
+│       ├── anger-gauge.js / whisper-advisor.js
 │       └── auth.js / style.css
 │
 ├── backend/
@@ -289,11 +296,14 @@ GEZA/
 │   │   ├── generate-follow-mail/ ├── save-session/
 │   │   ├── get-karte/            ├── analyze-karte/
 │   │   ├── evaluate-guidance/
-│   │   └── generate-guidance-feedback/
+    │   ├── generate-guidance-feedback/
+    │   ├── check-draft/          ├── analyze-reply/
+    │   ├── save-story-log/       ├── diagnose-tendency/
+    │   ├── analyze-anger/        └── detect-danger-speech/
 │   ├── shared/
 │   │   ├── decorators.py / prompt_loader.py / bedrock_client.py
 │   └── prompts/
-│       └── *.txt（13プロンプトテンプレート）
+        └── *.txt（16プロンプトテンプレート）
 │
 ├── template.yaml    ← SAM テンプレート
 ├── docs/            ← 統合仕様書
@@ -350,7 +360,7 @@ GEZA/
 └──────────┬───────────┘      └──────────────────────────────────────────┘
            │
      ┌─────┴──────────────────────────────────────┐
-     │       Lambda 関数（+2本 → 計16本）             │
+     │       Lambda 関数（+2本 → 全20本）             │
      │                                               │
      │  Nova Lite 系（追加）                           │
      │  ・analyze-anger         ← 怒り残量リアルタイム分析│
@@ -386,8 +396,8 @@ GEZA/
 
 | # | 関数名 | Bedrockモデル | メモリ | Timeout | 責務 |
 |---|--------|-------------|--------|---------|------|
-| 15 | **analyze-anger** | Nova Lite | 512MB | 10s | 相手の発言テキストから怒り残量・失望度・許容余地・反論危険度を推定 |
-| 16 | **detect-danger-speech** | Nova Lite | 512MB | 10s | ユーザーの発話テキストから言い訳・逆ギレ・責任転嫁・NGワードを検知し、短い助言を生成 |
+| 19 | **analyze-anger** | Nova Lite | 512MB | 10s | 相手の発言テキストから怒り残量・失望度・許容余地・反論危険度を推定 |
+| 20 | **detect-danger-speech** | Nova Lite | 512MB | 10s | ユーザーの発話テキストから言い訳・逆ギレ・責任転嫁・NGワードを検知し、短い助言を生成 |
 
 > **Timeout 10s**: 謝罪中のリアルタイム支援のため、既存 Lambda（30s）より短い応答が必須。Nova Lite の 1〜3 秒応答をプロトタイプで実証済み。
 
