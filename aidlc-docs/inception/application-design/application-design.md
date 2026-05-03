@@ -132,16 +132,21 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 
 ```javascript
 class ApologyMeter {
-  // 角度値（0〜180）を受け取り、ステージ別ピクトグラム画像をスタンプ演出＋SE音で表示する
-  // degree: 0〜180の角度値
+  // 6ゾーン14段階の謝罪角度メーター
+  // ゾーン: 🟢日常(0-30°) / 🟡ビジネス(45-60°) / 🟠危機(75-90°) / 🔴覚悟(100-120°) / ⚫超越(135-150°) / ✨昇天(165-180°)
+
+  // 角度値（0〜180）を受け取り、ライトモードのスマホ縦長UIで実印風朱肉スタンプ演出＋ゾーン別SE音（14種類）を表示
   setDegree(degree)
 
-  // 角度ステージ名を返す（会釈/深謝/土下座/寝下座/焦げ下座/焼き寝下座）
-  getStageName(degree)
+  // 14段階のステージ情報を返す
+  // 戻り値: { idx, deg, name, posture, lv, zone, se, zoneLabel, zoneColor }
+  getStageInfo(degree)
+
+  // 角度に対応するゾーンを返す
+  // 戻り値: { id, label, min, max, color, bg }
+  getZone(degree)
 
   // 自己申告角度とAI角度のギャップ分析結果を表示
-  // aiDegree: AI判断の角度
-  // selfDegree: 自己申告角度
   showGapAnalysis(aiDegree, selfDegree)
 }
 ```

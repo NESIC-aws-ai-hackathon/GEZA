@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GEZA - 謝罪角度アセスメント</title>
+<style>
+  :root {
+    --page-bg: #e9edf3;
+    --bg: #fffaf4;
+    --card: #ffffff;
+    --accent: #d83b24;
+    --accent2: #a61f15;
+    --ink: #b82016;
+    --ink-dark: #8f1710;
+    --paper: #fffdf8;
+    --text: #24211f;
+    --text-dim: #746d66;
+    --border: #eadfd4;
+    /* Zone colors */
+    --z-daily: #2ecc71;
+    --z-biz: #f1c40f;
+    --z-crisis: #e67e22;
+    --z-resolve: #e74c3c;
+    --z-beyond: #2c2c2c;
+    --z-ascend: #f0d060;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: var(--page-bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 18px 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .phone-shell {
+    width: min(100%, 430px);
+    min-height: calc(100dvh - 36px);
+    background: var(--bg);
+    border: 1px solid #d8dfe8;
+    box-shadow: 0 18px 60px rgba(50, 60, 72, .18);
+    overflow: hidden;
+  }
+  @media (max-width: 430px) {
+    body { padding: 0; background: var(--bg); }
+    .phone-shell { min-height: 100dvh; border: none; box-shadow: none; }
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    padding: 20px 16px 14px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #fff 0%, #fff7ec 100%);
+  }
+  header h1 { font-size: 1.3rem; font-weight: 800; }
+  header h1 em { font-style: normal; color: var(--accent); }
+  header p { color: var(--text-dim); font-size: .75rem; margin-top: 2px; }
+
+  /* ── Input ── */
+  .input-area { padding: 16px; }
+  .input-area label { display: block; font-size: .8rem; color: var(--text-dim); margin-bottom: 6px; }
+  .input-area textarea {
+    width: 100%; height: 68px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 10px 12px; font-size: .95rem;
+    resize: none; outline: none;
+  }
+  .input-area textarea:focus { border-color: var(--accent); }
+  .row { display: flex; gap: 10px; margin-top: 10px; }
+  .row .f { flex: 1; }
+  .row input, .row select {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 10px; font-size: .9rem; outline: none;
+  }
+  .btn {
+    display: block; width: calc(100% - 32px); margin: 14px auto;
+    padding: 14px; border: none; border-radius: 12px; font-size: 1.05rem;
+    font-weight: 800; color: #fff; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 8px 18px rgba(184, 32, 22, .18);
+    transition: transform .12s; -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn:disabled { opacity: .45; }
+
+  /* ── Result ── */
+  .result { padding: 16px; display: none; }
+  .result.show { display: block; }
+
+  /* ── Stamp Container ── */
+  .stamp-stage {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 0 8px;
+  }
+
+  /* ── Stamp Wrapper — アニメーション担当 ── */
+  .stamp-wrap {
+    --sc: 184, 32, 22;
+    position: relative;
+    display: inline-block;
+    opacity: 0;
+    transform: scale(2.5) rotate(-12deg);
+    transition: none;
+  }
+  .stamp-wrap.stamped {
+    animation: stampDrop .4s cubic-bezier(.22,.61,.36,1) forwards;
+  }
+  @keyframes stampDrop {
+    0%   { opacity: 0; transform: scale(2.5) rotate(-12deg); }
+    40%  { opacity: 1; transform: scale(.85) rotate(2deg); }
+    60%  { transform: scale(1.06) rotate(-1deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+
+  /* ── 朱肉かすれ輪 — SVG filter stamp-worn を適用 ── */
+  .stamp-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: transparent;
+    border: 7px solid rgb(var(--sc));
+    box-shadow:
+      inset 0 0 0 6px var(--paper),
+      inset 0 0 0 10px rgba(var(--sc),.85),
+      inset 0 0 0 20px var(--paper),
+      inset 0 0 0 23px rgba(var(--sc),.58);
+    filter: url(#stamp-worn);
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  /* ── Hanko-style Stamp ── */
+  .stamp-circle {
+    position: relative;
+    width: 232px; height: 232px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%, #fff 0%, #fff7ed 72%, #f2e6d8 100%);
+    box-shadow: 0 10px 24px rgba(95, 54, 34, .2);
+    display: flex; align-items: center; justify-content: center;
+    overflow: visible;
+  }
+  .stamp-circle::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 15% 22%, rgba(var(--sc),.28) 0 2px, transparent 3px),
+      radial-gradient(circle at 74% 19%, rgba(var(--sc),.22) 0 1px, transparent 3px),
+      radial-gradient(circle at 83% 65%, rgba(var(--sc),.2) 0 2px, transparent 4px),
+      radial-gradient(circle at 28% 78%, rgba(var(--sc),.16) 0 2px, transparent 4px),
+      repeating-conic-gradient(from 8deg, rgba(var(--sc),.22) 0deg 2deg, transparent 2deg 7deg);
+    opacity: .7;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .stamp-circle::after {
+    content: '';
+    position: absolute; inset: 15px;
+    border-radius: 50%;
+    border: 2px dashed rgba(var(--sc),.45);
+    box-shadow: 0 0 0 1px rgba(var(--sc),.15);
+    pointer-events: none;
+  }
+
+  .stamp-circle img {
+    position: relative; z-index: 1;
+    width: 142px; height: 142px;
+    object-fit: contain;
+    /* Black pictogram on white background — high contrast */
+    filter: contrast(1.08) drop-shadow(0 1px 1px rgba(0,0,0,.14));
+    pointer-events: none;
+  }
+
+  /* Stage label — ribbon at bottom of stamp */
+  .stamp-label {
+    position: absolute; z-index: 2;
+    bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(var(--sc),.92);
+    color: #fffdf8;
+    font-size: .65rem; font-weight: 800;
+    padding: 2px 12px; border-radius: 2px;
+    letter-spacing: .06em; white-space: nowrap;
+    box-shadow: 0 1px 4px rgba(141,24,15,.24);
+  }
+
+  /* Degree badge — top right (relative to .stamp-wrap) */
+  .stamp-degree {
+    position: absolute; z-index: 5;
+    top: 6px; right: 6px;
+    background: rgb(var(--sc));
+    color: #fff;
+    font-size: 1rem; font-weight: 900;
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(184,32,22,.25);
+    line-height: 1;
+  }
+  .stamp-degree small { font-size: .55rem; font-weight: 600; }
+
+  /* Level badge — top left (relative to .stamp-wrap) */
+  .stamp-level {
+    position: absolute; z-index: 5;
+    top: 10px; left: 10px;
+    font-size: .6rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 3px;
+    background: rgba(36,33,31,.82); color: #fff;
+    white-space: nowrap;
+  }
+
+  /* Impact flash */
+  .impact-flash {
+    position: absolute; top: 50%; left: 50%;
+    width: 0; height: 0; border-radius: 50%;
+    background: radial-gradient(circle, rgba(216,59,36,.18) 0%, transparent 70%);
+    transform: translate(-50%,-50%);
+    pointer-events: none;
+  }
+  .impact-flash.pop { animation: flashPop .5s ease-out forwards; }
+  @keyframes flashPop {
+    0%   { width: 60px; height: 60px; opacity: 1; }
+    100% { width: 380px; height: 380px; opacity: 0; }
+  }
+
+  /* Ink splat particles */
+  .ink-p {
+    position: absolute;
+    width: 5px; height: 5px; border-radius: 50%;
+    opacity: 0; pointer-events: none;
+  }
+  .ink-p.burst { animation: inkB .55s ease-out forwards; }
+  @keyframes inkB {
+    0%   { opacity: .7; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(.2); }
+  }
+
+  /* Screen shake */
+  .shake { animation: shk .4s ease-in-out; }
+  @keyframes shk {
+    0%,100%{ transform: translate(0); }
+    15%{ transform: translate(-5px,2px) rotate(-.3deg); }
+    35%{ transform: translate(4px,-1px) rotate(.2deg); }
+    55%{ transform: translate(-3px,1px); }
+    75%{ transform: translate(2px,-1px); }
+  }
+  .shake-heavy { animation: shkH .55s ease-in-out; }
+  @keyframes shkH {
+    0%,100%{ transform: translate(0); }
+    10%{ transform: translate(-9px,5px) rotate(-.7deg); }
+    25%{ transform: translate(8px,-4px) rotate(.5deg); }
+    40%{ transform: translate(-7px,3px) rotate(-.4deg); }
+    55%{ transform: translate(6px,-2px) rotate(.3deg); }
+    70%{ transform: translate(-4px,1px); }
+    85%{ transform: translate(2px,-1px); }
+  }
+  .shockwave {
+    position: absolute; top: 50%; left: 50%;
+    border-radius: 50%;
+    border: 3px solid var(--sw-c, var(--accent));
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: swExpand .6s ease-out forwards;
+  }
+  @keyframes swExpand {
+    0%   { width: 100px; height: 100px; opacity: .6; }
+    100% { width: 420px; height: 420px; opacity: 0; border-width: 1px; }
+  }
+  /* 極重揺れ */
+  .shake-max { animation: shkMax .65s ease-in-out; }
+  @keyframes shkMax {
+    0%,100%{ transform: translate(0) rotate(0); }
+    7%  { transform: translate(-16px,11px) rotate(-1.6deg); }
+    14% { transform: translate(14px,-10px) rotate(1.3deg); }
+    21% { transform: translate(-13px,9px) rotate(-1.1deg); }
+    28% { transform: translate(12px,-8px) rotate(.95deg); }
+    36% { transform: translate(-11px,7px) rotate(-.85deg); }
+    44% { transform: translate(9px,-5px) rotate(.65deg); }
+    52% { transform: translate(-7px,3px) rotate(-.42deg); }
+    60% { transform: translate(5px,-2px) rotate(.22deg); }
+    68% { transform: translate(-3px,1px); }
+    76% { transform: translate(1px,0); }
+  }
+  /* フレーム傾き */
+  .phone-shell.tilt { animation: phTilt .78s cubic-bezier(.4,0,.6,1); }
+  @keyframes phTilt {
+    0%,100% { transform: rotate(0) scale(1); }
+    12% { transform: rotate(-2.8deg) scale(.965); }
+    28% { transform: rotate(3.2deg) scale(.955); }
+    46% { transform: rotate(-2.1deg) scale(.975); }
+    63% { transform: rotate(1.6deg) scale(.985); }
+    79% { transform: rotate(-.9deg); }
+  }
+  /* スタンプバウンス（inline style経由） */
+  @keyframes stBounce {
+    0%   { transform: scale(1) translateY(0); }
+    22%  { transform: scale(1.2) translateY(-16px); }
+    48%  { transform: scale(.88) translateY(8px); }
+    68%  { transform: scale(1.1) translateY(-5px); }
+    84%  { transform: scale(.96) translateY(1px); }
+    100% { transform: scale(1) translateY(0); }
+  }
+  /* スタンプカオス（inline style経由） */
+  @keyframes stChaos {
+    0%   { transform: scale(1) rotate(0) translateY(0); }
+    7%   { transform: scale(1.45) rotate(8deg) translateY(-14px); }
+    15%  { transform: scale(.82) rotate(-7deg) translateY(10px); }
+    23%  { transform: scale(1.38) rotate(5deg) translateY(-12px); }
+    31%  { transform: scale(.78) rotate(-9deg) translateY(11px); }
+    39%  { transform: scale(1.3) rotate(4deg) translateY(-7px); }
+    47%  { transform: scale(1.6) rotate(-3.5deg) translateY(-3px); }
+    55%  { transform: scale(.86) rotate(2.5deg) translateY(5px); }
+    63%  { transform: scale(1.22) rotate(-2deg) translateY(-4px); }
+    71%  { transform: scale(1.5) rotate(.9deg); }
+    80%  { transform: scale(.93) rotate(0); }
+    90%  { transform: scale(1.12); }
+    100% { transform: scale(1) rotate(0); }
+  }
+
+  /* ── Stage Info ── */
+  .stage-info {
+    text-align: center; margin-top: 14px;
+    opacity: 0; transform: translateY(10px);
+    transition: all .4s ease .45s;
+  }
+  .stage-info.show { opacity: 1; transform: translateY(0); }
+  .stage-info .name { font-size: 1.4rem; font-weight: 800; }
+  .stage-info .posture { font-size: .8rem; color: var(--text-dim); margin-top: 2px; }
+  .stage-info .zone-badge {
+    display: inline-block; margin-top: 8px;
+    padding: 4px 14px; border-radius: 6px;
+    font-size: .75rem; font-weight: 700;
+  }
+  .stage-info .approach {
+    display: block; margin-top: 8px;
+    font-size: .78rem; color: var(--text-dim);
+    padding: 6px 14px; border: 1px solid var(--border); border-radius: 8px;
+  }
+
+  /* ── Scale ── */
+  .scale {
+    margin: 18px 0 4px; height: 10px; border-radius: 5px;
+    background: linear-gradient(90deg,
+      var(--z-daily) 0%, var(--z-daily) 17%,
+      var(--z-biz) 25%, var(--z-biz) 33%,
+      var(--z-crisis) 42%, var(--z-crisis) 50%,
+      var(--z-resolve) 56%, var(--z-resolve) 67%,
+      var(--z-beyond) 75%, var(--z-beyond) 83%,
+      var(--z-ascend) 92%, var(--z-ascend) 100%);
+    position: relative;
+  }
+  .scale .pin {
+    position: absolute; top: -5px;
+    width: 5px; height: 20px; background: #24211f;
+    border-radius: 3px; box-shadow: 0 0 0 2px rgba(255,255,255,.75);
+    transform: translateX(-50%);
+    transition: left .9s cubic-bezier(.34,1.56,.64,1);
+  }
+  .scale-labels {
+    display: flex; justify-content: space-between;
+    font-size: .5rem; color: var(--text-dim); margin-top: 2px;
+  }
+
+  /* ── Gap & Rationale cards ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px; margin-top: 14px;
+    opacity: 0; transform: translateY(16px);
+    transition: all .4s ease;
+  }
+  .card.show { opacity: 1; transform: translateY(0); }
+  .card h3 { font-size: .85rem; color: var(--accent); margin-bottom: 10px; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .bar-label { width: 56px; font-size: .72rem; color: var(--text-dim); text-align: right; }
+  .bar-track { flex: 1; height: 22px; background: #f1ebe4; border-radius: 4px; overflow: hidden; }
+  .bar-fill {
+    height: 100%; border-radius: 4px;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 6px; font-size: .7rem; font-weight: 700; color: #fff;
+    transition: width 1s cubic-bezier(.34,1.56,.64,1);
+  }
+  .bar-fill.ai { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .bar-fill.user { background: linear-gradient(90deg, #3498db, #2980b9); }
+  .gap-msg {
+    margin-top: 10px; padding: 10px 12px;
+    background: rgba(255,107,53,.08);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: .8rem; line-height: 1.55;
+  }
+
+  .factor { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: .8rem; }
+  .factor:last-child { border-bottom: none; }
+  .factor .w {
+    min-width: 34px; text-align: center; padding: 2px 6px;
+    background: var(--accent); color: #fff; font-size: .7rem;
+    font-weight: 700; border-radius: 4px;
+  }
+
+  /* ── Slider Demo ── */
+  .demo { padding: 16px; margin-top: 8px; }
+  .demo h2 { font-size: .95rem; color: var(--text-dim); text-align: center; margin-bottom: 12px; }
+  .demo-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; text-align: center;
+  }
+  .demo-val { font-size: 2.2rem; font-weight: 900; color: var(--accent); }
+  .demo-card input[type="range"] { width: 100%; margin: 12px 0; accent-color: var(--accent); height: 6px; }
+  .demo-stage { font-size: .8rem; }
+  .btn-preview {
+    display: inline-block; margin-top: 14px;
+    padding: 10px 22px; border: none; border-radius: 10px;
+    font-size: .88rem; font-weight: 800; color: #fff; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 4px 12px rgba(184,32,22,.2);
+    transition: transform .1s;
+  }
+  .btn-preview:active { transform: scale(.95); }
+
+  /* Slider stamp preview — hanko style */
+  .mini-hanko {
+    position: relative;
+    width: 150px; height: 150px; margin: 14px auto 0;
+    border-radius: 50%;
+    background: #fff;
+    border: 4px solid var(--z-resolve);
+    box-shadow: inset 0 0 0 3px #fffdf8, inset 0 0 0 6px rgba(184,32,22,.72), inset 0 0 0 13px #fffdf8, inset 0 0 0 15px rgba(184,32,22,.38), 0 5px 14px rgba(95,54,34,.18);
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color .3s, box-shadow .3s;
+    overflow: hidden;
+  }
+  .mini-hanko::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff, #fff7ed);
+    pointer-events: none;
+  }
+  .mini-hanko::after {
+    content: '';
+    position: absolute; inset: -5px; border-radius: 50%;
+    border: 1.5px dashed rgba(184,32,22,.4);
+    pointer-events: none;
+  }
+  .mini-hanko img {
+    position: relative; z-index: 1;
+    width: 100px; height: 100px; object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.1));
+  }
+  .mini-hanko .mini-lbl {
+    position: absolute; z-index: 2;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: rgba(184,32,22,.92); color: #fffdf8;
+    font-size: .55rem; font-weight: 800;
+    padding: 1px 8px; border-radius: 2px; white-space: nowrap;
+  }
+
+  /* ── Gallery ── */
+  .gallery { padding: 16px; margin-bottom: 60px; }
+  .gallery h2 { font-size: .95rem; color: var(--text-dim); text-align: center; margin-bottom: 12px; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .g-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 6px 4px; text-align: center;
+    cursor: pointer; transition: border-color .2s, transform .12s;
+  }
+  .g-card:active { transform: scale(.95); }
+  .g-card.active { border-color: var(--accent); background: rgba(255,107,53,.06); }
+
+  /* Mini hanko in gallery */
+  .g-hanko {
+    width: 52px; height: 52px; margin: 0 auto;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid var(--z-resolve);
+    box-shadow: inset 0 0 0 1.5px #fffdf8, inset 0 0 0 3px rgba(184,32,22,.78), inset 0 0 0 7px #fffdf8, inset 0 0 0 8px rgba(184,32,22,.35);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; position: relative;
+  }
+  .g-hanko::before {
+    content: '';
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff, #fff7ed);
+    pointer-events: none;
+  }
+  .g-hanko img {
+    position: relative; z-index: 1;
+    width: 34px; height: 34px; object-fit: contain;
+  }
+  .g-card .num { font-size: .6rem; color: var(--text-dim); margin-top: 3px; }
+  .g-card .deg { font-size: .72rem; font-weight: 700; margin-top: 1px; }
+  .g-card .nm { font-size: .52rem; color: var(--text-dim); margin-top: 1px; line-height: 1.15; }
+</style>
+</head>
+<body>
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <filter id="stamp-worn" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.065 0.045" numOctaves="4" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4.5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+<main class="phone-shell">
+
+<header>
+  <h1><em>GEZA</em> 謝罪角度アセスメント</h1>
+  <p>ApologyMeter — 判子スタンプ演出 + SE音 プロトタイプ</p>
+</header>
+
+<div class="input-area">
+  <label>やらかした内容</label>
+  <textarea id="inp" placeholder="例：本番環境にバグをリリースして3社に影響が出た">本番環境にバグをリリースして3社に影響が出た</textarea>
+  <div class="row">
+    <div class="f">
+      <label style="font-size:.75rem;color:var(--text-dim);margin-bottom:4px">自己申告（角度）</label>
+      <input type="number" id="selfDeg" min="0" max="180" value="45">
+    </div>
+    <div class="f">
+      <label style="font-size:.75rem;color:var(--text-dim);margin-bottom:4px">相手との関係性</label>
+      <select id="rel">
+        <option value="client">取引先</option>
+        <option value="boss" selected>上司</option>
+        <option value="colleague">同僚</option>
+        <option value="customer">エンドユーザー</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<button class="btn" id="btnGo" onclick="runAssess()">🔍 謝罪角度を診断する</button>
+
+<!-- Result -->
+<div class="result" id="res">
+  <div class="stamp-stage" id="stampStage">
+    <div class="impact-flash" id="flash"></div>
+    <div class="stamp-wrap" id="stampWrap">
+      <div class="stamp-ring"></div>
+      <div class="stamp-circle" id="stampCircle">
+        <img id="stampImg" src="" alt="">
+        <span class="stamp-label" id="stampLbl"></span>
+      </div>
+      <span class="stamp-degree" id="stampDeg"></span>
+      <span class="stamp-level" id="stampLv"></span>
+    </div>
+  </div>
+
+  <div class="stage-info" id="stageInfo">
+    <div class="name" id="sName"></div>
+    <div class="posture" id="sPosture"></div>
+    <div class="zone-badge" id="sZone"></div>
+    <div class="approach" id="sApproach"></div>
+  </div>
+
+  <div class="scale">
+    <div class="pin" id="pin" style="left:0%"></div>
+  </div>
+  <div class="scale-labels">
+    <span>0°</span><span>30°</span><span>60°</span><span>90°</span><span>120°</span><span>150°</span><span>180°</span>
+  </div>
+
+  <div class="card" id="gapCard" style="transition-delay:.85s">
+    <h3>📊 AI判定 vs 自己申告</h3>
+    <div class="bar-row">
+      <span class="bar-label">AI判定</span>
+      <div class="bar-track"><div class="bar-fill ai" id="bAi" style="width:0%"></div></div>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">自己申告</span>
+      <div class="bar-track"><div class="bar-fill user" id="bUser" style="width:0%"></div></div>
+    </div>
+    <div class="gap-msg" id="gapMsg"></div>
+  </div>
+
+  <div class="card" id="ratCard" style="transition-delay:1.05s">
+    <h3>🔎 判定根拠</h3>
+    <div id="factors"></div>
+  </div>
+</div>
+
+<!-- Slider -->
+<div class="demo">
+  <h2>🎚️ スライダーで確認</h2>
+  <div class="demo-card">
+    <div class="demo-val"><span id="sv">0</span>°</div>
+    <input type="range" id="slider" min="0" max="180" value="0">
+    <div class="demo-stage" id="dStage"></div>
+    <div class="mini-hanko" id="miniHanko">
+      <img id="dImg" src="" alt="">
+      <span class="mini-lbl" id="dLabel"></span>
+    </div>
+    <button class="btn-preview" id="btnPreview" onclick="previewStamp()">🔴 スタンプ演出を再生</button>
+  </div>
+</div>
+
+<!-- Gallery -->
+<div class="gallery">
+  <h2>📐 全14段階ピクトグラム一覧</h2>
+  <div class="gallery-grid" id="gGrid"></div>
+</div>
+
+</main>
+
+<script>
+// ── 14-Stage Pictogram Data ──
+const STAGES = [
+  { idx:0,  deg:0,   file:'geza_00_0deg_upright.png',              name:'直立不動',   posture:'背筋を伸ばし微動だにしない',     lv:'Lv.0 無',      zone:'daily',   se:'silent',  zoneLabel:'🟢 日常',     zoneColor:'var(--z-daily)' },
+  { idx:1,  deg:15,  file:'geza_01_15deg_head_down.png',           name:'目礼',       posture:'首だけわずかに傾ける',           lv:'Lv.1 微',      zone:'daily',   se:'knock',   zoneLabel:'🟢 日常',     zoneColor:'var(--z-daily)' },
+  { idx:2,  deg:30,  file:'geza_02_30deg_light_bow.png',           name:'会釈',       posture:'腰から軽く上体を倒す',           lv:'Lv.2 軽',      zone:'daily',   se:'peko',    zoneLabel:'🟢 日常',     zoneColor:'var(--z-daily)' },
+  { idx:3,  deg:45,  file:'geza_03_45deg_business_bow.png',        name:'敬礼',       posture:'腰から45°、手は太ももに',       lv:'Lv.3 中',      zone:'biz',     se:'sharan',  zoneLabel:'🟡 ビジネス', zoneColor:'var(--z-biz)' },
+  { idx:4,  deg:60,  file:'geza_04_60deg_deep_bow.png',            name:'最敬礼',     posture:'腰から深く、背中は平ら',         lv:'Lv.4 重',      zone:'biz',     se:'goon',    zoneLabel:'🟡 ビジネス', zoneColor:'var(--z-biz)' },
+  { idx:5,  deg:75,  file:'geza_05_75deg_deeper_apology.png',      name:'深謝',       posture:'最敬礼よりさらに深く',           lv:'Lv.5 深刻',    zone:'crisis',  se:'dododo',  zoneLabel:'🟠 危機',     zoneColor:'var(--z-crisis)' },
+  { idx:6,  deg:90,  file:'geza_06_90deg_right_angle_bow.png',     name:'直角のお辞儀',posture:'上体が完全に水平',              lv:'Lv.6 危機',    zone:'crisis',  se:'jaan',    zoneLabel:'🟠 危機',     zoneColor:'var(--z-crisis)' },
+  { idx:7,  deg:100, file:'geza_07_100deg_dogeza.png',             name:'土下座',     posture:'膝をつき額を床に',               lv:'Lv.7 覚悟',    zone:'resolve', se:'dogoon',  zoneLabel:'🔴 覚悟',     zoneColor:'var(--z-resolve)' },
+  { idx:8,  deg:110, file:'geza_08_110deg_dogeza_press_crack.png', name:'土下座プレス',posture:'額を床にめり込ませる',           lv:'Lv.8 絶望',    zone:'resolve', se:'mishi',   zoneLabel:'🔴 覚悟',     zoneColor:'var(--z-resolve)' },
+  { idx:9,  deg:120, file:'geza_09_120deg_prone_arms_side.png',    name:'寝下座',     posture:'全身を床に伏せる',               lv:'Lv.9 壊滅',    zone:'resolve', se:'zuzuzu',  zoneLabel:'🔴 覚悟',     zoneColor:'var(--z-resolve)' },
+  { idx:10, deg:135, file:'geza_10_135deg_prone_arms_forward.png', name:'這い寝下座', posture:'四肢を投げ出し大地と同化',       lv:'Lv.10 消滅願望',zone:'beyond',  se:'shiin',   zoneLabel:'⚫ 超越',     zoneColor:'var(--z-beyond)' },
+  { idx:11, deg:150, file:'geza_11_150deg_chirichiri_kogegeza.png',name:'焦げ寝下座', posture:'摩擦熱で体が焦げ始める',         lv:'Lv.11 超越',   zone:'beyond',  se:'juuuu',   zoneLabel:'⚫ 超越',     zoneColor:'var(--z-beyond)' },
+  { idx:12, deg:165, file:'geza_12_165deg_full_flame.png',         name:'焼き寝下座', posture:'全身が燃え上がる',               lv:'Lv.12 概念化', zone:'ascend',  se:'gooo',    zoneLabel:'✨ 昇天',     zoneColor:'var(--z-ascend)' },
+  { idx:13, deg:180, file:'geza_13_180deg_kogegeza_chirichiri.png',name:'炭化寝下座', posture:'完全燃焼、炭と化す',             lv:'Lv.MAX 昇天',  zone:'ascend',  se:'shuuu',   zoneLabel:'✨ 昇天',     zoneColor:'var(--z-ascend)' },
+];
+
+const ZONES = [
+  { id:'daily',   label:'🟢 日常',     min:0,   max:30,  color:'var(--z-daily)',   bg:'rgba(46,204,113,.12)' },
+  { id:'biz',     label:'🟡 ビジネス', min:31,  max:60,  color:'var(--z-biz)',     bg:'rgba(241,196,15,.12)' },
+  { id:'crisis',  label:'🟠 危機',     min:61,  max:90,  color:'var(--z-crisis)',  bg:'rgba(230,126,34,.12)' },
+  { id:'resolve', label:'🔴 覚悟',     min:91,  max:120, color:'var(--z-resolve)', bg:'rgba(231,76,60,.12)' },
+  { id:'beyond',  label:'⚫ 超越',     min:121, max:150, color:'var(--z-beyond)',  bg:'rgba(44,44,44,.35)' },
+  { id:'ascend',  label:'✨ 昇天',     min:151, max:180, color:'var(--z-ascend)',  bg:'rgba(240,208,96,.12)' },
+];
+
+const BASE = '../icons/pictgram/trimmed/';
+
+function getZone(d) { return ZONES.find(z => d >= z.min && d <= z.max) || ZONES[5]; }
+function getStage(d) { let b = STAGES[0]; for (const s of STAGES) if (s.deg <= d) b = s; return b; }
+
+const ZONE_RGB = {
+  daily:   '46, 175, 100',
+  biz:     '30, 100, 180',
+  crisis:  '210, 110, 30',
+  resolve: '200, 50, 40',
+  beyond:  '70, 30, 110',
+  ascend:  '200, 160, 40',
+};
+
+function makeDist(amount) {
+  const n = 256, curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = i * 2 / n - 1;
+    curve[i] = (Math.PI + amount) * x / (Math.PI + amount * Math.abs(x));
+  }
+  return curve;
+}
+
+function applyStampTheme(wrap, zoneId) {
+  wrap.style.setProperty('--sc', ZONE_RGB[zoneId] || '184, 32, 22');
+}
+
+function spawnShockwave(container, color) {
+  const el = document.createElement('div');
+  el.className = 'shockwave';
+  el.style.setProperty('--sw-c', color);
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+
+// ── Audio Engine ──
+let actx;
+function ctx() { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); return actx; }
+
+function mkNoise(c, dur) {
+  const len = c.sampleRate * dur;
+  const buf = c.createBuffer(1, len, c.sampleRate);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+  const src = c.createBufferSource(); src.buffer = buf;
+  return src;
+}
+
+// ── 共通スタンプ衝撃音「ドン！」 ── 角度連動6レイヤー
+function playStampSlam(intensity) {
+  const c = ctx(); if (c.state === 'suspended') c.resume();
+  const t = c.currentTime;
+  const vol = 0.75 + intensity * 0.4;
+
+  // L1: 低域ノイズバースト（高域を完全遮断 → 「パシッ」消去）
+  const n1 = mkNoise(c, .24);
+  const lp1 = c.createBiquadFilter(); lp1.type = 'lowpass'; lp1.frequency.value = 160;
+  const hp1 = c.createBiquadFilter(); hp1.type = 'highpass'; hp1.frequency.value = 18;
+  const ng1 = c.createGain();
+  ng1.gain.setValueAtTime(vol * 1.2, t);
+  ng1.gain.exponentialRampToValueAtTime(.001, t + .18 + intensity * .12);
+  n1.connect(lp1); lp1.connect(hp1); hp1.connect(ng1); ng1.connect(c.destination); n1.start(t);
+
+  // L2: サブベースパンチ（「ドン」の胴体）
+  const oLow = c.createOscillator(), gLow = c.createGain();
+  oLow.type = 'sine'; oLow.frequency.setValueAtTime(80, t);
+  oLow.frequency.exponentialRampToValueAtTime(16 + intensity * 8, t + .45 + intensity * .4);
+  gLow.gain.setValueAtTime(vol * 1.4, t);
+  gLow.gain.exponentialRampToValueAtTime(.001, t + .55 + intensity * .45);
+  oLow.connect(gLow); gLow.connect(c.destination); oLow.start(t); oLow.stop(t + 1.0);
+
+  // L3: 低域ボディサンプ（60Hz→下降）— 「パシッ」の元凶420Hzを排除
+  const oBody = c.createOscillator(), gBody = c.createGain();
+  oBody.type = 'triangle'; oBody.frequency.setValueAtTime(60, t);
+  oBody.frequency.exponentialRampToValueAtTime(20, t + .14);
+  gBody.gain.setValueAtTime(vol * 1.0, t);
+  gBody.gain.exponentialRampToValueAtTime(.001, t + .17);
+  oBody.connect(gBody); gBody.connect(c.destination); oBody.start(t); oBody.stop(t + .17);
+
+  // L4 (>=0.4): サブベースサステイン
+  if (intensity >= .4) {
+    const oS = c.createOscillator(), gS = c.createGain();
+    oS.type = 'sine'; oS.frequency.setValueAtTime(42, t);
+    oS.frequency.exponentialRampToValueAtTime(13, t + .65 + intensity * .25);
+    gS.gain.setValueAtTime(vol * 1.0 * intensity, t);
+    gS.gain.exponentialRampToValueAtTime(.001, t + .75 + intensity * .35);
+    oS.connect(gS); gS.connect(c.destination); oS.start(t); oS.stop(t + 1.1);
+  }
+
+  // L5 (>=0.7): 歪みクランチ（低域フィルター完備）
+  if (intensity >= .7) {
+    const oC = c.createOscillator(), gC = c.createGain();
+    const dC = c.createWaveShaper(); dC.curve = makeDist(20 + intensity * 35);
+    const lpC = c.createBiquadFilter(); lpC.type = 'lowpass'; lpC.frequency.value = 220;
+    oC.type = 'sine'; oC.frequency.setValueAtTime(55, t);
+    oC.frequency.exponentialRampToValueAtTime(18, t + .5);
+    gC.gain.setValueAtTime(vol * 0.65 * intensity, t);
+    gC.gain.exponentialRampToValueAtTime(.001, t + .55);
+    oC.connect(dC); dC.connect(lpC); lpC.connect(gC); gC.connect(c.destination); oC.start(t); oC.stop(t + .55);
+  }
+
+  // L6 (>=0.9): 地鳴りテール
+  if (intensity >= .9) {
+    const nR = mkNoise(c, 1.3);
+    const lpR = c.createBiquadFilter(); lpR.type = 'lowpass'; lpR.frequency.value = 75;
+    const gR = c.createGain();
+    gR.gain.setValueAtTime(0, t + .05);
+    gR.gain.linearRampToValueAtTime(vol * .42, t + .22);
+    gR.gain.linearRampToValueAtTime(vol * .30, t + .7);
+    gR.gain.exponentialRampToValueAtTime(.001, t + 1.4);
+    nR.connect(lpR); lpR.connect(gR); gR.connect(c.destination); nR.start(t + .05);
+  }
+}
+
+// ── ゾーン別追加演出音 ── slamの後に鳴る（全面刷新版）
+function playZoneSE(seType) {
+  const c = ctx(); if (c.state === 'suspended') c.resume();
+  const t = c.currentTime;
+  switch (seType) {
+    case 'silent': return;
+
+    case 'knock': { // コツッ — 木を叩く厚い音
+      const o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = 'triangle'; o1.frequency.setValueAtTime(1200, t);
+      o1.frequency.exponentialRampToValueAtTime(250, t + .03);
+      g1.gain.setValueAtTime(.7, t); g1.gain.exponentialRampToValueAtTime(.001, t + .12);
+      o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + .12);
+      const o2 = c.createOscillator(), g2 = c.createGain();
+      o2.type = 'sine'; o2.frequency.setValueAtTime(400, t);
+      o2.frequency.exponentialRampToValueAtTime(120, t + .1);
+      g2.gain.setValueAtTime(.5, t); g2.gain.exponentialRampToValueAtTime(.001, t + .15);
+      o2.connect(g2); g2.connect(c.destination); o2.start(t); o2.stop(t + .15);
+      const n = mkNoise(c, .04);
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2000;
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(.35, t); ng.gain.exponentialRampToValueAtTime(.001, t + .04);
+      n.connect(hp); hp.connect(ng); ng.connect(c.destination); n.start(t);
+      break;
+    }
+
+    case 'peko': { // ペコッ — お辞儀のやわらかい2トーン
+      const o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = 'sine'; o1.frequency.setValueAtTime(650, t);
+      o1.frequency.exponentialRampToValueAtTime(200, t + .18);
+      g1.gain.setValueAtTime(.6, t); g1.gain.exponentialRampToValueAtTime(.001, t + .3);
+      o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + .3);
+      const o2 = c.createOscillator(), g2 = c.createGain();
+      o2.type = 'sine'; o2.frequency.setValueAtTime(320, t + .02);
+      o2.frequency.exponentialRampToValueAtTime(120, t + .2);
+      g2.gain.setValueAtTime(.4, t + .02); g2.gain.exponentialRampToValueAtTime(.001, t + .28);
+      o2.connect(g2); g2.connect(c.destination); o2.start(t + .02); o2.stop(t + .28);
+      const n = mkNoise(c, .08);
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = .5;
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(.2, t); ng.gain.exponentialRampToValueAtTime(.001, t + .08);
+      n.connect(bp); bp.connect(ng); ng.connect(c.destination); n.start(t);
+      break;
+    }
+
+    case 'sharan': { // シャラーーン — 6和音キラキラチャイム
+      [550, 880, 1100, 1650, 2200, 3300].forEach((f, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(f + (Math.random() - .5) * 15, t + i * .03);
+        g.gain.setValueAtTime(.22, t + i * .03);
+        g.gain.exponentialRampToValueAtTime(.001, t + 1.0);
+        o.connect(g); g.connect(c.destination);
+        o.start(t + i * .03); o.stop(t + 1.0);
+      });
+      const n = mkNoise(c, .4);
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 6000; bp.Q.value = 5;
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(.1, t + .05); ng.gain.exponentialRampToValueAtTime(.001, t + .4);
+      n.connect(bp); bp.connect(ng); ng.connect(c.destination); n.start(t + .05);
+      break;
+    }
+
+    case 'goon': { // ゴォォォーーーン — 巨大な鐘 + 余韻
+      const o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = 'sine'; o1.frequency.setValueAtTime(100, t);
+      o1.frequency.exponentialRampToValueAtTime(48, t + 1.5);
+      g1.gain.setValueAtTime(.85, t); g1.gain.exponentialRampToValueAtTime(.001, t + 1.8);
+      o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 1.8);
+      [200, 300, 500, 800].forEach((f, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(f, t);
+        g.gain.setValueAtTime(.3 - i * .05, t);
+        g.gain.exponentialRampToValueAtTime(.001, t + 1.4 - i * .2);
+        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 1.4);
+      });
+      const n = mkNoise(c, .1);
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 800;
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(.5, t); ng.gain.exponentialRampToValueAtTime(.001, t + .12);
+      n.connect(lp); lp.connect(ng); ng.connect(c.destination); n.start(t);
+      break;
+    }
+
+    case 'dododo': { // ドドドドドド — 地響きクレッシェンド太鼓12連打
+      for (let i = 0; i < 12; i++) {
+        const tt = t + i * .045;
+        const vol = .4 + (i / 12) * .55;
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(55 + Math.random() * 20, tt);
+        o.frequency.exponentialRampToValueAtTime(25, tt + .05);
+        g.gain.setValueAtTime(vol * .7, tt); g.gain.exponentialRampToValueAtTime(.001, tt + .06);
+        o.connect(g); g.connect(c.destination); o.start(tt); o.stop(tt + .06);
+        const n = mkNoise(c, .04);
+        const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500;
+        const ng = c.createGain();
+        ng.gain.setValueAtTime(vol * .5, tt); ng.gain.exponentialRampToValueAtTime(.001, tt + .04);
+        n.connect(lp); lp.connect(ng); ng.connect(c.destination); n.start(tt);
+      }
+      const sub = c.createOscillator(), sg = c.createGain();
+      sub.type = 'sine'; sub.frequency.setValueAtTime(38, t);
+      sg.gain.setValueAtTime(.5, t); sg.gain.linearRampToValueAtTime(.7, t + .35);
+      sg.gain.exponentialRampToValueAtTime(.001, t + .8);
+      sub.connect(sg); sg.connect(c.destination); sub.start(t); sub.stop(t + .8);
+      break;
+    }
+
+    case 'jaan': { // ジャーーーン！！ — 巨大銅鑼フルクラッシュ
+      const n1 = mkNoise(c, .9);
+      const bp1 = c.createBiquadFilter(); bp1.type = 'bandpass'; bp1.frequency.value = 600; bp1.Q.value = .7;
+      const ng1 = c.createGain();
+      ng1.gain.setValueAtTime(.75, t); ng1.gain.exponentialRampToValueAtTime(.001, t + .9);
+      n1.connect(bp1); bp1.connect(ng1); ng1.connect(c.destination); n1.start(t);
+      const n2 = mkNoise(c, .5);
+      const bp2 = c.createBiquadFilter(); bp2.type = 'bandpass'; bp2.frequency.value = 3000; bp2.Q.value = 2;
+      const ng2 = c.createGain();
+      ng2.gain.setValueAtTime(.3, t); ng2.gain.exponentialRampToValueAtTime(.001, t + .5);
+      n2.connect(bp2); bp2.connect(ng2); ng2.connect(c.destination); n2.start(t);
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t);
+      o.frequency.exponentialRampToValueAtTime(45, t + 1.2);
+      g.gain.setValueAtTime(.65, t); g.gain.exponentialRampToValueAtTime(.001, t + 1.4);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 1.4);
+      const sub = c.createOscillator(), sg = c.createGain();
+      sub.type = 'sine'; sub.frequency.setValueAtTime(50, t);
+      sg.gain.setValueAtTime(.55, t); sg.gain.exponentialRampToValueAtTime(.001, t + 1.0);
+      sub.connect(sg); sg.connect(c.destination); sub.start(t); sub.stop(t + 1.0);
+      break;
+    }
+
+    case 'dogoon': { // ドッゴォォォォン！！！ — 大地を砕く衝撃
+      const o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = 'sine'; o1.frequency.setValueAtTime(45, t);
+      o1.frequency.exponentialRampToValueAtTime(12, t + 1.2);
+      g1.gain.setValueAtTime(1.0, t); g1.gain.exponentialRampToValueAtTime(.001, t + 1.4);
+      o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 1.4);
+      const o2 = c.createOscillator(), g2 = c.createGain();
+      const dist = c.createWaveShaper(); dist.curve = makeDist(20);
+      o2.type = 'sawtooth'; o2.frequency.setValueAtTime(80, t);
+      o2.frequency.exponentialRampToValueAtTime(25, t + .7);
+      g2.gain.setValueAtTime(.35, t); g2.gain.exponentialRampToValueAtTime(.001, t + .8);
+      o2.connect(dist); dist.connect(g2); g2.connect(c.destination); o2.start(t); o2.stop(t + .8);
+      const n = mkNoise(c, .4);
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 450;
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(.75, t); ng.gain.exponentialRampToValueAtTime(.001, t + .4);
+      n.connect(lp); lp.connect(ng); ng.connect(c.destination); n.start(t);
+      const o3 = c.createOscillator(), g3 = c.createGain();
+      o3.type = 'sine'; o3.frequency.setValueAtTime(28, t + .35);
+      g3.gain.setValueAtTime(0, t); g3.gain.linearRampToValueAtTime(.5, t + .4);
+      g3.gain.exponentialRampToValueAtTime(.001, t + .9);
+      o3.connect(g3); g3.connect(c.destination); o3.start(t + .35); o3.stop(t + .9);
+      break;
+    }
+
+    case 'mishi': { // ミシィッ！バキバキッ！ — 骨が軋み砕ける
+      for (let i = 0; i < 9; i++) {
+        const tt = t + i * .05 + Math.random() * .02;
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'square';
+        o.frequency.setValueAtTime(700 + Math.random() * 2500, tt);
+        o.frequency.exponentialRampToValueAtTime(150, tt + .03);
+        g.gain.setValueAtTime(.4, tt); g.gain.exponentialRampToValueAtTime(.001, tt + .04);
+        o.connect(g); g.connect(c.destination); o.start(tt); o.stop(tt + .04);
+        const n = mkNoise(c, .02);
+        const ng = c.createGain();
+        ng.gain.setValueAtTime(.3, tt); ng.gain.exponentialRampToValueAtTime(.001, tt + .025);
+        n.connect(ng); ng.connect(c.destination); n.start(tt);
+      }
+      const o = c.createOscillator(), g = c.createGain();
+      const dist = c.createWaveShaper(); dist.curve = makeDist(30);
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(42, t);
+      g.gain.setValueAtTime(.65, t); g.gain.exponentialRampToValueAtTime(.001, t + .8);
+      o.connect(dist); dist.connect(g); g.connect(c.destination); o.start(t); o.stop(t + .8);
+      break;
+    }
+
+    case 'zuzuzu': { // ズズズズズ…… — 大地が鳴動する
+      const o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = 'sine'; o1.frequency.setValueAtTime(28, t);
+      const lfo = c.createOscillator(), lfoG = c.createGain();
+      lfo.type = 'sine'; lfo.frequency.value = 8; lfoG.gain.value = 6;
+      lfo.connect(lfoG); lfoG.connect(o1.frequency); lfo.start(t);
+      g1.gain.setValueAtTime(.85, t);
+      g1.gain.linearRampToValueAtTime(.8, t + .8);
+      g1.gain.exponentialRampToValueAtTime(.001, t + 1.6);
+      o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 1.6); lfo.stop(t + 1.6);
+      const n1 = mkNoise(c, 1.3);
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 120;
+      const ng1 = c.createGain();
+      ng1.gain.setValueAtTime(.45, t); ng1.gain.exponentialRampToValueAtTime(.001, t + 1.3);
+      n1.connect(lp); lp.connect(ng1); ng1.connect(c.destination); n1.start(t);
+      const n2 = mkNoise(c, .9);
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 350; bp.Q.value = 1;
+      const ng2 = c.createGain();
+      ng2.gain.setValueAtTime(.2, t + .2); ng2.gain.exponentialRampToValueAtTime(.001, t + 1.1);
+      n2.connect(bp); bp.connect(ng2); ng2.connect(c.destination); n2.start(t + .2);
+      break;
+    }
+
+    case 'shiin': { // シーーーーン…… — 虚無の静寂+不穏なコーラス
+      const o1 = c.createOscillator(), g1 = c.createGain();
+      o1.type = 'sine'; o1.frequency.setValueAtTime(5000, t);
+      o1.frequency.exponentialRampToValueAtTime(1800, t + 2.2);
+      g1.gain.setValueAtTime(0, t);
+      g1.gain.linearRampToValueAtTime(.18, t + .6);
+      g1.gain.exponentialRampToValueAtTime(.001, t + 2.2);
+      o1.connect(g1); g1.connect(c.destination); o1.start(t); o1.stop(t + 2.2);
+      [3800, 4200, 4700].forEach(f => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(f, t);
+        o.frequency.linearRampToValueAtTime(f * .65, t + 2.0);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(.06, t + .8);
+        g.gain.exponentialRampToValueAtTime(.001, t + 2.0);
+        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 2.0);
+      });
+      const sub = c.createOscillator(), sg = c.createGain();
+      sub.type = 'sine'; sub.frequency.value = 28;
+      sg.gain.setValueAtTime(0, t);
+      sg.gain.linearRampToValueAtTime(.35, t + .8);
+      sg.gain.exponentialRampToValueAtTime(.001, t + 1.8);
+      sub.connect(sg); sg.connect(c.destination); sub.start(t); sub.stop(t + 1.8);
+      break;
+    }
+
+    case 'juuuu': { // ジュウウウウウ！！ — 灼熱の肉焼け
+      const n1 = mkNoise(c, 1.3);
+      const bp1 = c.createBiquadFilter(); bp1.type = 'bandpass'; bp1.frequency.value = 5500; bp1.Q.value = 4;
+      const dist = c.createWaveShaper(); dist.curve = makeDist(18);
+      const g1 = c.createGain();
+      g1.gain.setValueAtTime(.55, t); g1.gain.exponentialRampToValueAtTime(.001, t + 1.3);
+      n1.connect(bp1); bp1.connect(dist); dist.connect(g1); g1.connect(c.destination); n1.start(t);
+      for (let i = 0; i < 12; i++) {
+        const tt = t + Math.random() * .9;
+        const n = mkNoise(c, .025);
+        const ng = c.createGain();
+        ng.gain.setValueAtTime(.35, tt); ng.gain.exponentialRampToValueAtTime(.001, tt + .025);
+        n.connect(ng); ng.connect(c.destination); n.start(tt);
+      }
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(75, t);
+      o.frequency.exponentialRampToValueAtTime(35, t + .9);
+      g.gain.setValueAtTime(.4, t); g.gain.exponentialRampToValueAtTime(.001, t + 1.0);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 1.0);
+      break;
+    }
+
+    case 'gooo': { // ゴオオオオオオ！！！ — 業火の咆哮
+      const n1 = mkNoise(c, 1.6);
+      const lp1 = c.createBiquadFilter(); lp1.type = 'lowpass'; lp1.frequency.value = 500;
+      const dist = c.createWaveShaper(); dist.curve = makeDist(25);
+      const g1 = c.createGain();
+      g1.gain.setValueAtTime(.6, t);
+      g1.gain.linearRampToValueAtTime(.75, t + .4);
+      g1.gain.exponentialRampToValueAtTime(.001, t + 1.6);
+      n1.connect(lp1); lp1.connect(dist); dist.connect(g1); g1.connect(c.destination); n1.start(t);
+      const n2 = mkNoise(c, 1.2);
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1200; bp.Q.value = 1;
+      const g2 = c.createGain();
+      g2.gain.setValueAtTime(.35, t); g2.gain.exponentialRampToValueAtTime(.001, t + 1.2);
+      n2.connect(bp); bp.connect(g2); g2.connect(c.destination); n2.start(t);
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(48, t);
+      o.frequency.exponentialRampToValueAtTime(18, t + 1.3);
+      g.gain.setValueAtTime(.6, t); g.gain.exponentialRampToValueAtTime(.001, t + 1.5);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 1.5);
+      const n3 = mkNoise(c, .8);
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4000;
+      const g3 = c.createGain();
+      g3.gain.setValueAtTime(.18, t + .1); g3.gain.exponentialRampToValueAtTime(.001, t + .9);
+      n3.connect(hp); hp.connect(g3); g3.connect(c.destination); n3.start(t + .1);
+      break;
+    }
+
+    case 'shuuu': { // シュウウウウウ…… — 昇天コーラス+余韻
+      [400, 600, 800, 1200].forEach((f, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(f, t + i * .12);
+        o.frequency.linearRampToValueAtTime(f * 1.5, t + 2.2);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(.14, t + .3 + i * .1);
+        g.gain.exponentialRampToValueAtTime(.001, t + 2.2);
+        o.connect(g); g.connect(c.destination); o.start(t + i * .1); o.stop(t + 2.2);
+      });
+      const n = mkNoise(c, 2.0);
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2800;
+      const ng = c.createGain();
+      ng.gain.setValueAtTime(.22, t);
+      ng.gain.linearRampToValueAtTime(.12, t + .8);
+      ng.gain.exponentialRampToValueAtTime(.001, t + 2.0);
+      n.connect(hp); hp.connect(ng); ng.connect(c.destination); n.start(t);
+      const sub = c.createOscillator(), sg = c.createGain();
+      sub.type = 'sine'; sub.frequency.setValueAtTime(55, t);
+      sub.frequency.linearRampToValueAtTime(120, t + 1.8);
+      sg.gain.setValueAtTime(.2, t); sg.gain.exponentialRampToValueAtTime(.001, t + 1.8);
+      sub.connect(sg); sg.connect(c.destination); sub.start(t); sub.stop(t + 1.8);
+      break;
+    }
+  }
+}
+
+// ── スタンプ演出統合 ── ドン音のみ
+function playSE(seType, degree) {
+  if (seType === 'silent') return;
+  playStampSlam(Math.min(degree / 180, 1));
+}
+
+// ── ゴゴゴゴゴゴ 地響き持続音 ──
+function playRumble(intensity, dur) {
+  const c = ctx(); if (c.state === 'suspended') c.resume();
+  const t = c.currentTime;
+  const vol = 0.55 + intensity * 0.6;
+
+  // Sub-bass：遅いLFOで「ゴー」「ゴー」感（3-6Hz）
+  const oS = c.createOscillator(), gS = c.createGain();
+  oS.type = 'sine'; oS.frequency.setValueAtTime(26 + intensity * 14, t);
+  const lfo = c.createOscillator(), lfoG = c.createGain();
+  lfo.type = 'sine'; lfo.frequency.value = 3 + intensity * 3.5;  // 3〜6.5Hz — ゴゴゴのリズム
+  lfoG.gain.value = 10 + intensity * 14;
+  lfo.connect(lfoG); lfoG.connect(oS.frequency); lfo.start(t); lfo.stop(t + dur + .1);
+  gS.gain.setValueAtTime(0, t);
+  gS.gain.linearRampToValueAtTime(vol * 1.2, t + .1);
+  gS.gain.linearRampToValueAtTime(vol * 1.0, t + dur * .75);
+  gS.gain.exponentialRampToValueAtTime(.001, t + dur);
+  oS.connect(gS); gS.connect(c.destination); oS.start(t); oS.stop(t + dur + .1);
+
+  // ノイズ地鳴り（低域のみ）
+  const n1 = mkNoise(c, dur + .1);
+  const lp1 = c.createBiquadFilter(); lp1.type = 'lowpass'; lp1.frequency.value = 85 + intensity * 55;
+  const ng1 = c.createGain();
+  ng1.gain.setValueAtTime(0, t);
+  ng1.gain.linearRampToValueAtTime(vol * .95, t + .12);
+  ng1.gain.linearRampToValueAtTime(vol * .8, t + dur * .8);
+  ng1.gain.exponentialRampToValueAtTime(.001, t + dur);
+  n1.connect(lp1); lp1.connect(ng1); ng1.connect(c.destination); n1.start(t);
+
+  // 「ゴ」パルス—リズミカルなドン連打ち
+  const pulseCount = Math.max(2, Math.round(dur * (3 + intensity * 3)));
+  for (let i = 0; i < pulseCount; i++) {
+    const pt = t + .06 + i * (dur * .88 / pulseCount);
+    const pVol = vol * (.65 + Math.random() * .3);
+    const oP = c.createOscillator(), gP = c.createGain();
+    oP.type = 'sine'; oP.frequency.setValueAtTime(48 + Math.random() * 22, pt);
+    oP.frequency.exponentialRampToValueAtTime(16, pt + .1);
+    gP.gain.setValueAtTime(pVol, pt); gP.gain.exponentialRampToValueAtTime(.001, pt + .11);
+    oP.connect(gP); gP.connect(c.destination); oP.start(pt); oP.stop(pt + .11);
+  }
+
+  // 歪みグロウル（低域フィルター入り）
+  if (intensity >= .45) {
+    const oG = c.createOscillator(), dG = c.createWaveShaper(), gG = c.createGain();
+    const lpG = c.createBiquadFilter(); lpG.type = 'lowpass'; lpG.frequency.value = 180;
+    dG.curve = makeDist(16 + intensity * 28);
+    oG.type = 'sawtooth'; oG.frequency.setValueAtTime(44 + intensity * 12, t);
+    oG.frequency.linearRampToValueAtTime(35, t + dur);
+    gG.gain.setValueAtTime(0, t);
+    gG.gain.linearRampToValueAtTime(vol * .5 * intensity, t + .15);
+    gG.gain.exponentialRampToValueAtTime(.001, t + dur);
+    oG.connect(dG); dG.connect(lpG); lpG.connect(gG); gG.connect(c.destination); oG.start(t); oG.stop(t + dur + .1);
+  }
+}
+
+// ── レベル連動エフェクト（角度でカオス化） ──
+function runEffects(deg, color, rgb, stage, wrap) {
+  const shell = document.querySelector('.phone-shell');
+
+  // パーティクル
+  if (deg > 0) spawnInk(stage, color, Math.max(4, Math.round(deg / 180 * 80)));
+
+  // 衝撃波（多段発射）
+  const swCount = deg < 45 ? 0 : deg < 75 ? 1 : deg < 100 ? 2 : deg < 135 ? 3 : deg < 165 ? 5 : 8;
+  for (let i = 0; i < swCount; i++) setTimeout(() => spawnShockwave(stage, color), i * 110);
+
+  // 画面揺れ
+  if (deg >= 45) {
+    const body = document.body;
+    const sc = deg >= 165 ? 'shake-max' : deg >= 100 ? 'shake-heavy' : 'shake';
+    const sd = deg >= 165 ? 700 : deg >= 100 ? 550 : 400;
+    body.classList.add(sc); setTimeout(() => body.classList.remove(sc), sd);
+    if (deg >= 120) setTimeout(() => {
+      const c2 = deg >= 165 ? 'shake-max' : 'shake-heavy';
+      body.classList.add(c2); setTimeout(() => body.classList.remove(c2), deg >= 165 ? 700 : 550);
+    }, 600);
+    if (deg >= 165) setTimeout(() => {
+      body.classList.add('shake-heavy'); setTimeout(() => body.classList.remove('shake-heavy'), 550);
+    }, 1300);
+  }
+
+  // スタンプ光芒グロウ
+  if (deg >= 90) {
+    const px = 8 + Math.round((deg - 90) / 90 * 42);
+    wrap.style.filter = 'drop-shadow(0 0 ' + px + 'px rgba(' + rgb + ',.8))';
+    setTimeout(() => { wrap.style.filter = ''; }, deg >= 150 ? 4500 : deg >= 120 ? 2500 : 1500);
+  }
+
+  // スタンプバウンス（75°～149°）— バウンド着地時にドン2発目
+  if (deg >= 75 && deg < 150) {
+    setTimeout(() => {
+      wrap.style.animation = 'stBounce .55s cubic-bezier(.17,.67,.83,.67) forwards';
+      setTimeout(() => { wrap.style.animation = ''; }, 560);
+    }, 420);
+    // バウンス着地タイミングでドン2発目（stBounceの最下点＝約45%≒245ms後）
+    setTimeout(() => playStampSlam(Math.min(deg / 180, 1) * .7), 420 + 245);
+  }
+
+  // ゴゴゴゴゴゴ持続音（100°+）
+  if (deg >= 100) {
+    const rumbleDur = 0.6 + (deg - 100) / 80 * 1.6; // 0.6s〜2.2s
+    const rumbleInt = Math.min((deg - 100) / 80, 1);
+    setTimeout(() => playRumble(rumbleInt, rumbleDur), 80);
+  }
+
+  // フレーム発光フラッシュ
+  if (deg >= 120) {
+    const fc = deg >= 165 ? 5 : deg >= 150 ? 4 : deg >= 135 ? 3 : 2;
+    for (let i = 0; i < fc; i++) setTimeout(() => {
+      shell.style.transition = 'box-shadow .04s';
+      shell.style.boxShadow = '0 0 0 5px rgb(' + rgb + '), 0 0 72px rgba(' + rgb + ',.54), 0 18px 60px rgba(50,60,72,.18)';
+      setTimeout(() => { shell.style.boxShadow = ''; shell.style.transition = ''; }, 130);
+    }, i * 190);
+    shell.classList.add('tilt'); setTimeout(() => shell.classList.remove('tilt'), 780);
+  }
+
+  // 追加パーティクルウェーブ
+  const pB = Math.max(4, Math.round(deg / 180 * 80));
+  if (deg >= 135) setTimeout(() => spawnInk(stage, color, Math.round(pB * .55)), 280);
+  if (deg >= 150) setTimeout(() => spawnInk(stage, color, Math.round(pB * .45)), 560);
+  if (deg >= 165) {
+    setTimeout(() => spawnInk(stage, color, Math.round(pB * .35)), 900);
+    setTimeout(() => spawnInk(stage, color, Math.round(pB * .28)), 1300);
+  }
+
+  // スタンプカオスアニメ（150°+）— カオス各ピーク時にドン追加
+  if (deg >= 150) {
+    setTimeout(() => {
+      wrap.style.animation = 'stChaos 1.5s ease-in-out forwards';
+      setTimeout(() => { wrap.style.animation = ''; }, 1600);
+      // stChaosの各ピーク（7%/23%/39%/55%≒105/345/585/825ms）に小さめドン
+      const chaosInt = Math.min(deg / 180, 1) * .55;
+      [105, 345, 585, 825].forEach(ms => setTimeout(() => playStampSlam(chaosInt), ms));
+    }, 430);
+    // 150°+の追加ゴゴゴ（ずらして2重に）
+    setTimeout(() => playRumble(Math.min((deg - 150) / 30, 1), 1.2 + (deg - 150) / 30 * 0.8), 600);
+  }
+
+  // 追加衝撃波ウェーブ
+  if (deg >= 150) {
+    const bSW = deg >= 180 ? 6 : deg >= 165 ? 4 : 2;
+    for (let i = 0; i < bSW; i++) setTimeout(() => spawnShockwave(stage, color), 500 + i * 120);
+  }
+
+  // ────────────────────────────────
+  // 180° ABSOLUTE CHAOS — 全面崩壊
+  // ────────────────────────────────
+  if (deg >= 180) {
+    ['200,50,40','70,30,110','200,160,40','30,130,200','50,180,80'].forEach((c, i) => setTimeout(() => {
+      shell.style.transition = 'box-shadow .04s';
+      shell.style.boxShadow = '0 0 0 8px rgb(' + c + '), 0 0 120px rgba(' + c + ',.7), 0 18px 60px rgba(50,60,72,.18)';
+      setTimeout(() => { shell.style.boxShadow = ''; shell.style.transition = ''; }, 180);
+    }, 700 + i * 240));
+    setTimeout(() => spawnInk(stage, color, 68), 700);
+    setTimeout(() => spawnInk(stage, color, 58), 1100);
+    setTimeout(() => spawnInk(stage, color, 48), 1600);
+    for (let i = 0; i < 5; i++) setTimeout(() => spawnShockwave(stage, color), 1600 + i * 150);
+    // CHAOS ドン連打 + 最終ゴゴゴ
+    setTimeout(() => playRumble(1.0, 2.5), 900);
+    [700, 950, 1200].forEach(ms => setTimeout(() => playStampSlam(.9), ms));
+    setTimeout(() => { document.body.classList.add('shake-max'); setTimeout(() => document.body.classList.remove('shake-max'), 700); }, 1000);
+    setTimeout(() => { shell.classList.add('tilt'); setTimeout(() => shell.classList.remove('tilt'), 780); }, 1300);
+  }
+}
+
+// ── Ink Particles ──
+function spawnInk(container, color, count) {
+  count = count || 10;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'ink-p';
+    el.style.background = color;
+    const a = (Math.PI * 2 / count) * i + (Math.random() - .5) * .5;
+    const d = 60 + Math.random() * 60 + count;
+    el.style.setProperty('--tx', Math.cos(a) * d + 'px');
+    el.style.setProperty('--ty', Math.sin(a) * d + 'px');
+    el.style.left = '50%'; el.style.top = '50%';
+    const sz = 3 + Math.random() * (3 + count * .15);
+    el.style.width = sz + 'px'; el.style.height = sz + 'px';
+    container.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('burst'));
+    setTimeout(() => el.remove(), 600);
+  }
+}
+
+// ── Mock AI ──
+function mockAI(text, rel, selfD) {
+  const m = { client: 1.3, boss: 1.1, colleague: .8, customer: 1.4 }[rel] || 1;
+  const base = Math.min(180, Math.max(5, 50 + Math.floor(Math.random() * 60) + text.length * .8));
+  const ai = Math.min(180, Math.round(base * m));
+  return {
+    ai, selfD,
+    reasons: [
+      { f: '本番環境の障害', w: 25 + Math.floor(Math.random() * 10) },
+      { f: '複数社への影響', w: 15 + Math.floor(Math.random() * 10) },
+      { f: '連絡遅延', w: 10 + Math.floor(Math.random() * 10) },
+      { f: '関係性：' + document.getElementById('rel').selectedOptions[0].textContent, w: 10 + Math.floor(Math.random() * 8) },
+    ].sort((a, b) => b.w - a.w),
+  };
+}
+
+// ── Run ──
+async function runAssess() {
+  const btn = document.getElementById('btnGo');
+  btn.disabled = true; btn.textContent = '診断中...';
+  ctx();
+  await new Promise(r => setTimeout(r, 600));
+  const r = mockAI(
+    document.getElementById('inp').value,
+    document.getElementById('rel').value,
+    parseInt(document.getElementById('selfDeg').value) || 0
+  );
+  showResult(r);
+  btn.disabled = false; btn.textContent = '🔍 謝罪角度を診断する';
+}
+
+function showResult(r) {
+  const sec = document.getElementById('res');
+  sec.classList.add('show');
+  sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const deg = r.ai;
+  const st = getStage(deg);
+  const zn = getZone(deg);
+
+  const wrap = document.getElementById('stampWrap');
+  const flash = document.getElementById('flash');
+  const info = document.getElementById('stageInfo');
+  const gap = document.getElementById('gapCard');
+  const rat = document.getElementById('ratCard');
+  wrap.classList.remove('stamped');
+  flash.classList.remove('pop');
+  info.classList.remove('show');
+  gap.classList.remove('show');
+  rat.classList.remove('show');
+
+  document.getElementById('stampImg').src = BASE + st.file;
+  document.getElementById('stampLbl').textContent = st.name;
+  document.getElementById('stampDeg').innerHTML = deg + '<small>°</small>';
+  document.getElementById('stampLv').textContent = st.lv;
+
+  const rawColor = zn.color;
+
+  document.getElementById('sName').textContent = '#' + st.idx + ' ' + st.name;
+  document.getElementById('sName').style.color = rawColor;
+  document.getElementById('sPosture').textContent = st.posture;
+  document.getElementById('sZone').textContent = st.zoneLabel;
+  document.getElementById('sZone').style.background = zn.bg;
+  document.getElementById('sZone').style.color = rawColor;
+  document.getElementById('sZone').style.border = '1px solid ' + rawColor;
+
+  const approach = deg > 90 ? '💡 直接謝罪（対面またはWeb会議）を強く推奨'
+    : deg > 60 ? '💡 直接謝罪（対面推奨）' : '💡 メールまたは電話での謝罪';
+  document.getElementById('sApproach').textContent = approach;
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      applyStampTheme(wrap, st.zone);
+      wrap.classList.add('stamped');
+      flash.classList.add('pop');
+      playSE(st.se, deg);
+      runEffects(deg, rawColor, ZONE_RGB[st.zone] || '184, 32, 22', document.getElementById('stampStage'), wrap);
+    }, 100);
+    setTimeout(() => info.classList.add('show'), 500);
+    setTimeout(() => document.getElementById('pin').style.left = (deg / 180 * 100) + '%', 300);
+    setTimeout(() => {
+      document.getElementById('bAi').style.width = (deg / 180 * 100) + '%';
+      document.getElementById('bAi').textContent = deg + '°';
+      document.getElementById('bUser').style.width = (r.selfD / 180 * 100) + '%';
+      document.getElementById('bUser').textContent = r.selfD + '°';
+      const diff = deg - r.selfD;
+      let msg;
+      if (diff > 30) msg = '⚠️ <strong>大きなギャップ（+' + diff + '°）</strong><br>あなたが思っている以上に相手は怒っています。';
+      else if (diff > 10) msg = '📌 <strong>ギャップあり（+' + diff + '°）</strong><br>自己認識より少し深刻です。';
+      else if (diff > -10) msg = '✅ <strong>ほぼ一致</strong><br>状況を正確に認識できています。';
+      else msg = '🤔 <strong>過大評価（' + diff + '°）</strong><br>思ったほど深刻ではないかもしれません。';
+      document.getElementById('gapMsg').innerHTML = msg;
+      gap.classList.add('show');
+    }, 800);
+    setTimeout(() => {
+      const el = document.getElementById('factors');
+      el.innerHTML = '';
+      r.reasons.forEach(f => {
+        const d = document.createElement('div');
+        d.className = 'factor';
+        d.innerHTML = '<span class="w">+' + f.w + '</span><span>' + f.f + '</span>';
+        el.appendChild(d);
+      });
+      rat.classList.add('show');
+    }, 1000);
+  });
+}
+
+// ── Slider ──
+const sl = document.getElementById('slider');
+function updSlider() {
+  const d = +sl.value;
+  document.getElementById('sv').textContent = d;
+  const st = getStage(d), zn = getZone(d);
+  document.getElementById('dStage').textContent = '#' + st.idx + ' ' + st.name + ' — ' + st.posture;
+  document.getElementById('dStage').style.color = zn.color;
+  document.getElementById('dImg').src = BASE + st.file;
+  document.getElementById('dLabel').textContent = st.name;
+  document.getElementById('dLabel').style.background = zn.color;
+  const h = document.getElementById('miniHanko');
+  const rgb = ZONE_RGB[st.zone] || '184, 32, 22';
+  h.style.borderColor = 'rgb(' + rgb + ')';
+  h.style.boxShadow = 'inset 0 0 0 3px #fffdf8, inset 0 0 0 6px rgba(' + rgb + ',.72), inset 0 0 0 13px #fffdf8, inset 0 0 0 15px rgba(' + rgb + ',.38), 0 5px 14px rgba(95,54,34,.18)';
+}
+sl.addEventListener('input', updSlider);
+updSlider();
+
+// ── Preview Stamp (button + gallery) ──
+function previewStamp() {
+  const d = +sl.value;
+  const st = getStage(d);
+  // 結果セクションが非表示なら表示する
+  const sec = document.getElementById('res');
+  sec.classList.add('show');
+
+  const wrap = document.getElementById('stampWrap');
+  const flash = document.getElementById('flash');
+  const info = document.getElementById('stageInfo');
+  const zn = getZone(d);
+
+  wrap.classList.remove('stamped');
+  flash.classList.remove('pop');
+  info.classList.remove('show');
+
+  document.getElementById('stampImg').src = BASE + st.file;
+  document.getElementById('stampLbl').textContent = st.name;
+  document.getElementById('stampDeg').innerHTML = d + '<small>°</small>';
+  document.getElementById('stampLv').textContent = st.lv;
+  document.getElementById('sName').textContent = '#' + st.idx + ' ' + st.name;
+  document.getElementById('sName').style.color = zn.color;
+  document.getElementById('sPosture').textContent = st.posture;
+  document.getElementById('sZone').textContent = st.zoneLabel;
+  document.getElementById('sZone').style.background = zn.bg;
+  document.getElementById('sZone').style.color = zn.color;
+  document.getElementById('sZone').style.border = '1px solid ' + zn.color;
+  document.getElementById('sApproach').textContent = '';
+
+  // gap/rat 非表示
+  document.getElementById('gapCard').classList.remove('show');
+  document.getElementById('ratCard').classList.remove('show');
+
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      applyStampTheme(wrap, st.zone);
+      wrap.classList.add('stamped');
+      flash.classList.add('pop');
+      playSE(st.se, d);
+      runEffects(d, zn.color, ZONE_RGB[st.zone] || '184, 32, 22', document.getElementById('stampStage'), wrap);
+    }, 80);
+    setTimeout(() => info.classList.add('show'), 450);
+    setTimeout(() => document.getElementById('pin').style.left = (d / 180 * 100) + '%', 250);
+  });
+
+  // スクロール
+  document.getElementById('stampStage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Gallery ──
+(function () {
+  const g = document.getElementById('gGrid');
+  STAGES.forEach(st => {
+    const zn = getZone(st.deg);
+    const card = document.createElement('div');
+    card.className = 'g-card';
+    const rgb = ZONE_RGB[st.zone] || '184, 32, 22';
+    card.innerHTML = `
+      <div class="g-hanko" style="border-color:rgb(${rgb});box-shadow:inset 0 0 0 1.5px #fffdf8, inset 0 0 0 3px rgba(${rgb},.78), inset 0 0 0 7px #fffdf8, inset 0 0 0 8px rgba(${rgb},.35);">
+        <img src="${BASE}${st.file}" alt="${st.name}">
+      </div>
+      <div class="num">#${st.idx}</div>
+      <div class="deg">${st.deg}°</div>
+      <div class="nm">${st.name}</div>
+    `;
+    card.addEventListener('click', () => {
+      sl.value = st.deg; updSlider();
+      document.querySelectorAll('.g-card').forEach(x => x.classList.remove('active'));
+      card.classList.add('active');
+      previewStamp(); // スタンプ演出付きで再生
+    });
+    g.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

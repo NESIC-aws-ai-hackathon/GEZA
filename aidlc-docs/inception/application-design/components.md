@@ -19,7 +19,7 @@
 | **AuthModule** | `frontend/shared/auth.js` | Cognito User Pool 認証（サインアップ・ログイン・トークン管理・未認証リダイレクト） |
 | **TranscribeClient** | `frontend/shared/transcribe.js` | Cognito Identity Pool で取得した一時認証情報を使い、AWS Transcribe Streaming へ直接WebSocket接続。リアルタイム文字起こし結果をコールバックで通知 |
 | **PollySyncController** | `frontend/shared/polly-sync.js` | Polly MP3（Base64）の音声再生と SpeechMarks viseme タイムコードを同期し、AvatarController.applyViseme() を呼び出す（50ms以内） |
-| **ApologyMeter** | `frontend/shared/apology-meter.js` | 謝罪角度（0〜180°）のステージ別ピクトグラム画像表示・スタンプ演出・SE音再生・ステージ名表示・AI vs 自己申告ギャップ分析表示 |
+| **ApologyMeter** | `frontend/shared/apology-meter.js` | 謝罪角度（0〜180°）の6ゾーン×14段階ピクトグラム表示・ライトモードのスマホ縦長UI・実印風朱肉スタンプ演出（白い紙面＋二重輪＋かすれ）・ゾーン別SE音（14種類）・ステージ情報表示・AI vs 自己申告ギャップ分析表示 |
 | **AngerGauge** | `frontend/shared/anger-gauge.js` | 怒り残量（0〜100%）・失望度・許容余地・反論危険度のリアルタイムゲージ表示。推移データをメモリに蓄積。トレンド矢印（↑↓→）表示 |
 | **WhisperAdvisor** | `frontend/shared/whisper-advisor.js` | 危険発言検知結果を短い助言として表示。出力インターフェースを抽象化（TEXT/AUDIO/DEVICEの3モード）。助言キュー管理・自動消去 |
 

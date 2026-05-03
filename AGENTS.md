@@ -67,7 +67,7 @@ element.innerHTML = userInput;    // ❌
 
 | ドキュメント | パス | 備考 |
 | --------- | ---- | ---- |
-| ユーザーストーリー（**正式版**） | `aidlc-docs/inception/user-stories/stories.md` | INVEST済34ストーリー/221SP |
+| ユーザーストーリー（**正式版**） | `aidlc-docs/inception/user-stories/stories.md` | INVEST済37ストーリー/245SP |
 | ユーザーストーリー（草稿） | `docs/draft-user-stories.md` | 初期検討用・参考のみ |
 | AI-DLC状態 | `aidlc-state.md` | フェーズ進捗・ユニット定義 |
 | 画像アセット定義 | `icons/README.md` | アイコン一覧 |
