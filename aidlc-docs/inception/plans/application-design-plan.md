@@ -25,8 +25,7 @@
 
 ## 設計スコープ確認
 
-**対象**: 34ストーリー / 221SP / 9ユニット（U0〜U8）  
-**アーキテクチャ**: マルチページ（Vanilla JS） + Lambda（Python 3.12）× 14 + API Gateway + DynamoDB + Cognito + S3 + CloudFront + Bedrock + Polly + Transcribe
+**対象**: 34ストーリー / 221SP / 9ユニット（U0〜U8）  ※ 計画書作成時点の値。正式版は [stories.md](../user-stories/stories.md) 参照（41ストーリー/271SP/10ユニット）。  **アーキテクチャ**: マルチページ（Vanilla JS） + Lambda（Python 3.12）× 14 + API Gateway + DynamoDB + Cognito + S3 + CloudFront + Bedrock + Polly + Transcribe
 
 ---
 

@@ -21,21 +21,22 @@
 | **PollySyncController** | `frontend/shared/polly-sync.js` | Polly MP3（Base64）の音声再生と SpeechMarks viseme タイムコードを同期し、AvatarController.applyViseme() を呼び出す（50ms以内） |
 | **ApologyMeter** | `frontend/shared/apology-meter.js` | 謝罪角度（0〜180°）の6ゾーン×14段階ピクトグラム表示・ライトモードのスマホ縦長UI・実印風朱肉スタンプ演出（白い紙面＋二重輪＋かすれ）・ゾーン別SE音（14種類）・ステージ情報表示・AI vs 自己申告ギャップ分析表示 |
 | **AngerGauge** | `frontend/shared/anger-gauge.js` | 怒り残量（0〜100%）・失望度・許容余地・反論危険度のリアルタイムゲージ表示。推移データをメモリに蓄積。トレンド矢印（↑↓→）表示 |
-| **WhisperAdvisor** | `frontend/shared/whisper-advisor.js` | 危険発言検知結果を短い助言として表示。出力インターフェースを抽象化（TEXT/AUDIO/DEVICEの3モード）。助言キュー管理・自動消去 |
+| **WhisperAdvisor** | `frontend/shared/whisper-advisor.js` | 危険発言検知結果を短い助言として表示。出力インターフェースを抽象化（TEXT: 画面パネル / AUDIO: イヤホン音声 / SILENT_PANEL: Web会議向け前面パネル）。助言キュー管理・自動消去 |
 
 ### ページ コンポーネント
 
 | コンポーネント | ファイル | 対応Journey / US | 責務 |
 |-------------|---------|-----------------|------|
 | **TopPage** | `frontend/pages/index.html` + `top.js` | Journey 1 / US-101〜103 | トップ画面・アバター表示・モード選択・Cognito認証ガード |
-| **InceptionPage** | `frontend/pages/inception.html` + `inception.js` | Journey 2 / US-201〜203, 207〜208, 210〜211 | やらかし入力・謝罪角度アセスメント・ギャップ分析・謝罪相手生成・謝罪プラン・実施日管理・当日サポート |
+| **InceptionPage** | `frontend/pages/inception.html` + `inception.js` | Journey 2 / US-201, 212, 207、208, 210、211 | やらかし入力・**深掘り分析（AI追加質問ループ）**・謝罪角度アセスメント・ギャップ分析・謝罪相手生成・謝罪プラン・実施日管理・当日サポート |
 | **AvatarCustomizePage** | `frontend/pages/customize.html` + `customize.js` | US-204 | アバターカスタマイズ（髪型/髪色/肌色/メガネ/性別）・プリセット選択 |
 | **StoryPage** | `frontend/pages/story.html` + `story.js` | Journey 3 / US-301〜302 | ストーリー選択・難易度/テーマ設定・ボスプロフィール表示 |
 | **PracticePage** | `frontend/pages/practice.html` + `practice.js` | Journey 4 / US-401〜408 | 謝罪練習コア画面（アバター・テキスト/音声入力・AI評価・ゲージ・フォールバック処理） |
 | **FeedbackPage** | `frontend/pages/feedback.html` + `feedback.js` | Journey 4〜5 / US-407, US-501〜502 | 謝罪フィードバック・改善謝罪文・再発防止策・フォローメール |
 | **CartePage** | `frontend/pages/carte.html` + `carte.js` | Journey 6 / US-601〜602 | 謝罪カルテ一覧・傾向分析・保存済みアバター復元 |
 | **BossPage** | `frontend/pages/boss.html` + `boss.js` | Journey 7 / US-701〜703 | 上司モード（指導内容入力・部下役AI対話・建設性スコア・パワハラリスク） |
-| **DuringSupportPage** | `frontend/pages/during-support.html` + `during-support.js` | Journey 10 / US-1001〜1003 | 謝罪中支援統合画面。相手音声→怒り残量分析、ユーザー音声→危険発言検知、統合ダッシュボード、セッションサマリー生成 |
+| **DuringSupportPage** | `frontend/pages/during-support.html` + `during-support.js` | Journey 10 / US-1001〜1006 | 謝罪中支援統合画面。`supportMode: "face_to_face" \| "web_meeting"` で動作を切り替え。対面モード: イヤホン音声助言。Web会議モード: 専用タブ/前面パネルに短文テキスト助言。相手音声→怒り残量分析、ユーザー音声→危険発言検知、統合ダッシュボード、セッションサマリー生成・カルテ保存 |
+| **UsageCostPage** | `frontend/pages/usage.html` + `usage.js` | （横断機能・P2） | AI利用量・概算コスト可視化。月次グラフ・プロファイル別内訳・呼び出し履歴表示 |
 
 ---
 
@@ -52,7 +53,11 @@
 | **AnalyzeAngerLambda** | `backend/functions/analyze-anger/` | Nova Lite | 相手の発言テキストから怒り残量・失望度・許容余地・反論危険度を推定（謝罪中支援） |
 | **DetectDangerSpeechLambda** | `backend/functions/detect-danger-speech/` | Nova Lite | ユーザーの発話テキストから言い訳・逆ギレ・責任転嫁・NGワードを検知し、短い助言を生成（謝罪中支援） |
 
-### 高品質生成系（Claude Sonnet 使用）
+### 中品質生成系（Claude Haiku 4.5 使用）
+
+| コンポーネント | ディレクトリ | Bedrock モデル | 責務 |
+|-------------|------------|--------------|------|
+| **ProbeIncidentLambda** | `backend/functions/probe-incident/` | Claude Haiku 4.5 | やらかし深掘り分析。追加質問を生成し本人が気づいていない本質（隠れた影響・相手が本当に怒っている理由・構造的原因）を炙り出す。最大2〜5ラウンド |
 
 | コンポーネント | ディレクトリ | Bedrock モデル | 責務 |
 |-------------|------------|--------------|------|

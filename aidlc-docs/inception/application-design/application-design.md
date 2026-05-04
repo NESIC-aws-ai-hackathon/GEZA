@@ -1,6 +1,6 @@
 # アプリケーション設計 統合ドキュメント
 
-> 最終更新: 2026-05-01（コンセプト転換: 謝罪丸投げコンシェルジュ / 謝罪角度機能追加）  
+> 最終更新: 2026-05-04（プロダクト概要「謝罪行動支援AI」統一 / LLMモデルプロファイル追加 / 表記整合性更新）  
 > 生成日: 2026-04-30  
 > 詳細定義ファイル: components.md / component-methods.md / services.md / component-dependency.md
 
@@ -10,9 +10,11 @@
 
 ### 1.1 プロダクト概要
 
-GEZAは**謝罪丸投げコンシェルジュ**です。  
+GEZAは**謝罪行動支援AI**です。  
 やらかした内容を一言入れるだけで、謝罪角度判定→台本フル生成→タイミング・手土産提案まで全部AIがやります。あなたは頭を下げるだけ。  
-キラー機能は**謝罪の角度アセスメント**—やらかしの深刻度をAIが0〜180°の角度で数値化し、ステージ別ピクトグラム画像＋スタンプ演出＋SE音で表示します。
+**AI整え、人間が向き合う** — AIが分析・構成・演出を担い、人間は「誠意を伝える」一点に集中できる謝罪ライフサイクル型アプリ。
+
+キラー機能は**謝罪の角度アセスメント**—やらかしの深刻度をAIが0〜180°の角度で数値化し、6ゾーン14段階の演出（実印風朱肉スタンプ＋ゾーン別SE音）で表示します。
 
 ### 1.2 技術スタック
 
@@ -22,9 +24,19 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | アバター描画 | facesjs v5.0.3（フォーク版・IIFE Bundle）|
 | 音声合成 | Amazon Polly（Kazuha：女性 / Takumi：男性, ja-JP, Neural, MP3 + SpeechMarks） |
 | 音声認識 | Amazon Transcribe Streaming（WebSocket 直接接続, ja-JP） |
-| バックエンド | AWS Lambda (Python 3.12, 512MB, 30s) × 20関数 |
-| LLM | Amazon Nova Lite（評価・分類）/ Claude Sonnet（生成） |
+| バックエンド | AWS Lambda (Python 3.12, 512MB, 30s) × 21関数 |
+| LLM | Amazon Bedrock — モデルプロファイル制（下記参照） |
 | DB | DynamoDB シングルテーブル（PAY_PER_REQUEST） |
+
+#### LLMモデルプロファイル
+
+| プロファイル | モデル | 用途 | レイテンシ目標 | コスト/1K tokens |
+|------------|--------|------|-------------|----------------|
+| **fast** | Amazon Nova Lite | 評価・分類・リアルタイム分析（assess, evaluate, check-draft, analyze-karte, evaluate-guidance, analyze-anger, detect-danger） | < 2s | 最低 |
+| **standard** | Claude Haiku 4.5 | 中品質生成（generate-plan, probe-incident） | < 5s | 中 |
+| **premium** | Claude Sonnet | 高品質生成（generate-opponent, generate-story, generate-feedback, generate-guidance-feedback, generate-prevention, generate-follow-mail, analyze-reply, diagnose-tendency） | < 10s | 高 |
+
+> **選定方針**: Lambda関数ごとにプロファイルを固定割り当て。将来的にユーザー設定で standard↔premium を切り替え可能にする構想あり（P2スコープ）。
 | 認証 | Amazon Cognito User Pool（ログイン） + Identity Pool（Transcribe 一時認証） |
 | API | API Gateway HTTP API v2（JWT Authorizer） |
 | ホスティング | S3 + CloudFront |
@@ -59,9 +71,9 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 └──────────┬───────────┘
            │
      ┌─────┴──────────────────────────────────┐
-     │           Lambda 関数群（20本）           │
+     │           Lambda 関数群（21本）           │
      │                                         │
-     │  Nova Lite 系              Sonnet 系     │
+     │  Nova Lite 系 (fast)        Haiku 4.5/Sonnet 系 (生成)  │
      │  ・assess-apology         ・generate-opponent │
      │  ・evaluate-apology       ・generate-story    │
      │  ・analyze-karte          ・generate-plan     │
@@ -95,12 +107,12 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | Q1 | フロントエンド構成 | B: 複数HTML + 共通JS/CSS | ページ間の状態をsessionStorageで引き継ぎ、シンプルな構成 |
 | Q2 | 状態管理 | A+C Hybrid: 3層ステート | リアルタイム(AppState) + セッション間(sessionStorage) + 永続(DynamoDB) |
 | Q3 | アバター/感情分離 | C: avatar.js + emotions.js | テスタビリティ・再利用性を確保 |
-| Q4 | Lambda分割粒度 | A: 細粒度20関数 | 独立デプロイ・スケーリング・タイムアウト最適化（初期14関数、E035/E038拡張で計全20本） |
-| Q5 | Bedrockモデル | A: Nova Lite/Sonnet分離 | コスト最適化（評価はNova Lite、高品質生成はSonnet） |
+| Q4 | Lambda分割粒度 | A: 細粒度21関数 | 独立デプロイ・スケーリング・タイムアウト最適化（初期14関数、E035/E038/深掘り拡張で計21本） |
+| Q5 | Bedrockモデル | A: モデルプロファイル制（fast/standard/premium） | コスト・レイテンシ・品質のトレードオフを3段階で管理 |
 | Q6 | 音声認識接続 | A: Transcribe直接WebSocket | Lambda経由は不要、Cognito Identity Poolで安全に認証 |
 | Q7 | DB設計 | A: DynamoDBシングルテーブル | アクセスパターンが明確、コスト効率 |
 | Q8 | 会話履歴保存 | A: 全ターン保存 | カルテ分析・改善追跡に必要 |
-| Q9 | API設計 | A: RESTful（リソースベース） | 直感的な設計。0エンドポイント（初期15、E035+E038拡張で計全20本） |
+| Q9 | API設計 | A: RESTful（リソースベース） | 直感的な設計。21エンドポイント（初期15、拡張で計21本） |
 | Q10 | 認証方式 | A: API Gateway JWT Authorizer | Cognito統合、Lambda内認証不要 |
 | Q11 | プロンプト管理 | A: backend/prompts/配置 | バージョン管理しやすく、テスト容易 |
 | Q12 | エラーハンドリング | B: @handle_errors デコレーター | 全Lambdaに一貫したエラー処理 |
@@ -180,7 +192,7 @@ Layer 3: DynamoDB API経由（永続化）
 | 2 | evaluate-apology | Nova Lite | 512MB | 30s |
 | 3 | generate-opponent | Claude Sonnet | 512MB | 30s |
 | 4 | generate-story | Claude Sonnet | 512MB | 30s |
-| 5 | generate-plan | Claude Sonnet | 512MB | 30s |
+| 5 | generate-plan | Claude Haiku 4.5 | 512MB | 30s |
 | 6 | text-to-speech | Polly | 512MB | 30s |
 | 7 | generate-feedback | Claude Sonnet | 512MB | 30s |
 | 8 | generate-prevention | Claude Sonnet | 512MB | 30s |
@@ -196,6 +208,7 @@ Layer 3: DynamoDB API経由（永続化）
 | 18 | diagnose-tendency | Claude Sonnet | 512MB | 30s |
 | **19** | **analyze-anger** | **Nova Lite** | **512MB** | **10s** |
 | **20** | **detect-danger-speech** | **Nova Lite** | **512MB** | **10s** |
+| **21** | **probe-incident** | **Claude Haiku 4.5** | **512MB** | **30s** |
 
 ### 5.2 共有 Lambda Layer
 
@@ -215,12 +228,18 @@ backend/prompts/
   generate-opponent.txt
   generate-story.txt
   generate-plan.txt
+  probe-incident.txt
   generate-feedback.txt
   generate-prevention.txt
   generate-follow-mail.txt
   analyze-karte.txt
   evaluate-guidance.txt
   generate-guidance-feedback.txt
+  check-draft.txt
+  analyze-reply.txt
+  diagnose-tendency.txt
+  analyze-anger.txt
+  detect-danger-speech.txt
 ```
 
 ---
@@ -308,7 +327,7 @@ GEZA/
 │   ├── shared/
 │   │   ├── decorators.py / prompt_loader.py / bedrock_client.py
 │   └── prompts/
-        └── *.txt（16プロンプトテンプレート）
+        └── *.txt（17プロンプトテンプレート）
 │
 ├── template.yaml    ← SAM テンプレート
 ├── docs/            ← 統合仕様書
@@ -335,6 +354,15 @@ GEZA/
 
 「AIが考え、人間が詫びる」Human-in-the-Loop を謝罪の本番中にまで拡張する。  
 謝罪ライフサイクル（Before → During → After）のうち、**During**（謝罪中）をカバーすることで、GEZAが謝罪の全フェーズを支援する唯一のAIサービスとなる。
+
+#### 2つの支援モード
+
+| モード | 入力ソース | 助言出力 | 想定シーン |
+|--------|-----------|---------|----------|
+| **対面モード** (`face_to_face`) | スマホマイク（イヤホン装着） | イヤホン音声 / 将来ARグラス | 対面謝罪・訪問謝罪 |
+| **Web会議モード** (`web_meeting`) | PC音声出力＋マイク入力 | 専用タブ/前面パネル（短文テキスト） | Zoom / Teams / Google Meet |
+
+> **Web会議モード設計方針**: 会議相手にAI助言が聞こえないよう、助言は音声ではなく画面上に短文で表示する。会議画面を遮らないコンパクトUI。DuringSupportPage の `supportMode` 属性で対面/Web会議を切り替え、バックエンドAPI（analyze-anger / detect-danger-speech）は共通で利用する。
 
 ### 11.2 アーキテクチャ拡張図
 
@@ -365,7 +393,7 @@ GEZA/
 └──────────┬───────────┘      └──────────────────────────────────────────┘
            │
      ┌─────┴──────────────────────────────────────┐
-     │       Lambda 関数（+2本 → 全20本）             │
+     │       Lambda 関数（+2本 → 全21本）             │
      │                                               │
      │  Nova Lite 系（追加）                           │
      │  ・analyze-anger         ← 怒り残量リアルタイム分析│

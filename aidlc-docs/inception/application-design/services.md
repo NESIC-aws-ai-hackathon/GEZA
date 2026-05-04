@@ -1,6 +1,6 @@
 # サービス定義
 
-> 最終更新: 2026-04-30（コンセプト変更により assess-apology エンドポイント追加）
+> 最終更新: 2026-05-04（LLMモデルプロファイル追記 / sessionType拡張 / AI利用量可視化設計追加）
 
 ---
 
@@ -13,6 +13,7 @@
 | メソッド | パス | Lambda | 説明 |
 |---------|-----|--------|------|
 | **POST** | **`/apology/assess`** | **assess-apology** | **謝罪角度算出（0〜180°）+ 根拠説明 + 推奨アプローチ** |
+| **POST** | **`/incident/probe`** | **probe-incident** | **やらかし深掘り分析（追加質問生成 or 本質分析結果返却）** |
 | POST | `/apology/evaluate` | evaluate-apology | 謝罪評価・感情分類・NGワード・追撃質問生成 |
 | POST | `/opponent/generate` | generate-opponent | 謝罪相手プロフィール + アバターseed生成 |
 | POST | `/story/generate` | generate-story | ストーリー + ボスプロフィール生成 |
@@ -68,6 +69,59 @@
   }
 }
 ```
+
+---
+
+### POST `/incident/probe`（やらかし深掘り分析）
+
+**Request:**
+```json
+{
+  "incident_summary": "本番環境にバグをリリースしてしまい...",
+  "conversation_history": [
+    { "role": "ai", "content": "その時、相手はどんな反応でしたか？" },
+    { "role": "user", "content": "黙って画面を見つめていました..." }
+  ],
+  "round": 2
+}
+```
+
+**Response（追加質問が必要な場合）:**
+```json
+{
+  "statusCode": 200,
+  "body": {
+    "status": "probing",
+    "question": "そのバグが発生した本当の原因は何だと思いますか？技術的な問題ですか、それともコミュニケーションの問題ですか？",
+    "intent": "構造的原因の特定",
+    "round": 3,
+    "max_rounds": 5
+  }
+}
+```
+
+**Response（分析完了時）:**
+```json
+{
+  "statusCode": 200,
+  "body": {
+    "status": "completed",
+    "essence": {
+      "core_issue": "バグ自体より、事前に『リスクがある』と分かっていたのにリリースを強行した判断が問題の本質",
+      "hidden_impact": [
+        "取引先PMの上司への報告が必要になり、PM自身の評価にも影響",
+        "今後の案件でのバッファ要求が厳しくなる（信頼コスト）"
+      ],
+      "real_anger_reason": "バグそのものではなく、『相談なく独断でリリースした』というプロセス無視への怒り",
+      "structural_cause": "リリース判断の属人化。レビュープロセスが形骸化していた"
+    },
+    "enriched_summary": "リリース判断の独断＋事前リスク認識の隠蔽＋相手の社内評価への二次被害",
+    "round": 3
+  }
+}
+```
+
+> **設計ポイント**: `status` が `"probing"` の間はフロントエンドがループ的にUI表示→ユーザー回答→再API呼び出しを行う。`"completed"` になったら `enriched_summary` を `assess-apology` に渡して角度算出の精度を向上させる。最大5ラウンド。
 
 ---
 
@@ -312,6 +366,8 @@
 | 謝罪中支援セッション | `USER#<userId>` | `DURING#<timestamp>#<sessionId>` | 謝罪中支援セッションサマリー |
 | 怒り残量推移 | `DURING#<sessionId>` | `ANGER#<timestamp>` | 怒り残量・失望度等の時系列データ |
 | 危険発言ログ | `DURING#<sessionId>` | `DANGER#<timestamp>` | 検知された危険発言と助言の記録 |
+| 月間AI利用量サマリー | `USER#<userId>` | `MONTHLY#<YYYY-MM>` | 月間のAPI呼び出し回数・トークン消費・概算コスト |
+| API呼び出し個別ログ | `USER#<userId>` | `USAGE#<timestamp>#<lambdaName>` | 個別API呼び出しのトークン消費記録 |
 
 ### 主要属性
 
@@ -320,7 +376,8 @@ geza-data
 ├── PK (String) - パーティションキー
 ├── SK (String) - ソートキー  
 ├── sessionId (String) - セッション識別子
-├── sessionType (String) - "APOLOGY" | "GUIDANCE"
+├── sessionType (String) - "APOLOGY" | "GUIDANCE" | "DURING" | "STORY"
+├── supportMode (String) - "face_to_face" | "web_meeting"（sessionType="DURING" 時のみ。対面モード or Web会議モード）
 ├── userId (String) - Cognito sub
 ├── timestamp (String) - ISO8601
 ├── angerLevel (Number) - 最終怒り度 (0-100)
@@ -393,12 +450,13 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Resources:
-  # Lambda 関数（20関数）- SAM::Function
+  # Lambda 関数（21関数）- SAM::Function
   AssessApologyFunction: ...
   EvaluateApologyFunction: ...
   GenerateOpponentFunction: ...
   GenerateStoryFunction: ...
   GeneratePlanFunction: ...
+  ProbeIncidentFunction: ...
   TextToSpeechFunction: ...
   GenerateFeedbackFunction: ...
   GeneratePreventionFunction: ...
@@ -479,9 +537,10 @@ Globals:
 
 | モデル | 用途 | 月間呼び出し数 | 平均トークン（入力/出力） | 単価（入力 / 出力 per 1M tokens） | 月額概算 |
 |-------|------|:-----------:|:---:|:---:|:---:|
-| Amazon Nova Lite | evaluate-apology, assess-apology, analyze-karte, evaluate-guidance, **analyze-anger, detect-danger-speech** | 5,500回 + 3,000回 = 8,500回 | 1,500 / 500 | $0.06 / $0.24 | **$0.87** |
-| Claude Sonnet (4-5) | generate-opponent, story, plan, feedback, prevention, mail, guidance-feedback | 1,500回 | 2,000 / 1,500 | $3.00 / $15.00 | **$42.75** |
-| | | | | **Bedrock 合計** | **≈ $43.62** |
+| Amazon Nova Lite | evaluate-apology, assess-apology, check-draft, analyze-karte, evaluate-guidance, **analyze-anger, detect-danger-speech** | 5,500回 + 3,000回 = 8,500回 | 1,500 / 500 | $0.06 / $0.24 | **$0.87** |
+| Claude Haiku 4.5 | generate-plan, probe-incident | 500回 + 500回 = 1,000回 | 1,500 / 1,000 | $0.80 / $4.00 | **$0.52** |
+| Claude Sonnet (4-5) | generate-opponent, story, feedback, prevention, mail, analyze-reply, guidance-feedback, diagnose-tendency | 1,000回 | 2,000 / 1,500 | $3.00 / $15.00 | **$28.50** |
+| | | | | **Bedrock 合計** | **≈ $29.89** |
 
 ### Amazon Polly（TTS）
 
@@ -524,13 +583,65 @@ Globals:
 
 | カテゴリ | 月額 (USD) | 月額 (JPY概算 @150円) |
 |---------|:---------:|:---:|
-| Bedrock (LLM) | $43.31 | ¥6,497 |
+| Bedrock (LLM) | $29.89 | ¥4,484 |
 | Polly (TTS) | $32.00 | ¥4,800 |
 | DynamoDB | $15.15 | ¥2,273 |
 | Lambda + API GW | $0.19 | ¥29 |
 | S3 + CloudFront | $1.50 | ¥225 |
 | Transcribe | $0.54 | ¥81 |
-| **月額合計** | **$92.69** | **≈ ¥13,904** |
+| **月額合計** | **$79.27** | **≈ ¥11,891** |
 
 > **注意**: 無料利用枠（Lambda 100万回/月、DynamoDB 25GB、Polly Neural 100万文字/12ヶ月）を考慮すると、初年度は月額 **$50〜60 程度**に収まる見込み。  
 > スケール時（1,000ユーザー）は Bedrock 呼び出しが支配的となり **$400〜500/月** を想定。
+
+---
+
+## LLMモデルプロファイル選択
+
+Lambda関数ごとに以下のプロファイルを割り当て、コスト・レイテンシ・品質を最適化する。
+
+| プロファイル | モデル | 割り当てLambda | 特性 |
+|------------|--------|--------------|------|
+| **fast** | Amazon Nova Lite | assess-apology, evaluate-apology, analyze-karte, evaluate-guidance, analyze-anger, detect-danger-speech, check-draft | 低レイテンシ（< 2s）・低コスト・分類/評価タスク向け |
+| **standard** | Claude Haiku 4.5 | generate-plan, **probe-incident** | 中品質生成（< 5s）・バランス型 |
+| **premium** | Claude Sonnet | generate-opponent, generate-story, generate-feedback, generate-guidance-feedback, generate-prevention, generate-follow-mail, analyze-reply, diagnose-tendency | 高品質生成（< 10s）・創造的タスク向け |
+
+> **将来構想（P2）**: ユーザーが standard↔premium を設定画面から切り替え可能にし、コスト/品質のトレードオフを自分で選べるようにする。
+
+---
+
+## AI利用量可視化（横断機能・P2構想）
+
+ユーザーが自身のAI利用状況と概算コストを確認できる機能。横断機能として全ユニットに薄く関わる。
+
+### DynamoDB属性（追加）
+
+```
+geza-data（既存テーブルに追加）
+├── PK: USER#<userId>
+│   SK: MONTHLY#<YYYY-MM>
+│   ├── totalCalls (Number) - 月間API呼び出し回数
+│   ├── totalInputTokens (Number) - 月間入力トークン合計
+│   ├── totalOutputTokens (Number) - 月間出力トークン合計
+│   ├── estimatedCostUsd (Number) - 概算コスト（USD）
+│   ├── callsByProfile (Map) - { fast: N, standard: N, premium: N }
+│   └── lastUpdated (String) - ISO8601
+│
+├── PK: USER#<userId>
+│   SK: USAGE#<timestamp>#<lambdaName>
+│   ├── lambdaName (String) - 呼び出しLambda関数名
+│   ├── profile (String) - "fast" | "standard" | "premium"
+│   ├── inputTokens (Number)
+│   ├── outputTokens (Number)
+│   ├── latencyMs (Number)
+│   └── sessionId (String) - 紐づくセッションID
+```
+
+### APIエンドポイント（将来追加・P2）
+
+| メソッド | パス | Lambda | 説明 |
+|---------|-----|--------|------|
+| GET | `/usage/monthly` | get-usage | 当月のAI利用量サマリー取得 |
+| GET | `/usage/history?months=3` | get-usage | 過去N月の利用量推移 |
+
+> **実装方針**: Lambda共有レイヤーの `bedrock_client.py` にトークン計測フックを追加し、API呼び出しごとに USAGE# レコードを書き込み + MONTHLY# レコードをアトミックカウンタで更新する。フロントエンドは `UsageCostPage` で月次グラフ + プロファイル別内訳を表示する。

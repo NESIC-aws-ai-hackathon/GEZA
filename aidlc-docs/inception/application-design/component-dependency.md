@@ -26,6 +26,7 @@
 | フロントエンド | 呼び出す API エンドポイント | Lambda |
 |------------|--------------------------|--------|
 | InceptionPage | POST /apology/assess | AssessApologyLambda |
+| InceptionPage | POST /incident/probe | ProbeIncidentLambda |
 | InceptionPage | POST /opponent/generate | GenerateOpponentLambda |
 | InceptionPage | POST /plan/generate | GeneratePlanLambda |
 | StoryPage | POST /story/generate | GenerateStoryLambda |

@@ -2,7 +2,8 @@
 
 > AI-DLC INCEPTION - Units Generation 成果物  
 > 生成日: 2026-04-30  
-> 分割方针: 機能ドメイン単位（9ユニット + インフラ基盤）
+> 最終更新: 2026-05-04（表崩れ修正 / 優先度ティア明確化）  
+> 分割方針: 機能ドメイン単位（9ユニット + インフラ基盤）
 
 ---
 
@@ -11,7 +12,7 @@
 | 決定事項 | 内容 |
 |---------|------|
 | 分割粒度 | 機能ドメイン単位（9ユニット + 基盤） |
-| インフラ構築 | SAM一括デプロイ（全20 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）|
+| インフラ構築 | SAM一括デプロイ（全21 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）|
 | FE共通モジュール | AuthModule/ApiClient/StateManager/AvatarController を U0 に先行実装、残りは各ユニットで追加 |
 | 実装順序 | U0 → U1 → U2 → U3 → U4 → U5（オプション）→ U6（最終）→ U7 → U8（将来構想）→ U9（決勝拡張） |
 | ディレクトリ構成 | フラット構成（`backend/functions/<name>/` + `frontend/pages/<page>/` + `frontend/shared/`）|
@@ -24,17 +25,17 @@
 |----|----------|------|:--:|:------:|:----:|
 | **U0** | 共通インフラ + FEコアモジュール | - | (基盤) | 最高 | 未着手 |
 | **U1** | トップ画面 + Cognito認証 | E1 | 16 | P0 | 未着手 |
-| **U2** | コンシェルジュコア | E2 | 49 | P0 | 未着手 |
+| **U2** | コンシェルジュコア | E2 | 57 | P0 | 未着手 |
 | **U3** | リハーサルモード（AI台本の読み合わせ） | E4 | 51 | P0† | 未着手 |
-
-> † **U3はコンセプト上「オプション（やりたい人だけ）」ですが、デモがえのためP0として分類。「謝罪丸投げ」の核は U2。U3は「AI製台本を読むだけ」の位置づけ。
 | **U4** | 謝罪後支援 + カルテ | E5 + E6 | 28 | P0 | 未着手 |
+
+> † **U3はコンセプト上「オプション（やりたい人だけ）」ですが、デモ映えのためP0として分類。「謝罪丸投げ」の核は U2。U3は「AI製台本を読むだけ」の位置づけ。**
 | **U5** | ストーリーモード | E3 | 13 | P1 | 未着手（U3完了後） |
 | **U6** | 上司モード | E7 | 23 | P1 | 未着手（最終・時間が余れば） |
 | **U7** | 送る前GEZAチェック・返信分析 | E8 | 21 | P2 | 未着手（将来構想） |
 | **U8** | 謝罪カルテ拡張・謝罪傾向診断 | E9 | 20 | P2 | 未着手（将来構想） |
-| **U9** | 謝罪中支援（怒り残量スキャナー・GEZA耳打ちモード） | E10 | 24 | P3 | 未着手（決勝拡張） |
-| | **合計** | | **245** | | |
+| **U9** | 謝罪中支援（怒り残量スキャナー・GEZA耳打ちモード・Web会議モード） | E10 | 42 | P3 | 未着手（決勝拡張） |
+| | **合計** | | **271** | | |
 
 ---
 
@@ -42,7 +43,7 @@
 
 ### 責務
 - AWS インフラ全体の初回デプロイ（SAM）
-- 全 Lambda スタブ（20本）のデプロイ（空の handler、ルーティング確立）
+- 全 Lambda スタブ（21本）のデプロイ（空の handler、ルーティング確立）
 - フロントエンドコア共通モジュール実装
 
 ### バックエンド成果物
@@ -71,6 +72,7 @@ backend/
     diagnose-tendency/lambda_function.py   # スタブ
     analyze-anger/lambda_function.py       # スタブ
     detect-danger-speech/lambda_function.py # スタブ
+    probe-incident/lambda_function.py      # スタブ
   shared/
     decorators.py        # @handle_errors デコレーター
     input_validator.py   # 入力バリデーション・プロンプトインジェクション対策
@@ -93,6 +95,7 @@ backend/
     diagnose-tendency.txt
     analyze-anger.txt
     detect-danger-speech.txt
+    probe-incident.txt
 ```
 
 ### フロントエンド成果物
@@ -115,20 +118,20 @@ frontend/
 なし（インフラ基盤・共通処理 / 技術的前提条件）
 
 ### AWS リソース
-- API Gateway HTTP API v2（全20エンドポイント定義済み）
+- API Gateway HTTP API v2（全21エンドポイント定義済み）
 - Cognito User Pool + Identity Pool
 - DynamoDB シングルテーブル（geza-data）
 - S3（静的ホスティングバケット + prompts用）
 - CloudFront ディストリビューション
-- Lambda × 20（スタブ）
+- Lambda × 21（スタブ）
 - SAM Layer: shared-utils-layer
 ### U0 完了基準
 
-- [ ] `sam deploy` 成功（全20 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
+- [ ] `sam deploy` 成功（全21 Lambda スタブ + Cognito + API GW + DynamoDB + S3 + CloudFront）
 - [ ] Cognito User Pool でテストユーザー作成・ログイン成功
-- [ ] API Gateway 全20エンドポイントで 200 レスポンス（スタブ）
+- [ ] API Gateway 全21エンドポイントで 200 レスポンス（スタブ）
 - [ ] CloudFront URL で index.html が表示される
-- [ ] shared-utils-layer のインポートが全20 Lambda で成功
+- [ ] shared-utils-layer のインポートが全21 Lambda で成功
 - [ ] AuthModule でログイン → JWT取得 → ApiClient で API 呼び出し成功
 - [ ] `backend/prompts/*.txt` スタブ配置（各 Lambda の prompt_loader.py が FileNotFoundError を出さない）
 
@@ -177,7 +180,7 @@ frontend/
 
 ### 責務
 - 謝罪の全体プランニング支援（GEZAのコア機能）
-- やらかし入力 → 角度アセスメント → 相手生成 → プラン作成 → 実施日管理
+- やらかし入力 → **深掘り分析（AI追加質問）** → 角度アセスメント → 相手生成 → プラン作成 → 実施日管理
 - ピクトグラム画像+スタンプ演出+SE音で角度表示・ギャップ分析
 
 ### バックエンド成果物（Lambda実装）
@@ -185,10 +188,12 @@ frontend/
 ```
 backend/functions/
   assess-apology/lambda_function.py     # Nova Lite: 角度算出（0〜180°）
+  probe-incident/lambda_function.py     # Claude Haiku 4.5: 深掘り分析（追加質問生成 or 本質分析結果）
   generate-opponent/lambda_function.py  # Claude Sonnet: 相手プロフィール生成
-  generate-plan/lambda_function.py      # Claude Sonnet: 謝罪プラン + ToDo
+  generate-plan/lambda_function.py      # Claude Haiku 4.5: 謝罪プラン + ToDo
 backend/prompts/
   assess-apology.txt
+  probe-incident.txt
   generate-opponent.txt
   generate-plan.txt
 ```
@@ -211,6 +216,7 @@ frontend/
 | US | タイトル | SP |
 |----|---------|:--:|
 | US-201 | やらかし内容を自由入力する | 5 |
+| US-212 | AIの深掘り質問でやらかしの本質を明らかにする | 8 |
 | US-207 | 謝罪の角度をAIがアセスメントする | 8 |
 | US-208 | AI角度 vs 自己申告のギャップを分析する | 5 |
 | US-202 | 謝罪相手をAIが生成する | 13 |
@@ -218,7 +224,7 @@ frontend/
 | US-210 | 謝罪実施日を設定しカウントダウン管理する | 5 |
 | US-211 | 謝罪実施当日の直前サポートを受ける | 3 |
 | US-204 | 謝罪相手のアバターをカスタマイズする | 5 |
-| **合計** | | **49** |
+| **合計** | | **57** |
 
 ### 依存 U0/U1 成果物
 - ApiClient, StateManager (U0)
@@ -526,12 +532,14 @@ frontend/
 
 ---
 
-## U9: 謝罪中支援 — 怒り残量スキャナー・GEZA耳打ちモード（P3・決勝拡張）
+## U9: 謝罪中支援 — 怒り残量スキャナー・GEZA耳打ちモード・Web会議モード（P3・決勝拡張）
 
 ### 責務
 - 謝罪中の相手の発言をリアルタイム分析し、怒り残量・失望度・許容余地・反論危険度を推定・表示
 - ユーザー自身の発話を監視し、言い訳・逆ギレ・責任転嫁・NGワードを検知して短い助言を返す
 - 怒り残量ゲージ・助言を統合した謝罪中ダッシュボードの表示
+- **対面モード**: イヤホン越しの短い音声助言（将来的にARグラス連携も想定）
+- **Web会議モード**: PC音声出力＋マイク入力をソースとし、専用タブ/前面パネルに短文テキストで静かに助言（会議相手にAI助言を聞かせない）
 - セッション終了後のサマリー生成・謝罪カルテへの保存
 
 ### バックエンド成果物（Lambda実装）
@@ -611,9 +619,12 @@ DetectDangerSpeechFunction:
 | US | タイトル | SP |
 |----|---------|:--:|
 | US-1001 | 怒り残量スキャナー | 8 |
-| US-1002 | GEZA耳打ちモード | 8 |
+| US-1002 | GEZA耳打ちモード（対面） | 8 |
 | US-1003 | 謝罪中ダッシュボード | 8 |
-| **合計** | | **24** |
+| US-1004 | Web会議モード（画面上助言） | 8 |
+| US-1005 | Web会議中の危険発言警告 | 5 |
+| US-1006 | Web会議後の振り返り・カルテ保存 | 5 |
+| **合計** | | **42** |
 
 ### 主な機能
 - 怒り残量リアルタイム推定（0〜100%）+ トレンド表示
@@ -621,6 +632,8 @@ DetectDangerSpeechFunction:
 - 言い訳・逆ギレ・責任転嫁・NGワード検知
 - 短い助言のリアルタイム表示（キュー管理・自動消去）
 - 統合ダッシュボード表示（4ゲージ + 助言エリア + 会話ログ）
+- **対面モード**: イヤホン耳打ち（将来ARグラス想定）
+- **Web会議モード**: 専用タブ/前面パネルに短文テキストでサイレント助言（会議相手に聞かせない）
 - セッション終了後サマリー生成・カルテ保存
 - 音声入力フォールバック（テキスト手動入力対応）
 
@@ -703,7 +716,8 @@ GEZA/
         ├── analyze-reply.txt            # U7 で作成
         ├── diagnose-tendency.txt        # U8 で作成
         ├── analyze-anger.txt            # U9 で作成
-        └── detect-danger-speech.txt     # U9 で作成
+        ├── detect-danger-speech.txt     # U9 で作成
+        └── probe-incident.txt           # U2 で作成
 └── frontend/
     ├── pages/
     │   ├── index.html + top.js          # U1 で実装
