@@ -63,6 +63,15 @@ aws dynamodb describe-table --table-name geza-data `
 - `sam validate` の exit code 1 は pydantic 警告のみ（テンプレート自体は正常）
 - `aws_lambda_builders` の packager.py を `errors='replace'` パッチ済み（日本語パス対策）
 - `samconfig.toml` のコメントは ASCII のみ（CP932 エンコーディング問題回避）
+- CloudFront Invalidation: Outputs に `CloudFrontDistributionId` なし → `aws cloudfront list-distributions --no-verify-ssl` で Distribution ID を取得。`--no-verify-ssl` が必要（ローカルSSL問題）
+  ```powershell
+  # Distribution ID 取得（dhamuhqye8mp6 → E1AZPLEM19ABKQ）
+  aws cloudfront list-distributions --profile share --no-verify-ssl `
+    --query "DistributionList.Items[].{Id:Id,Domain:DomainName}" --output table
+  # Invalidation 実行
+  aws cloudfront create-invalidation --distribution-id E1AZPLEM19ABKQ `
+    --paths "/*" --profile share --no-verify-ssl
+  ```
 
 ## MVPスコープはAI-DLC実行中に随時検討する
 

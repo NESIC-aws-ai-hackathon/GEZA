@@ -1,0 +1,483 @@
+﻿/* GEZA — メインスタイルシート（U1 ダークモード）
+ * カラー: 紺ベース #1a1a2e / カード #16213e / アクセント赤 #e94560
+ * スマホ幅 375px 基準 / PC は中央 max-width: 430px
+ */
+
+/* ============================================================
+   1. リセット / ベース
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #12121f;
+  color: #eee;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+/* ============================================================
+   2. アプリコンテナ
+   ============================================================ */
+.app-container {
+  width: 100%; max-width: 430px; min-height: 100vh;
+  background: #16213e;
+  display: flex; flex-direction: column;
+  position: relative; overflow-x: hidden;
+  box-shadow: 0 0 60px rgba(0,0,0,0.4);
+}
+
+/* ============================================================
+   3. セクション切り替え
+   ============================================================ */
+.page-section[hidden] { display: none !important; }
+
+/* ============================================================
+   3.5 共通ヘッダー
+   ============================================================ */
+.app-header {
+  width: 100%;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  background: linear-gradient(135deg, #0f3460, #533483);
+  border-bottom: 2px solid rgba(233,69,96,0.35);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+
+.app-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.app-header-icon {
+  width: 40px; height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(233,69,96,0.45));
+  margin-top: 6px;
+}
+
+.app-header-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #e94560;
+  letter-spacing: 6px;
+  text-shadow: 0 0 18px rgba(233,69,96,0.5);
+  line-height: 1;
+}
+
+.app-header-logout {
+  position: absolute;
+  right: 16px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  color: #aaa;
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.app-header-logout:hover { border-color: #e94560; color: #eee; }
+.app-header-logout[hidden] { display: none !important; }
+
+/* ============================================================
+   3.7 認証チェック中ローディング
+   ============================================================ */
+.app-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.app-loading[hidden] { display: none !important; }
+
+/* ============================================================
+   4. アバターコンテナ — プロトタイプ準拠 2層構造
+   ============================================================ */
+.avatar-frame {
+  width: 260px;
+  height: 320px;
+  margin: 0 auto;
+  border-radius: 20px;
+  background: radial-gradient(circle at 50% 40%, #2a2a4a, #1a1a2e);
+  border: 2px solid #e94560;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 0 40px rgba(0,0,0,0.15);
+}
+
+/* facesjs コンテナ: 上端を -55px オフセット → 頭頂をフレーム上端よりはみ出す */
+.facesjs-container {
+  position: absolute;
+  top: -55px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.facesjs-container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  shape-rendering: geometricPrecision;
+}
+
+/* アイドルモーション */
+@keyframes headIdle {
+  0%   { transform: translateY(0px) rotate(0deg); }
+  18%  { transform: translateY(-1.5px) rotate(0.4deg); }
+  40%  { transform: translateY(-2.5px) rotate(-0.2deg); }
+  62%  { transform: translateY(-1px) rotate(0.5deg); }
+  82%  { transform: translateY(-2px) rotate(-0.3deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.avatar-frame #face-group {
+  transform-box: fill-box;
+  transform-origin: 50% 75%;
+  animation: headIdle 6s ease-in-out infinite;
+}
+
+/* 瞬きラッパー */
+.avatar-frame .eye-wrap {
+  transform-box: fill-box;
+  transform-origin: center center;
+}
+
+/* ログインセクションでは小さい */
+.avatar-frame.small {
+  width: 140px;
+  height: 170px;
+}
+
+/* トップセクションでは大きめ */
+.avatar-frame.large {
+  width: 260px;
+  height: 320px;
+}
+
+/* 縮小→拡大トランジション */
+.avatar-frame {
+  transition: border-color 0.5s, box-shadow 0.5s;
+}
+
+/* 縮小→拡大トランジション */
+.avatar-frame {
+  transition: width 0.5s ease, height 0.5s ease, border-color 0.5s, box-shadow 0.5s;
+}
+
+/* ============================================================
+   5. ログインセクション
+   ============================================================ */
+#login-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px 28px;
+  gap: 24px;
+}
+
+.login-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-welcome {
+  font-size: 20px;
+  font-weight: 700;
+  color: #eee;
+}
+
+.login-tagline {
+  font-size: 13px;
+  color: #888;
+  letter-spacing: 0.5px;
+}
+
+.login-card {
+  width: 100%;
+  background: #0f3460;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid rgba(83,52,131,0.4);
+}
+
+.login-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #eee;
+  text-align: center;
+}
+
+/* ============================================================
+   6. フォーム要素
+   ============================================================ */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 13px; color: #aaa; font-weight: 600; }
+
+.form-input {
+  background: #16213e;
+  border: 1.5px solid #533483;
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #eee;
+  font-size: 15px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+  border-color: #e94560;
+  box-shadow: 0 0 0 3px rgba(233,69,96,0.15);
+}
+
+.form-input::placeholder { color: #666; }
+
+.password-wrapper { position: relative; }
+.password-wrapper .form-input { padding-right: 44px; }
+
+.password-toggle {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #888; cursor: pointer;
+  font-size: 18px; padding: 0; line-height: 1;
+}
+.password-toggle:hover { color: #eee; }
+
+.error-message { font-size: 13px; color: #fc8181; min-height: 18px; line-height: 1.4; }
+
+/* ============================================================
+   7. ボタン
+   ============================================================ */
+.btn {
+  border: none; border-radius: 10px; padding: 13px 20px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #e94560, #533483);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(233,69,96,0.3);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 6px 22px rgba(233,69,96,0.45);
+  transform: translateY(-1px);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background: transparent; color: #aaa;
+  border: 1px solid #533483;
+}
+.btn-secondary:hover:not(:disabled) { color: #eee; border-color: #e94560; }
+
+.loading-spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   8. TOP セクション
+   ============================================================ */
+#top-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 24px 16px;
+  gap: 12px;
+}
+
+.avatar-catchphrase {
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* ゲージ */
+.gauges-section { padding: 0 24px 20px; display: flex; flex-direction: column; gap: 14px; }
+.gauge-item { display: flex; flex-direction: column; gap: 6px; }
+.gauge-label-row { display: flex; justify-content: space-between; align-items: center; }
+.gauge-label { font-size: 13px; color: #aaa; }
+.gauge-value { font-size: 13px; font-weight: 700; color: #eee; }
+
+.gauge-bar-track { background: #0f3460; border-radius: 4px; height: 10px; overflow: hidden; }
+.gauge-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.gauge-bar-fill.anger     { background: linear-gradient(90deg, #ff6600, #ff0000); }
+.gauge-bar-fill.trust     { background: linear-gradient(90deg, #0066ff, #00cc66); }
+.gauge-bar-fill.difficulty { background: linear-gradient(90deg, #ed8936, #fbd38d); }
+
+/* 謝罪状況カード */
+.status-card {
+  margin: 0 16px 12px;
+  background: #0f3460;
+  border: 1px solid rgba(83,52,131,0.4);
+  border-radius: 14px;
+  padding: 16px;
+}
+.status-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ccc;
+  margin-bottom: 12px;
+}
+.status-items { display: flex; flex-direction: column; gap: 10px; }
+.status-item {
+  display: flex; align-items: center; gap: 10px;
+}
+.status-icon { font-size: 20px; flex-shrink: 0; }
+.status-detail { display: flex; flex-direction: column; gap: 2px; }
+.status-label { font-size: 11px; color: #888; }
+.status-value { font-size: 13px; color: #eee; font-weight: 600; }
+
+/* モードセレクター */
+.mode-selector {
+  padding: 8px 16px 32px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+
+.mode-btn {
+  background: #0f3460;
+  border: 1px solid #533483;
+  border-radius: 14px;
+  padding: 16px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative; text-align: center; color: #eee;
+}
+.mode-btn:hover:not([data-status="coming-soon"]) {
+  border-color: #e94560; background: #16213e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(233,69,96,0.15);
+}
+.mode-btn[data-status="coming-soon"] { opacity: 0.45; cursor: not-allowed; }
+.mode-icon { font-size: 26px; line-height: 1; }
+.mode-label { font-size: 13px; font-weight: 700; color: #eee; }
+.mode-desc { font-size: 11px; color: #aaa; line-height: 1.3; }
+.coming-soon-badge {
+  position: absolute; top: 8px; right: 8px;
+  background: #533483; color: #ddd; font-size: 10px;
+  padding: 2px 6px; border-radius: 6px;
+}
+
+/* ============================================================
+   9. グローバルバナー
+   ============================================================ */
+.global-banner {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  max-width: 430px; width: 100%;
+  background: #c53030; color: #fff;
+  font-size: 13px; padding: 10px 16px; text-align: center;
+  z-index: 999; display: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.global-banner.visible { display: block; }
+.global-banner.success { background: #2e7d32; }
+
+/* ============================================================
+   10. TOTP セットアップ
+   ============================================================ */
+#totp-secret-display {
+  background: #1a1a2e;
+  color: #00d4ff;
+  border: 1px solid #533483;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  word-break: break-all;
+  font-family: "SF Mono", "Consolas", "Menlo", monospace;
+  flex: 1;
+}
+
+.totp-qr-container {
+  display: flex; justify-content: center; align-items: center;
+  padding: 16px 0 8px;
+}
+.totp-qr-container img,
+.totp-qr-container canvas {
+  border-radius: 8px;
+  border: 2px solid #533483;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.totp-secret-details {
+  margin-top: 8px;
+  border: 1px solid #533483;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.totp-secret-details summary {
+  padding: 10px 14px;
+  font-size: 13px; color: #888;
+  cursor: pointer; user-select: none;
+  list-style: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.totp-secret-details summary::-webkit-details-marker { display: none; }
+.totp-secret-details summary::before {
+  content: "\25B6"; font-size: 10px; color: #666;
+  transition: transform 0.2s;
+}
+.totp-secret-details[open] summary::before { transform: rotate(90deg); }
+.totp-secret-details[open] summary { border-bottom: 1px solid #533483; color: #aaa; }
+
+.totp-secret-row {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 12px;
+  background: #0f3460;
+}
+
+.totp-copy-btn {
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   11. フォーム非表示
+   ============================================================ */
+#mfa-form[hidden],
+#new-password-form[hidden],
+#totp-setup-form[hidden] {
+  display: none !important;
+}
+
+/* 管理者アカウント注記 */
+.login-note {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}

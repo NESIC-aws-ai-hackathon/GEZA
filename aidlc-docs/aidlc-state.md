@@ -4,7 +4,7 @@
 - **プロジェクト名**: GEZA（謝罪丸投げコンシェルジュ）
 - **プロジェクトタイプ**: Greenfield
 - **開始日**: 2026-04-29
-- **現在のステージ**: CONSTRUCTION - U0 Deploy & Test 完了（U1 Functional Design 待ち）
+- **現在のステージ**: CONSTRUCTION - U1 Deploy & Test 完了（U2 Functional Design 待ち）
 - **コンセプト**: 謝罪丸投げコンシェルジュ（コア: 謝罪角度アセスメント・台本フル生成、謝罪中支援: 怒り残量スキャナー・GEZA耳打ちモード【決勝拡張】、継続支援: 送る前チェック・返信分析・謝罪カルテ・傾向診断、オプション: リハーサルモード）
 
 ## ワークスペース状態
@@ -42,10 +42,18 @@
 - [x] Infrastructure Design — U0 完了（2026-05-05）
 - [x] Code Generation — U0 完了（2026-05-05）
 - [x] Deploy & Test — U0 完了（2026-05-05）✅ sam deploy CREATE_COMPLETE / スモークテスト PASS
-- [ ] NFR Design（ユニット毎）
-- [ ] Infrastructure Design（ユニット毎）
-- [ ] Code Generation（ユニット毎）
-- [ ] Build and Test
+- [x] Functional Design — U1 完了（2026-05-05）✅ 承認済み（NEW_PASSWORD_REQUIRED/MFA_SETUP フロー追加反映）
+- [x] NFR Requirements — U1 完了（2026-05-05）✅ 承認済み
+- [x] NFR Design — U1 完了（2026-05-05）✅ 承認済み
+- [x] Infrastructure Design — U1 完了（2026-05-05）✅ 承認済み
+- [x] Code Generation — U1 完了（2026-05-05）✅ 承認済み
+- [x] Deploy & Test — U1 完了（2026-05-05）✅ S3 sync + CF Invalidation + スモークテスト PASS
+- [ ] Functional Design — U2
+- [ ] NFR Requirements — U2
+- [ ] NFR Design — U2
+- [ ] Infrastructure Design — U2
+- [ ] Code Generation — U2
+- [ ] Deploy & Test — U2
 
 ---
 

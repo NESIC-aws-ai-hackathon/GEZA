@@ -4,66 +4,428 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-  <meta http-equiv="X-Frame-Options" content="DENY" />
   <title>GEZA — AI 謝罪行動支援</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+  <link rel="apple-touch-icon" href="icons/geza_icon.png">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- ログインページ -->
-  <main id="login-page" class="login-page" role="main">
-    <div class="login-card">
-      <h1 class="login-title" data-testid="login-title"></h1>
-      <p class="login-description" data-testid="login-description"></p>
+  <!-- グローバルエラーバナー -->
+  <div id="global-banner" class="global-banner" role="alert" aria-live="assertive"></div>
+
+  <div class="app-container">
+
+    <!-- ============================================================
+         共通ヘッダー（ログイン画面・TOP画面共通）
+         ============================================================ -->
+    <header class="app-header" data-testid="app-header">
+      <div class="app-header-brand">
+        <img
+          src="icons/geza_icon.png"
+          alt="GEZA"
+          class="app-header-icon"
+        />
+        <span class="app-header-title">GEZA</span>
+      </div>
       <button
-        id="login-btn"
-        class="btn btn-primary"
-        data-testid="login-btn"
+        id="logout-btn"
+        class="app-header-logout"
         type="button"
-        aria-label="Cognito でログイン"
-      >
-        ログイン / サインアップ
-      </button>
-      <p class="login-note" data-testid="login-note"></p>
+        data-testid="logout-btn"
+        hidden
+      >ログアウト</button>
+    </header>
+
+    <!-- 認証チェック中ローディング表示 -->
+    <div id="app-loading" class="app-loading">
+      <div class="loading-spinner" style="width:32px;height:32px;border-width:3px;"></div>
     </div>
-  </main>
 
-  <!-- 初期設定 (config.js で window.GEZA_CONFIG を定義する) -->
+    <!-- ============================================================
+         ログインセクション（認証確認後に表示）
+         ============================================================ -->
+    <section id="login-section" class="page-section" role="main" hidden>
+
+      <!-- ログインヘッダー -->
+      <div class="login-header">
+        <!-- facesjs 初期化用（非表示） -->
+        <div id="avatar-container-login" aria-hidden="true" style="display:none;"></div>
+        <p class="login-tagline" data-testid="login-tagline">土下座はあなたに、誠意はAIに。</p>
+      </div>
+
+      <!-- ログインカード -->
+      <div class="login-card">
+        <p class="login-card-title">ログイン</p>
+
+        <!-- パスワードフォーム -->
+        <form id="login-form" novalidate data-testid="login-form">
+          <div class="form-group">
+            <label class="form-label" for="email-input">メールアドレス</label>
+            <input
+              id="email-input"
+              class="form-input"
+              type="email"
+              autocomplete="email"
+              placeholder="example@company.com"
+              data-testid="email-input"
+              required
+            />
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label class="form-label" for="password-input">パスワード</label>
+            <div class="password-wrapper">
+              <input
+                id="password-input"
+                class="form-input"
+                type="password"
+                autocomplete="current-password"
+                placeholder="12文字以上"
+                data-testid="password-input"
+                required
+              />
+              <button
+                id="password-toggle"
+                class="password-toggle"
+                type="button"
+                aria-label="パスワードを表示"
+                data-testid="password-toggle"
+              >👁</button>
+            </div>
+          </div>
+          <div
+            id="login-error"
+            class="error-message"
+            role="alert"
+            aria-live="polite"
+            data-testid="login-error"
+            hidden
+          ></div>
+          <button
+            id="login-btn"
+            class="btn btn-primary"
+            type="submit"
+            data-testid="login-btn"
+            style="margin-top: 16px;"
+          >
+            <span class="loading-spinner" style="display:none;" aria-hidden="true"></span>
+            <span class="btn-label">ログイン</span>
+          </button>
+        </form>
+
+        <!-- MFA フォーム（initiateAuth チャレンジ後に表示） -->
+        <form id="mfa-form" novalidate data-testid="mfa-form" hidden>
+          <p style="font-size:13px; color:#aaa; text-align:center; margin-bottom:12px;">
+            認証アプリの 6 桁コードを入力してください
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="totp-input">認証コード</label>
+            <input
+              id="totp-input"
+              class="form-input"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="000000"
+              autocomplete="one-time-code"
+              data-testid="totp-input"
+              required
+            />
+          </div>
+          <div
+            id="mfa-error"
+            class="error-message"
+            role="alert"
+            aria-live="polite"
+            data-testid="mfa-error"
+            hidden
+          ></div>
+          <button
+            id="mfa-submit-btn"
+            class="btn btn-primary"
+            type="submit"
+            data-testid="mfa-submit-btn"
+            style="margin-top: 16px;"
+          >
+            <span class="loading-spinner" style="display:none;" aria-hidden="true"></span>
+            <span class="btn-label">確認</span>
+          </button>
+          <button
+            id="mfa-back-btn"
+            class="btn btn-secondary"
+            type="button"
+            data-testid="mfa-back-btn"
+            style="margin-top: 8px;"
+          >
+            <span class="btn-label">← メールアドレス入力に戻る</span>
+          </button>
+        </form>
+
+        <!-- 初回パスワード変更フォーム（NEW_PASSWORD_REQUIRED チャレンジ時） -->
+        <form id="new-password-form" novalidate data-testid="new-password-form" hidden>
+          <p style="font-size:13px; color:#aaa; text-align:center; margin-bottom:12px;">
+            初回ログインのため新しいパスワードを設定してください
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="new-password-input">新しいパスワード</label>
+            <div class="password-wrapper">
+              <input
+                id="new-password-input"
+                class="form-input"
+                type="password"
+                autocomplete="new-password"
+                placeholder="12文字以上・大文字・小文字・数字・記号を含む"
+                data-testid="new-password-input"
+                required
+              />
+              <button
+                id="new-password-toggle"
+                class="password-toggle"
+                type="button"
+                aria-label="パスワードを表示"
+              >👁</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 12px;">
+            <label class="form-label" for="new-password-confirm-input">パスワード確認</label>
+            <input
+              id="new-password-confirm-input"
+              class="form-input"
+              type="password"
+              autocomplete="new-password"
+              placeholder="もう一度入力"
+              data-testid="new-password-confirm-input"
+              required
+            />
+          </div>
+          <div
+            id="new-password-error"
+            class="error-message"
+            role="alert"
+            aria-live="polite"
+            data-testid="new-password-error"
+            hidden
+          ></div>
+          <button
+            id="new-password-btn"
+            class="btn btn-primary"
+            type="submit"
+            data-testid="new-password-btn"
+            style="margin-top: 16px;"
+          >
+            <span class="loading-spinner" style="display:none;" aria-hidden="true"></span>
+            <span class="btn-label">パスワードを設定</span>
+          </button>
+        </form>
+
+        <!-- TOTP 設定フォーム（MFA_SETUP チャレンジ時） -->
+        <form id="totp-setup-form" novalidate data-testid="totp-setup-form" hidden>
+          <p style="font-size:13px; color:#555; text-align:center; margin-bottom:16px; line-height:1.6;">
+            認証アプリ（Google Authenticator 等）で<br>QRコードをスキャンしてください
+          </p>
+
+          <!-- QR コード表示エリア -->
+          <div id="totp-qr-container" class="totp-qr-container" aria-label="MFA設定用QRコード"></div>
+
+          <!-- シークレットキー（QR スキャンできない場合の代替） -->
+          <details class="totp-secret-details">
+            <summary>QRコードが読み取れない場合</summary>
+            <div class="totp-secret-row">
+              <code id="totp-secret-display" class="totp-secret-code" data-testid="totp-secret-display"></code>
+              <button
+                id="totp-secret-copy-btn"
+                class="btn btn-secondary totp-copy-btn"
+                type="button"
+                data-testid="totp-secret-copy-btn"
+              >コピー</button>
+            </div>
+          </details>
+
+          <div class="form-group" style="margin-top:16px;">
+            <label class="form-label" for="totp-setup-code-input">認証アプリに表示された 6 桁コード</label>
+            <input
+              id="totp-setup-code-input"
+              class="form-input"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="000000"
+              autocomplete="one-time-code"
+              data-testid="totp-setup-code-input"
+              required
+            />
+          </div>
+          <div
+            id="totp-setup-error"
+            class="error-message"
+            role="alert"
+            aria-live="polite"
+            data-testid="totp-setup-error"
+            hidden
+          ></div>
+          <button
+            id="totp-setup-btn"
+            class="btn btn-primary"
+            type="submit"
+            data-testid="totp-setup-btn"
+            style="margin-top: 16px;"
+          >
+            <span class="loading-spinner" style="display:none;" aria-hidden="true"></span>
+            <span class="btn-label">認証アプリを登録</span>
+          </button>
+        </form>
+
+      </div><!-- /.login-card -->
+
+      <p class="login-note">
+        ログインには管理者から払い出されたアカウントが必要です
+      </p>
+    </section>
+
+    <!-- ============================================================
+         TOP セクション（認証後表示）
+         ============================================================ -->
+    <section id="top-section" class="page-section" hidden>
+
+      <!-- アバター（四角フレーム .large） -->
+      <div class="avatar-section">
+        <div class="avatar-frame large">
+          <div
+            id="avatar-container-top"
+            class="facesjs-container"
+            role="img"
+            aria-label="謝罪ボスアバター"
+            data-testid="avatar-top"
+          ></div>
+        </div>
+      </div>
+
+      <!-- 謝罪状況カード -->
+      <div class="status-card">
+        <h3 class="status-card-title">現在の状況</h3>
+        <div class="status-items">
+          <div class="status-item">
+            <span class="status-icon">🔥</span>
+            <div class="status-detail">
+              <span class="status-label">進行中の案件</span>
+              <span class="status-value" id="active-cases">なし</span>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-icon">📋</span>
+            <div class="status-detail">
+              <span class="status-label">次のタスク</span>
+              <span class="status-value" id="next-task">新しい謝罪を始めましょう</span>
+            </div>
+          </div>
+          <div class="status-item">
+            <span class="status-icon">📊</span>
+            <div class="status-detail">
+              <span class="status-label">練習回数</span>
+              <span class="status-value" id="practice-count">0 回</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- モードセレクター -->
+      <div id="mode-selector" class="mode-selector" data-testid="mode-selector">
+
+        <!-- 耳打ちモード（リンクあり） -->
+        <button
+          class="mode-btn"
+          type="button"
+          data-mode="mimicry"
+          data-status="available"
+          data-target="pages/mimicry.html"
+          data-testid="mode-btn-mimicry"
+        >
+          <span class="mode-icon" aria-hidden="true">👂</span>
+          <span class="mode-label">耳打ちモード</span>
+          <span class="mode-desc">リアルタイムで謝罪をサポート</span>
+        </button>
+
+        <button
+          class="mode-btn"
+          type="button"
+          data-mode="real"
+          data-status="coming-soon"
+          data-target="pages/inception.html"
+          data-testid="mode-btn-real"
+          disabled
+        >
+          <span class="mode-icon" aria-hidden="true">💼</span>
+          <span class="mode-label">実案件モード</span>
+          <span class="mode-desc">実際の謝罪の練習</span>
+          <span class="coming-soon-badge">準備中</span>
+        </button>
+
+        <button
+          class="mode-btn"
+          type="button"
+          data-mode="story"
+          data-status="coming-soon"
+          data-target="pages/story.html"
+          data-testid="mode-btn-story"
+          disabled
+        >
+          <span class="mode-icon" aria-hidden="true">📖</span>
+          <span class="mode-label">ストーリーモード</span>
+          <span class="mode-desc">物語の謝罪シナリオ</span>
+          <span class="coming-soon-badge">準備中</span>
+        </button>
+
+        <button
+          class="mode-btn"
+          type="button"
+          data-mode="karte"
+          data-status="coming-soon"
+          data-target="pages/karte.html"
+          data-testid="mode-btn-karte"
+          disabled
+        >
+          <span class="mode-icon" aria-hidden="true">📋</span>
+          <span class="mode-label">謝罪カルテ</span>
+          <span class="mode-desc">謝罪履歴と分析</span>
+          <span class="coming-soon-badge">準備中</span>
+        </button>
+
+        <button
+          class="mode-btn"
+          type="button"
+          data-mode="manager"
+          data-status="coming-soon"
+          data-target="pages/manager.html"
+          data-testid="mode-btn-manager"
+          disabled
+        >
+          <span class="mode-icon" aria-hidden="true">👔</span>
+          <span class="mode-label">上司向けFB</span>
+          <span class="mode-desc">上司へのフィードバック</span>
+          <span class="coming-soon-badge">準備中</span>
+        </button>
+
+      </div><!-- /#mode-selector -->
+
+    </section><!-- /#top-section -->
+
+  </div><!-- /.app-container -->
+
+  <!-- ================================================================
+       スクリプト読み込み順序:
+       1. config.js    — window.GEZA_CONFIG 定義
+       2. facesjs      — window.faces 定義
+       3. 共通モジュール (state / auth / avatar / anger-gauge)
+       4. top.js       — DOMContentLoaded で初期化
+       ================================================================ -->
   <script src="config.js"></script>
-  <script src="shared/auth.js"></script>
+  <script src="assets/facesjs.min.js"></script>
+  <script src="assets/qrcode.min.js"></script>
   <script src="shared/state.js"></script>
-  <script>
-    (function () {
-      // textContent で静的テキストを設定 (XSS-01)
-      document.querySelector("[data-testid='login-title']").textContent = "GEZA";
-      document.querySelector("[data-testid='login-description']").textContent =
-        "AI を活用した謝罪行動支援アプリです。";
-      document.querySelector("[data-testid='login-note']").textContent =
-        "ログインには管理者から払い出されたアカウントが必要です。";
+  <script src="shared/auth.js"></script>
+  <script src="shared/avatar.js"></script>
+  <script src="shared/anger-gauge.js"></script>
+  <script src="pages/top.js"></script>
 
-      // 認証済みならダッシュボードにリダイレクト
-      if (AuthModule.isAuthenticated()) {
-        window.location.assign("dashboard.html");
-        return;
-      }
-
-      // 認可コードコールバック処理
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
-      if (code) {
-        AuthModule.handleCallback(code)
-          .then(() => window.location.assign("dashboard.html"))
-          .catch(() => {
-            const btn = document.getElementById("login-btn");
-            if (btn) btn.textContent = "認証エラー — 再試行";
-          });
-        return;
-      }
-
-      // ログインボタン
-      document.getElementById("login-btn").addEventListener("click", function () {
-        AuthModule.redirectToLogin();
-      });
-    })();
-  </script>
 </body>
 </html>

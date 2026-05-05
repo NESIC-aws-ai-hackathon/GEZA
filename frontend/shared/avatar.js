@@ -15,7 +15,7 @@ const AvatarController = (() => {
    */
   function init(containerId, faceConfig = null) {
     _containerId = containerId;
-    _currentFace = faceConfig ?? window.faces.generate();
+    _currentFace = faceConfig ?? window.facesjs.generate();
     _render();
   }
 
@@ -42,7 +42,7 @@ const AvatarController = (() => {
     if (_animationTimer) return;
     _animationTimer = setInterval(() => {
       if (!_currentFace) return;
-      const blink = window.faces.override(_currentFace, { eye: { id: "eye-closed" } });
+      const blink = window.facesjs.override(_currentFace, { eye: { id: "eye-closed" } });
       _renderFace(blink);
       setTimeout(() => _render(), 150);
     }, 3000 + Math.random() * 2000);
@@ -65,7 +65,7 @@ const AvatarController = (() => {
     const container = document.getElementById(_containerId);
     if (!container) return;
     // facesjs が生成する SVG を直接挿入（ユーザー入力は一切含まない）
-    window.faces.display(_containerId, face);
+    window.facesjs.display(_containerId, face);
   }
 
   function _emotionOverrides(emotionKey) {
