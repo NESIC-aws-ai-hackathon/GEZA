@@ -1,0 +1,38 @@
+# samconfig.toml - GEZA SAM deploy configuration
+# Do NOT commit AWS account IDs or credentials.
+# Set AllowedOrigin via parameter_overrides after CloudFront domain is known.
+
+version = 0.1
+
+[default]
+[default.global.parameters]
+region = "ap-northeast-1"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.deploy.parameters]
+stack_name         = "geza-app"
+resolve_s3         = true
+capabilities       = "CAPABILITY_IAM"
+confirm_changeset  = true
+fail_on_empty_changeset = false
+region             = "ap-northeast-1"
+
+[default.validate.parameters]
+region = "ap-northeast-1"
+lint   = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+env_vars        = "env.json"
+
+[staging]
+[staging.deploy.parameters]
+stack_name         = "geza-app-staging"
+resolve_s3         = true
+capabilities       = "CAPABILITY_IAM"
+confirm_changeset  = false
+fail_on_empty_changeset = false
+region             = "ap-northeast-1"

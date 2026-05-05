@@ -4,7 +4,7 @@
 - **プロジェクト名**: GEZA（謝罪丸投げコンシェルジュ）
 - **プロジェクトタイプ**: Greenfield
 - **開始日**: 2026-04-29
-- **現在のステージ**: INCEPTION - 完了・承認済み
+- **現在のステージ**: CONSTRUCTION - U0 Deploy & Test 完了（U1 Functional Design 待ち）
 - **コンセプト**: 謝罪丸投げコンシェルジュ（コア: 謝罪角度アセスメント・台本フル生成、謝罪中支援: 怒り残量スキャナー・GEZA耳打ちモード【決勝拡張】、継続支援: 送る前チェック・返信分析・謝罪カルテ・傾向診断、オプション: リハーサルモード）
 
 ## ワークスペース状態
@@ -21,7 +21,8 @@
 ## Extension Configuration
 | Extension | Enabled | Decided At |
 |---|---|---|
-| （拡張なし） | N/A | - |
+| security-baseline | **有効** | 2026-05-05 U0開始時 |
+| property-based-testing | **有効（フル適用）** | 2026-05-05 U0開始時 |
 
 ## ステージ進捗
 
@@ -35,8 +36,12 @@
 - [x] Units Generation ← **完了・承認済み**
 
 ### 🟢 CONSTRUCTION PHASE
-- [ ] Functional Design（ユニット毎）
-- [ ] NFR Requirements（ユニット毎）
+- [x] Functional Design — U0 完了（2026-05-05）
+- [x] NFR Requirements — U0 完了（2026-05-05）
+- [x] NFR Design — U0 完了（2026-05-05）
+- [x] Infrastructure Design — U0 完了（2026-05-05）
+- [x] Code Generation — U0 完了（2026-05-05）
+- [x] Deploy & Test — U0 完了（2026-05-05）✅ sam deploy CREATE_COMPLETE / スモークテスト PASS
 - [ ] NFR Design（ユニット毎）
 - [ ] Infrastructure Design（ユニット毎）
 - [ ] Code Generation（ユニット毎）

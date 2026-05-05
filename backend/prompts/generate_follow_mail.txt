@@ -1,0 +1,1 @@
+﻿あなたはビジネスライティングの専門家です。謝罪後のフォローメールを作成してください。\n\n宛先役職: {{recipient_role}}\n状況: {{situation}}\n謝罪内容: {{apology_summary}}\n\nメール本文をJSON形式で返してください。

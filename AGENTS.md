@@ -9,6 +9,60 @@
 7. inceptionフェーズ内で実現性の調査と調査結果を記載する資料を作成する。
 　 事前調査が必要な項目と方法を洗い出して、人間が実際に調査し、結果を記載する。
 8. AI-DLCのワークフローはすべてスキップしないで厳密に行うこと。
+9. **各ユニットの Code Generation 完了後に必ずデプロイ＆スモークテストを実施すること（後述「デプロイ手順」参照）。**
+
+## デプロイ手順（各ユニット完了後に必ず実施）
+
+### 前提
+- AWS SSO ログイン済みであること: `aws sso login --profile share`
+- `python3.13.exe` が PATH に存在すること（初回のみ）:
+  ```powershell
+  Copy-Item "C:\Users\oono.toshiki\AppData\Local\Programs\Python\Python313\python.exe" `
+            "C:\Users\oono.toshiki\AppData\Local\Programs\Python\Python313\python3.13.exe"
+  $env:PATH = "C:\Users\oono.toshiki\AppData\Local\Programs\Python\Python313;$env:PATH"
+  ```
+
+### ビルド＆デプロイ
+```powershell
+# 1. バリデーション（"is a valid SAM Template" が表示されればOK）
+sam validate
+
+# 2. ビルド
+sam build --parallel
+
+# 3. デプロイ（初回・変更時）
+sam deploy --profile share --no-confirm-changeset --resolve-s3 `
+  --stack-name geza-app `
+  --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM `
+  --region ap-northeast-1
+```
+
+### スモークテスト（デプロイ後）
+```powershell
+# Outputs から URL を取得
+$outputs = aws cloudformation describe-stacks --stack-name geza-app `
+  --profile share --region ap-northeast-1 `
+  --query "Stacks[0].Outputs" --output json | ConvertFrom-Json
+
+# 1. APIエンドポイント疎通確認（401 が返れば Lambda + API GW が正常）
+$api = ($outputs | Where-Object OutputKey -eq "ApiEndpoint").OutputValue
+Invoke-WebRequest -Uri "$api/apology/assess" -Method POST -UseBasicParsing | Select-Object StatusCode
+
+# 2. CloudFront 疎通確認（200 が返れば CloudFront + S3 が正常）
+$cf = ($outputs | Where-Object OutputKey -eq "CloudFrontDomain").OutputValue
+Invoke-WebRequest -Uri $cf -UseBasicParsing | Select-Object StatusCode
+
+# 3. DynamoDB テーブル確認
+aws dynamodb describe-table --table-name geza-data `
+  --profile share --region ap-northeast-1 `
+  --query "Table.TableStatus" --output text
+```
+
+### 既知の環境制約
+- SAM CLI は Python 3.14 で動作するが pydantic 警告あり（無害）
+- `sam validate` の exit code 1 は pydantic 警告のみ（テンプレート自体は正常）
+- `aws_lambda_builders` の packager.py を `errors='replace'` パッチ済み（日本語パス対策）
+- `samconfig.toml` のコメントは ASCII のみ（CP932 エンコーディング問題回避）
 
 ## MVPスコープはAI-DLC実行中に随時検討する
 

@@ -1,0 +1,1264 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: GEZA - AI Apology Support Application
+Globals:
+  Function:
+    Runtime: python3.13
+    Architectures:
+    - arm64
+    Layers:
+    - Ref: GezaSharedLayer
+    Environment:
+      Variables:
+        DYNAMODB_TABLE_NAME:
+          Ref: GezaDataTable
+        SQS_QUEUE_URL:
+          Ref: GezaAsyncJobsQueue
+        PROMPTS_BUCKET_NAME:
+          Fn::Sub: geza-prompts-${AWS::AccountId}-${AWS::Region}
+        BEDROCK_REGION: ap-northeast-1
+        ALLOWED_ORIGIN:
+          Fn::Sub: https://${GezaDistribution.DomainName}
+        COGNITO_USER_POOL_ID:
+          Ref: GezaUserPool
+    Tracing: PassThrough
+Resources:
+  GezaSharedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: geza-shared
+      Description: GEZA shared modules
+      ContentUri: GezaSharedLayer
+      CompatibleRuntimes:
+      - python3.13
+      CompatibleArchitectures:
+      - arm64
+      RetentionPolicy: Delete
+    Metadata:
+      BuildArchitecture: arm64
+      BuildMethod: python3.13
+      SamResourceId: GezaSharedLayer
+  GezaDataTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: geza-data
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: pk
+        AttributeType: S
+      - AttributeName: sk
+        AttributeType: S
+      KeySchema:
+      - AttributeName: pk
+        KeyType: HASH
+      - AttributeName: sk
+        KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+  GezaAsyncJobsDlq:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: geza-async-jobs-dlq
+      MessageRetentionPeriod: 1209600
+  GezaAsyncJobsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: geza-async-jobs
+      VisibilityTimeout: 70
+      MessageRetentionPeriod: 345600
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+          - GezaAsyncJobsDlq
+          - Arn
+        maxReceiveCount: 3
+  GezaStaticBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: geza-static-${AWS::AccountId}-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  GezaPromptsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        Fn::Sub: geza-prompts-${AWS::AccountId}-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  GezaStaticBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: GezaStaticBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: cloudfront.amazonaws.com
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaStaticBucket.Arn}/*
+          Condition:
+            StringEquals:
+              AWS:SourceArn:
+                Fn::Sub: arn:aws:cloudfront::${AWS::AccountId}:distribution/${GezaDistribution}
+  GezaPromptsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket:
+        Ref: GezaPromptsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS:
+              Fn::Sub: arn:aws:iam::${AWS::AccountId}:root
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+  GezaCloudFrontOAC:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: geza-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  GezaResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: geza-security-headers
+        SecurityHeadersConfig:
+          ContentSecurityPolicy:
+            ContentSecurityPolicy: default-src 'self'; script-src 'self'; style-src
+              'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.execute-api.ap-northeast-1.amazonaws.com
+              https://cognito-idp.ap-northeast-1.amazonaws.com; font-src 'self'; frame-ancestors
+              'none';
+            Override: true
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 63072000
+            IncludeSubdomains: true
+            Override: true
+          ContentTypeOptions:
+            Override: true
+          FrameOptions:
+            FrameOption: DENY
+            Override: true
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+          XSSProtection:
+            Protection: true
+            ModeBlock: true
+            Override: true
+  GezaDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        PriceClass: PriceClass_200
+        Origins:
+        - Id: S3Origin
+          DomainName:
+            Fn::GetAtt:
+            - GezaStaticBucket
+            - RegionalDomainName
+          OriginAccessControlId:
+            Ref: GezaCloudFrontOAC
+          S3OriginConfig: {}
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          ResponseHeadersPolicyId:
+            Ref: GezaResponseHeadersPolicy
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          Compress: true
+        CacheBehaviors:
+        - PathPattern: index.html
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          ResponseHeadersPolicyId:
+            Ref: GezaResponseHeadersPolicy
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+        - PathPattern: '*.html'
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          ResponseHeadersPolicyId:
+            Ref: GezaResponseHeadersPolicy
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+        CustomErrorResponses:
+        - ErrorCode: 403
+          ResponseCode: 200
+          ResponsePagePath: /index.html
+          ErrorCachingMinTTL: 0
+        - ErrorCode: 404
+          ResponseCode: 200
+          ResponsePagePath: /index.html
+          ErrorCachingMinTTL: 0
+        HttpVersion: http2
+  GezaUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: geza-user-pool
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      MfaConfiguration: 'ON'
+      EnabledMfas:
+      - SOFTWARE_TOKEN_MFA
+      Schema:
+      - AttributeDataType: String
+        Name: email
+        Required: true
+        Mutable: true
+      AutoVerifiedAttributes:
+      - email
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+        - Name: verified_email
+          Priority: 1
+      UserPoolAddOns:
+        AdvancedSecurityMode: 'OFF'
+  GezaUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId:
+        Ref: GezaUserPool
+      ClientName: geza-web-client
+      GenerateSecret: false
+      ExplicitAuthFlows:
+      - ALLOW_USER_SRP_AUTH
+      - ALLOW_REFRESH_TOKEN_AUTH
+      - ALLOW_USER_PASSWORD_AUTH
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      PreventUserExistenceErrors: ENABLED
+  GezaIdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      IdentityPoolName: geza-identity-pool
+      AllowUnauthenticatedIdentities: false
+      CognitoIdentityProviders:
+      - ClientId:
+          Ref: GezaUserPoolClient
+        ProviderName:
+          Fn::GetAtt:
+          - GezaUserPool
+          - ProviderName
+  GezaIdentityPoolAuthRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: geza-identity-pool-auth-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Federated: cognito-identity.amazonaws.com
+          Action: sts:AssumeRoleWithWebIdentity
+          Condition:
+            StringEquals:
+              cognito-identity.amazonaws.com:aud:
+                Ref: GezaIdentityPool
+            ForAnyValue:StringLike:
+              cognito-identity.amazonaws.com:amr: authenticated
+      Policies:
+      - PolicyName: geza-transcribe-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: transcribe:StartStreamTranscriptionWebSocket
+            Resource: '*'
+  GezaIdentityPoolRoles:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId:
+        Ref: GezaIdentityPool
+      Roles:
+        authenticated:
+          Fn::GetAtt:
+          - GezaIdentityPoolAuthRole
+          - Arn
+  GezaHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      Auth:
+        DefaultAuthorizer: CognitoJwtAuthorizer
+        Authorizers:
+          CognitoJwtAuthorizer:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer:
+                Fn::Sub: https://cognito-idp.ap-northeast-1.amazonaws.com/${GezaUserPool}
+              audience:
+              - Ref: GezaUserPoolClient
+      CorsConfiguration:
+        AllowHeaders:
+        - Authorization
+        - Content-Type
+        AllowMethods:
+        - GET
+        - POST
+        - OPTIONS
+        AllowOrigins:
+        - Fn::Sub: https://${GezaDistribution.DomainName}
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 20
+      AccessLogSettings:
+        DestinationArn:
+          Fn::GetAtt:
+          - GezaApiAccessLogGroup
+          - Arn
+        Format: '{"requestId":"$context.requestId","ip":"$context.identity.sourceIp","requestTime":"$context.requestTime","httpMethod":"$context.httpMethod","routeKey":"$context.routeKey","status":"$context.status","responseLength":"$context.responseLength"}'
+  GezaApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/apigateway/geza-http-api
+      RetentionInDays: 7
+  AssessApologyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: assess-apology
+      Handler: lambda_function.lambda_handler
+      CodeUri: AssessApologyFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /apology/assess
+    Metadata:
+      SamResourceId: AssessApologyFunction
+  EvaluateApologyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: evaluate-apology
+      Handler: lambda_function.lambda_handler
+      CodeUri: EvaluateApologyFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /apology/evaluate
+    Metadata:
+      SamResourceId: EvaluateApologyFunction
+  AnalyzeKarteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: analyze-karte
+      Handler: lambda_function.lambda_handler
+      CodeUri: AnalyzeKarteFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: GET
+            Path: /karte/analyze
+    Metadata:
+      SamResourceId: AnalyzeKarteFunction
+  EvaluateGuidanceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: evaluate-guidance
+      Handler: lambda_function.lambda_handler
+      CodeUri: EvaluateGuidanceFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /guidance/evaluate
+    Metadata:
+      SamResourceId: EvaluateGuidanceFunction
+  CheckDraftFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: check-draft
+      Handler: lambda_function.lambda_handler
+      CodeUri: CheckDraftFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /draft/check
+    Metadata:
+      SamResourceId: CheckDraftFunction
+  AnalyzeAngerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: analyze-anger
+      Handler: lambda_function.lambda_handler
+      CodeUri: AnalyzeAngerFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /during/analyze-anger
+    Metadata:
+      SamResourceId: AnalyzeAngerFunction
+  DetectDangerSpeechFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: detect-danger-speech
+      Handler: lambda_function.lambda_handler
+      CodeUri: DetectDangerSpeechFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /during/detect-danger
+    Metadata:
+      SamResourceId: DetectDangerSpeechFunction
+  ProbeIncidentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: probe-incident
+      Handler: lambda_function.lambda_handler
+      CodeUri: ProbeIncidentFunction
+      MemorySize: 512
+      Timeout: 30
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-haiku-4-5-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /incident/probe
+    Metadata:
+      SamResourceId: ProbeIncidentFunction
+  GeneratePlanFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-plan
+      Handler: lambda_function.lambda_handler
+      CodeUri: GeneratePlanFunction
+      MemorySize: 512
+      Timeout: 30
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-haiku-4-5-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /plan/generate
+    Metadata:
+      SamResourceId: GeneratePlanFunction
+  GenerateOpponentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-opponent
+      Handler: lambda_function.lambda_handler
+      CodeUri: GenerateOpponentFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /opponent/generate
+    Metadata:
+      SamResourceId: GenerateOpponentFunction
+  GenerateStoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-story
+      Handler: lambda_function.lambda_handler
+      CodeUri: GenerateStoryFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /story/generate
+    Metadata:
+      SamResourceId: GenerateStoryFunction
+  GenerateFeedbackFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-feedback
+      Handler: lambda_function.lambda_handler
+      CodeUri: GenerateFeedbackFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /feedback/generate
+    Metadata:
+      SamResourceId: GenerateFeedbackFunction
+  GeneratePreventionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-prevention
+      Handler: lambda_function.lambda_handler
+      CodeUri: GeneratePreventionFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /prevention/generate
+    Metadata:
+      SamResourceId: GeneratePreventionFunction
+  GenerateFollowMailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-follow-mail
+      Handler: lambda_function.lambda_handler
+      CodeUri: GenerateFollowMailFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /mail/generate
+    Metadata:
+      SamResourceId: GenerateFollowMailFunction
+  AnalyzeReplyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: analyze-reply
+      Handler: lambda_function.lambda_handler
+      CodeUri: AnalyzeReplyFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /reply/analyze
+    Metadata:
+      SamResourceId: AnalyzeReplyFunction
+  DiagnoseTendencyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: diagnose-tendency
+      Handler: lambda_function.lambda_handler
+      CodeUri: DiagnoseTendencyFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: GET
+            Path: /karte/diagnose
+    Metadata:
+      SamResourceId: DiagnoseTendencyFunction
+  GenerateGuidanceFeedbackFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-guidance-feedback
+      Handler: lambda_function.lambda_handler
+      CodeUri: GenerateGuidanceFeedbackFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: sqs:SendMessage
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /guidance/feedback
+    Metadata:
+      SamResourceId: GenerateGuidanceFeedbackFunction
+  SaveSessionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: save-session
+      Handler: lambda_function.lambda_handler
+      CodeUri: SaveSessionFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /sessions
+    Metadata:
+      SamResourceId: SaveSessionFunction
+  GetKarteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get-karte
+      Handler: lambda_function.lambda_handler
+      CodeUri: GetKarteFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:GetItem
+          - dynamodb:Query
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+      Events:
+        ApiList:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: GET
+            Path: /karte
+        ApiGet:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: GET
+            Path: /karte/{sessionId}
+    Metadata:
+      SamResourceId: GetKarteFunction
+  TextToSpeechFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: text-to-speech
+      Handler: lambda_function.lambda_handler
+      CodeUri: TextToSpeechFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: polly:SynthesizeSpeech
+          Resource: '*'
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /tts/synthesize
+    Metadata:
+      SamResourceId: TextToSpeechFunction
+  SaveStoryLogFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: save-story-log
+      Handler: lambda_function.lambda_handler
+      CodeUri: SaveStoryLogFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: POST
+            Path: /story/log
+    Metadata:
+      SamResourceId: SaveStoryLogFunction
+  GetJobStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get-job-status
+      Handler: lambda_function.lambda_handler
+      CodeUri: GetJobStatusFunction
+      MemorySize: 256
+      Timeout: 10
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action: dynamodb:GetItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: GezaHttpApi
+            Method: GET
+            Path: /jobs/{jobId}
+    Metadata:
+      SamResourceId: GetJobStatusFunction
+  BedrockDispatcherFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: bedrock-dispatcher
+      Handler: lambda_function.lambda_handler
+      CodeUri: BedrockDispatcherFunction
+      MemorySize: 1024
+      Timeout: 60
+      Policies:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+          Resource:
+            Fn::GetAtt:
+            - GezaAsyncJobsQueue
+            - Arn
+        - Effect: Allow
+          Action:
+          - dynamodb:UpdateItem
+          - dynamodb:PutItem
+          Resource:
+            Fn::GetAtt:
+            - GezaDataTable
+            - Arn
+        - Effect: Allow
+          Action: bedrock:InvokeModel
+          Resource:
+          - arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-sonnet-4-5-v1:0
+          - arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-haiku-4-5-v1:0
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource:
+            Fn::Sub: ${GezaPromptsBucket.Arn}/*
+      Events:
+        SQSTrigger:
+          Type: SQS
+          Properties:
+            Queue:
+              Fn::GetAtt:
+              - GezaAsyncJobsQueue
+              - Arn
+            BatchSize: 1
+            FunctionResponseTypes:
+            - ReportBatchItemFailures
+    Metadata:
+      SamResourceId: BedrockDispatcherFunction
+  AssessApologyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/assess-apology
+      RetentionInDays: 7
+  EvaluateApologyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/evaluate-apology
+      RetentionInDays: 7
+  ProbeIncidentLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/probe-incident
+      RetentionInDays: 7
+  GenerateOpponentLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-opponent
+      RetentionInDays: 7
+  GenerateStoryLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-story
+      RetentionInDays: 7
+  GenerateFeedbackLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-feedback
+      RetentionInDays: 7
+  GeneratePreventionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-prevention
+      RetentionInDays: 7
+  GenerateFollowMailLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-follow-mail
+      RetentionInDays: 7
+  AnalyzeReplyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/analyze-reply
+      RetentionInDays: 7
+  DiagnoseTendencyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/diagnose-tendency
+      RetentionInDays: 7
+  GenerateGuidanceFeedbackLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-guidance-feedback
+      RetentionInDays: 7
+  GeneratePlanLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-plan
+      RetentionInDays: 7
+  TextToSpeechLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/text-to-speech
+      RetentionInDays: 7
+  SaveSessionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/save-session
+      RetentionInDays: 7
+  GetKarteLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/get-karte
+      RetentionInDays: 7
+  AnalyzeKarteLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/analyze-karte
+      RetentionInDays: 7
+  EvaluateGuidanceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/evaluate-guidance
+      RetentionInDays: 7
+  CheckDraftLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/check-draft
+      RetentionInDays: 7
+  SaveStoryLogLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/save-story-log
+      RetentionInDays: 7
+  DetectDangerSpeechLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/detect-danger-speech
+      RetentionInDays: 7
+  AnalyzeAngerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/analyze-anger
+      RetentionInDays: 7
+  GetJobStatusLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/get-job-status
+      RetentionInDays: 7
+  BedrockDispatcherLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/bedrock-dispatcher
+      RetentionInDays: 7
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value:
+      Fn::Sub: https://${GezaHttpApi}.execute-api.ap-northeast-1.amazonaws.com
+  CloudFrontDomain:
+    Description: CloudFront distribution domain
+    Value:
+      Fn::Sub: https://${GezaDistribution.DomainName}
+  StaticBucketName:
+    Description: S3 bucket for static assets
+    Value:
+      Ref: GezaStaticBucket
+  PromptsBucketName:
+    Description: S3 bucket for prompt templates
+    Value:
+      Ref: GezaPromptsBucket
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value:
+      Ref: GezaUserPool
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value:
+      Ref: GezaUserPoolClient
+  IdentityPoolId:
+    Description: Cognito Identity Pool ID
+    Value:
+      Ref: GezaIdentityPool
+  DynamoDBTableName:
+    Description: DynamoDB table name
+    Value:
+      Ref: GezaDataTable
+  AsyncJobsQueueUrl:
+    Description: SQS async jobs queue URL
+    Value:
+      Ref: GezaAsyncJobsQueue
+  StackName:
+    Description: CloudFormation stack name
+    Value:
+      Ref: AWS::StackName

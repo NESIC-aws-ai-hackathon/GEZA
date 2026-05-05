@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <title>GEZA — AI 謝罪行動支援</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ログインページ -->
+  <main id="login-page" class="login-page" role="main">
+    <div class="login-card">
+      <h1 class="login-title" data-testid="login-title"></h1>
+      <p class="login-description" data-testid="login-description"></p>
+      <button
+        id="login-btn"
+        class="btn btn-primary"
+        data-testid="login-btn"
+        type="button"
+        aria-label="Cognito でログイン"
+      >
+        ログイン / サインアップ
+      </button>
+      <p class="login-note" data-testid="login-note"></p>
+    </div>
+  </main>
+
+  <!-- 初期設定 (config.js で window.GEZA_CONFIG を定義する) -->
+  <script src="config.js"></script>
+  <script src="shared/auth.js"></script>
+  <script src="shared/state.js"></script>
+  <script>
+    (function () {
+      // textContent で静的テキストを設定 (XSS-01)
+      document.querySelector("[data-testid='login-title']").textContent = "GEZA";
+      document.querySelector("[data-testid='login-description']").textContent =
+        "AI を活用した謝罪行動支援アプリです。";
+      document.querySelector("[data-testid='login-note']").textContent =
+        "ログインには管理者から払い出されたアカウントが必要です。";
+
+      // 認証済みならダッシュボードにリダイレクト
+      if (AuthModule.isAuthenticated()) {
+        window.location.assign("dashboard.html");
+        return;
+      }
+
+      // 認可コードコールバック処理
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      if (code) {
+        AuthModule.handleCallback(code)
+          .then(() => window.location.assign("dashboard.html"))
+          .catch(() => {
+            const btn = document.getElementById("login-btn");
+            if (btn) btn.textContent = "認証エラー — 再試行";
+          });
+        return;
+      }
+
+      // ログインボタン
+      document.getElementById("login-btn").addEventListener("click", function () {
+        AuthModule.redirectToLogin();
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -757,3 +757,269 @@ prototype/
   - **application-design.md**: サービス名にタイトル追記
   - **audit.md**: 本エントリ追記
 - **整合性確認**: 全ドキュメント間でサービス名/LLMプロファイル/200感情/41ストーリー/271SP整合済み
+
+## エントリ 046 - CONSTRUCTIONフェーズ開始
+- **日時**: 2026-05-05T11:00:00+09:00
+- **フェーズ**: CONSTRUCTION - 開始
+- **ユーザーリクエスト（原文）**: "OK　inceptionフェーズとしてはこれで完成として constractionフェーズを始めてほしい AI-DLCに従って進めて"
+- **アクション**: INCEPTIONフェーズ完了確認 → CONSTRUCTIONフェーズ開始。最初のユニット U0（共通インフラ + FEコアモジュール）のFunctional Design段階から着手。
+- **Extensionステータス**: セキュリティ拡張・テスト拡張 — ユーザーへopt-in確認を提示
+
+## エントリ 047 - Extension opt-in 回答受信
+- **日時**: 2026-05-05T11:05:00+09:00
+- **フェーズ**: CONSTRUCTION - Extension Configuration
+- **ユーザーリクエスト（原文）**: "確認事項1: A / 確認事項2: A / 確認事項3: A"
+- **決定事項**:
+  - セキュリティ拡張（security-baseline）: **適用（A）** — OWASP Top 10 + AWS セキュリティベストプラクティスをブロッキング制約として強制
+  - プロパティベーステスト拡張（property-based-testing）: **適用（A）** — 全PBTルールをブロッキング制約として強制
+  - 実装順序: **推奨順（A）** — U0 → U1 → U2 → U3 → U4（P0 MVP）
+- **次アクション**: U0 Functional Design Plan 作成
+
+## エントリ 048 - U0 Functional Design Plan 作成
+- **日時**: 2026-05-05T11:10:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Functional Design（Part 1: Planning）
+- **アクション**: `aidlc-docs/construction/plans/U0-functional-design-plan.md` 作成。Q1〜Q9（設計確認事項）を含む計画ファイルをユーザーへ提示。ユーザーの回答待ち。
+
+## エントリ 049 - U0 Functional Design Plan 回答受信
+- **日時**: 2026-05-05T11:20:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Functional Design（Part 1: 回答分析）
+- **回答サマリー**:
+  - Q1（バリデーション方針）: B — 標準（required + 型チェック + 文字列長上限2000文字 + プロンプトインジェクション簡易検知）
+  - Q2（Bedrockリトライ）: B — 指数バックオフ最大3回（ThrottlingException/ServiceUnavailableExceptionのみ）
+  - Q3（StateManager 3層ステート）: A — 提示案のまま採用
+  - Q4（カテゴリ内タイマー）: A — AvatarController内部管理、setCategoryEmotion()呼び出し時に前タイマークリア→新タイマー起動
+  - Q5（JWT自動リフレッシュ）: A — 401時にCognito refreshTokenでサイレントリフレッシュ→リトライ
+  - Q6（HTTPセキュリティヘッダー）: A — CloudFront Response Headers Policyで付与（SECURITY-04対応）
+  - Q7（DynamoDB暗号化）: C — AWSマネージドキー（SSE-DynamoDB）暗号化のみ、PITRはオフ（コスト考慮）
+  - Q8（プロンプトインジェクション対策）: C — ブロックリスト + 文字数制限 + HTMLエスケープ
+  - Q9（PBT対象）: A, C — EmotionDefinitions.pickRandomInCategory() の invariant + input_validator.py の invariant
+- **曖昧性確認**: 全回答明確、曖昧性なし。Functional Design 成果物生成に進む。
+
+## エントリ 049 - U0 Functional Design 承認（ユーザー入力）
+- **日時**: 2026-05-05T11:35:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Functional Design（承認）
+- **ユーザー入力（完全原文）**: 「承認します\nAI-DLCに従って次に進んで」
+- **AI対応**: audit.md に承認を記録し、U0 NFR Requirements ステージへ移行する
+
+## エントリ 050 - U0 Functional Design 成果物生成完了
+- **日時**: 2026-05-05T11:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Functional Design（Part 2: 成果物生成）
+- **生成ファイル**:
+  - `aidlc-docs/construction/U0/functional-design/business-logic-model.md`（Lambda処理フロー・decorators/input_validator/bedrock_client/prompt_loader/EmotionDefinitionsのロジックモデル）
+  - `aidlc-docs/construction/U0/functional-design/domain-entities.md`（AppState/SessionState/BedrockRequest/感情エンティティ/DynamoDBエンティティ/SAMインフラエンティティ）
+  - `aidlc-docs/construction/U0/functional-design/business-rules.md`（バリデーション14ルール/リトライ5ルール/認証9ルール/セキュリティヘッダー6種/DynamoDB4ルール/APIレート3ルール/エラーハンドリング5ルール/CORS3ルール/ログ5ルール/XSS防止4ルール/セキュリティコンプライアンスマトリクスSECURITY-01〜14）
+  - `aidlc-docs/construction/U0/functional-design/frontend-components.md`（AuthModule/ApiClient/StateManager/AvatarController/EmotionDefinitions の詳細設計 + PBT テストケース仕様）
+- **セキュリティコンプライアンス**: SECURITY-01〜14 全適用確認 ✅
+- **PBT コンプライアンス**: pickRandomInCategory() invariant（2プロパティ）+ input_validator() invariant（3プロパティ）仕様記述済み ✅
+- **次のステージ**: U0 NFR Requirements
+
+## エントリ 051 - U0 Functional Design 監査対応（W-3/W-4）
+- **日時**: 2026-05-05T11:40:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Functional Design（レビュー修正）
+- **対応内容**:
+  - **W-3**: `business-rules.md` LLMプロファイル表に Bedrock 非使用3本の注記を追加
+    - `save-session`（DynamoDB書き込みのみ）/ `get-karte`（DynamoDB読み取りのみ）/ `text-to-speech`（Pollyのみ）
+    - 合計: Bedrock使用18本 + 非使用3本 = 21本でLambda全数整合 ✅
+  - **W-4**: `domain-entities.md` BEDROCK_REGION を `us-east-1` → `ap-northeast-1` に修正
+    - 根拠: プロトタイプ `cfn-template.yaml` が `BEDROCK_REGION: ap-northeast-1` で Nova Lite 1-3s を実測済み
+    - IAM Resource ARN も `us-east-1` → `ap-northeast-1` に合わせて修正
+    - 要確認事項を注記: Claude Haiku 4.5 / Sonnet 4.5 の ap-northeast-1 利用可否はデプロイ前にコンソールで確認すること
+
+## エントリ 052 - U0 NFR Requirements 回答受信
+- **日時**: 2026-05-05T11:50:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 NFR Requirements（Part 1: 回答分析）
+- **ユーザー入力（完全原文）**: 「回答しました」
+- **回答サマリー**:
+  - Q1（Lambda タイムアウト）: C — 役割別（fast=10s / standard=30s / premium=60s）
+  - Q2（Lambda メモリ）: B — 役割別（fast=256MB / standard=512MB / premium=1024MB）
+  - Q3（コールドスタート）: A — 許容する（ハッカソンデモスコープ）
+  - Q4（E2Eレスポンス目標）: B — 5秒以内
+  - Q5（DynamoDB モード）: A — On-Demand（PAY_PER_REQUEST）
+  - Q6（Logs保持期間）: A — 7日
+  - Q7（FEロード目標）: B — 5秒以内（Wi-Fi/LTE前提）
+  - Q8（可用性要件）: C — 特に要件なし（ハッカソンスコープ）
+  - Q9（API GW スロットリング）: B — burst=100 / rate=20
+  - Q10（エラー監視）: A — CloudWatch Logs のみ（手動確認）
+- **曖昧性確認**: 全回答明確、曖昧性なし。NFR Requirements 成果物生成に進む。
+
+## エントリ 053 - U0 NFR Requirements 成果物生成完了
+- **日時**: 2026-05-05T12:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 NFR Requirements（Part 2: 成果物生成）
+- **生成ファイル**:
+  - `aidlc-docs/construction/U0/nfr-requirements/nfr-requirements.md`（パフォーマンス/スケーラビリティ/可用性/セキュリティ/運用/信頼性/メンテナビリティ要件、SECURITY/PBT コンプライアンスサマリー）
+  - `aidlc-docs/construction/U0/nfr-requirements/tech-stack-decisions.md`（Lambda設定マトリクス23本、AWSサービス選定、FEスタック、テストスタック、コスト見積もり）
+- **セキュリティコンプライアンス**: SECURITY-01〜14 全適用確認 ✅
+- **PBT コンプライアンス**: PBT-01 準拠（Functional Design 成果物にプロパティ記載済み） ✅
+- **次のステージ**: U0 NFR Design
+
+## エントリ 054 - U0 NFR Requirements レビュー修正（C-1/W-1/W-2/W-3）
+- **日時**: 2026-05-05T12:10:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 NFR Requirements（レビュー修正）
+- **ユーザー入力（完全原文）**: （監査レポート：C-1 CRITICAL premium タイムアウト60s超過 / W-1 Lambda数23本 / W-2 premium E2E目標矛盾 / W-3 Sonnet価格確認）「非同期パターンにしたほうが良いと思う」
+- **対応内容**:
+  - **C-1（CRITICAL）**: premium Lambda タイムアウト 60s → 29s に修正（API GW HTTP API v2 ハードリミット対応）。非同期パターン採用を決定（NFR Design で詳細設計）。両ファイル修正済み ✅
+  - **W-1**: tech-stack-decisions.md の注記を修正（「3本」→「2本」、Lambda数=21本の説明を正確化）✅
+  - **W-2**: nfr-requirements.md premium E2E目標を「5秒以内（目標）/60秒（タイムアウト）」→「30秒以内（UI待機）/29秒（タイムアウト）」に修正 ✅
+  - **W-3**: tech-stack-decisions.md Sonnet行にデプロイ前確認の注記を追加 ✅
+- **アーキテクチャ決定**: premium Lambda（Claude Sonnet使用 8本）は非同期パターンを採用。詳細（SQS/DynamoDB Polling/job endpoint設計）はNFR Designステージで設計する
+
+## エントリ 055 - U0 NFR Requirements 最終承認
+- **日時**: 2026-05-05T12:15:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 NFR Requirements（最終承認）
+- **ユーザー入力（完全原文）**: 「承認します」
+- **AI対応**: NFR Requirements ステージを完了として記録。U0 NFR Design ステージへ移行する
+
+## エントリ 056 - U0 NFR Design Plan 回答受信
+- **日時**: 2026-05-05T12:20:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 NFR Design（Part 1: 回答分析）
+- **ユーザー入力（完全原文）**: 「記載しました」
+- **回答サマリー**:
+  - Q1（非同期実装方式）: A — SQS → Lambda（API GW → 8 trigger Lambda → SQS → bedrock-dispatcher → DynamoDB）
+  - Q2（ポーリング方式）: B — 指数バックオフポーリング（1s→2s→4s…最大30s）
+  - Q3（ジョブ状態管理）: A — geza-data 同一テーブル（JOB#<jobId> SKを追加）
+  - Q4（サーキットブレーカー）: A — 実装しない（指数バックオフリトライのみ）
+  - Q5（CFキャッシュ）: D — index.html TTL0 / 他アセット TTL1年
+  - Q6（Lambda Layer更新）: A — SAMデプロイ時に全Lambda自動更新
+  - Q7（DynamoDB整合性）: C — 書き込み後読み取りケースのみ ConsistentRead=True
+  - Q8（FEエラー回復）: C — エラー + 手動リトライボタン
+- **曖昧性確認**: 全回答明確、曖昧性なし。NFR Design 成果物生成に進む。
+
+## エントリ 057 - U0 NFR Design 成果物生成完了
+- **日時**: 2026-05-05T12:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 NFR Design（Part 2: 成果物生成）
+- **生成ファイル**:
+  - `aidlc-docs/construction/U0/nfr-design/nfr-design-patterns.md`（非同期 SQSパターン / 指数バックオフポーリング / DynamoDB JOB# / Bedrockリトライ / CFキャッシュ / 整合性 / エラー回復 / Layer更新）
+  - `aidlc-docs/construction/U0/nfr-design/logical-components.md`（全体アーキテクチャ図 / 全 Lambda 一覧 23本 / SQS設定 / DynamoDBアクセスパターン / CF+S3 / Cognito / IAM）
+- **アーキテクチャ決定**: Lambda 23本体制確定（+2: bedrock-dispatcher + get-job-status）。Infrastructure Design で services.md を更新する。
+- **セキュリティコンプライアンス**: SECURITY-01〞14 全適用確認 ✅
+- **PBT コンプライアンス**: PBT-01 準拠（Functional Design プロパティ確認済み） ✅
+- **次のステージ**: U0 Infrastructure Design
+
+## エントリ 058 - U0 NFR Design WARNING 3件 修正
+- **日時**: 2026-05-05T13:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 NFR Design（修正フォローアップ）
+- **W-1（修正済）**: premium trigger Lambda メモリ・タイムアウト修正
+  - `logical-components.md` セクション 3.3 ヘッダー: `1024MB / 29s` → `256MB / 10s`
+  - `tech-stack-decisions.md` premium 8行: `1024 MB | 29 s` → `256 MB | 10 s`（備考もtriggerのみ旨を明記）
+  - 理由: trigger はバリデーション+jobId生成+DynamoDB PutItem+SQS SendMessage のみ。Bedrock呼び出しなし。コスト75%削減。
+- **W-2（修正済）**: ポーリング maxIntervalMs 16s → 5s、maxWaitMs 30s → 60s
+  - `nfr-design-patterns.md` pollJob 関数デフォルト値: `maxWaitMs=60000, maxIntervalMs=5000`
+  - タイムライン: T=31s検知 → T=27s検知（最大2秒遅延）に更新
+  - 理由: 16s上限だとBedrock25s完了時に最大6秒の無駄待ちが発生。5s上限で最大2秒遅延に改善。
+- **W-3（修正済）**: Lambda名不一致 quick-check → evaluate-guidance に統一
+  - `tech-stack-decisions.md` `quick-check` → `evaluate-guidance`
+  - 理由: logical-components.md（NFR Design）の evaluate-guidance に統一。機能的に「指導評価」の名称が正確。
+- **影響範囲**: Infrastructure Design で SAMテンプレート定義時に 256MB/10s を使用すること
+
+## エントリ 059 - U0 Infrastructure Design 成果物生成完了
+- **日時**: 2026-05-05T14:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Infrastructure Design
+- **Q1〜Q12 回答**:
+  - Q1=A（シングルスタック geza-app）/ Q2=A（S3名自動生成）/ Q3=A（シングル template.yaml）/ Q4=A（SAM Globals）
+  - Q5=A（GSI なし）/ Q6=**B**（バケット2本：静的/プロンプト分離）/ Q7=A / Q8=A（カスタムドメインなし）
+  - Q9=A / Q10=A（Alarm/Dashboard なし）/ Q11=**BCB**（パスワード12文字以上・MFA必須TOTP・管理者のみ作成）/ Q12=A（--resolve-s3）
+- **生成ファイル**:
+  - `aidlc-docs/construction/U0/infrastructure-design/infrastructure-design.md`（SAM疑似コード全体 / Lambda 23本設定マトリクス / IAMポリシーグループ別 / DynamoDB/SQS/Cognito/CF+S3/CW Logs設定 / SECURITY-01〜14対応マトリクス / API 23EP一覧）
+  - `aidlc-docs/construction/U0/infrastructure-design/deployment-architecture.md`（アーキテクチャ図 / ディレクトリ構成 / SAMデプロイコマンド / 動作確認手順）
+- **主要アーキテクチャ決定**:
+  - S3 2バケット構成（geza-static / geza-prompts）確定
+  - Cognito: パスワード12文字・MFA必須・管理者のみ作成（セキュリティ重視）
+  - 全 Lambda CloudWatch Logs 7日保持確定
+  - SECURITY-01〜14 全 BLOCKING 適用確認済み
+- **次のステージ**: U0 Code Generation
+
+## エントリ 060 - U0 Infrastructure Design CRITICAL/WARNING 5件 修正
+- **日時**: 2026-05-05T14:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Infrastructure Design（修正フォローアップ）
+- **C-1（修正済）**: CloudFront SPA フォールバック追加
+  - `infrastructure-design.md` GezaDistribution に `CustomErrorResponses` 追加（403/404 → /index.html, ErrorCachingMinTTL=0）
+  - 理由: SPA のページリロード時に S3 が 404 を返しブラウザが白画面になる問題を防ぐ
+- **W-1（修正済）**: Lambda アーキテクチャ x86_64 → arm64（Graviton2）
+  - `infrastructure-design.md` Globals `Architectures: [x86_64]` → `[arm64]`
+  - 理由: Python 3.12 / boto3 完全対応。コスト20%削減。AWS最新技術アピール
+- **W-2（修正済）**: logical-components.md Lambda サマリー更新
+  - fast: 10本 → **7本**、non-bedrock: 3本 → **4本**（Infrastructure Design 確定値に合わせる）
+- **W-3（修正済）**: セクション12 に save-story-log (#23) を追加（「将来実装」注記付き）
+- **W-4（修正済）**: セクション12 ヘッダー「23EP」→「22 API EP + 1 SQS トリガー = 23 Lambda」
+- **次のステージ**: U0 Code Generation（変更なし）
+
+## エントリ 061 - U0 Infrastructure Design 承認
+- **日時**: 2026-05-05T14:45:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Infrastructure Design（承認）
+- **承認者コメント**: 「承認します」
+- **承認内容**:
+  - `aidlc-docs/construction/U0/infrastructure-design/infrastructure-design.md` ✅
+  - `aidlc-docs/construction/U0/infrastructure-design/deployment-architecture.md` ✅
+  - C-1/W-1〜W-4 修正済み（SPAフォールバック / arm64 / Lambda数整合 / EP表記修正）
+- **次のステージ**: U0 Code Generation
+
+## エントリ 063 - U0 Code Generation 計画承認
+- **日時**: 2026-05-05T15:15:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Code Generation（Part 1 完了・Part 2 開始）
+- **承認者コメント**: 「承認します。AI-DLCに従って進めて」
+- **W-1 修正確認**: bedrock_client.py リトライ `1s→2s→4s`（RETRY-03 準拠）修正済み ✅
+- **次のアクション**: Part 2 Generation Step 10〜33 を順次実行
+
+## エントリ 062 - U0 Code Generation 計画承認要請
+- **日時**: 2026-05-05T15:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Code Generation（Part 1: Planning）
+- **計画ファイル**: `aidlc-docs/construction/plans/U0-code-generation-plan.md`
+- **ステップ数**: 合計 33 ステップ（Part 1: 9 / Part 2: 24）
+- **生成対象**:
+  - `template.yaml`（SAM 全リソース定義）
+  - `backend/shared/`（5ファイル + requirements.txt）
+  - `backend/functions/`（Lambda 21スタブ + 2実装 = 23本）
+  - `backend/prompts/`（17ファイル）
+  - `frontend/shared/`（7ファイル）
+  - `frontend/index.html`
+  - テスト（Hypothesis / fast-check PBT）
+  - `samconfig.toml` / `aidlc-docs/construction/U0/code/change-log.md`
+- **ユーザー承認待ち**
+
+## エントリ 063 - U0 Code Generation 承認・Part 2 開始
+- **日時**: 2026-05-05T15:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Code Generation（Part 2: Generation）
+- **ユーザー承認**: 「承認します / AI-DLCに従って進めて」
+- **次のアクション**: Step 10〜33 順次実行開始
+
+## エントリ 064 - U0 Code Generation Part 2 完了
+- **日時**: 2026-05-05T17:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Code Generation（Part 2: Generation 完了）
+- **完了ステップ**: Step 10〜33（全 33 ステップ完了）
+- **生成成果物**:
+  - 	emplate.yaml（SAM 全リソース定義）
+  - ackend/shared/ 6 ファイル（decorators / input_validator / bedrock_client / prompt_loader / structured_logger / requirements.txt）
+  - ackend/functions/ 23 本（get-job-status / bedrock-dispatcher 完全実装 + 21 スタブ）
+  - ackend/prompts/ 17 ファイル（プレースホルダー版）
+  - rontend/shared/ 7 ファイル（auth / api / state / avatar / emotions / anger-gauge / whisper-advisor）
+  - rontend/index.html（ログインページ）
+  - ackend/tests/test_input_validator.py（Hypothesis PBT 4 テスト）
+  - rontend/tests/test_emotions.js（fast-check PBT 5 テスト）
+  - samconfig.toml
+  - idlc-docs/construction/U0/code/change-log.md
+- **セキュリティ**: SECURITY-05/08/09 / AUTH-05 / XSS-01 / PBT-01 全対応
+- **次のフェーズ**: U1 Functional Design
+
+
+## エントリ 065 - U0 Deploy & Smoke Test 完了
+- **日時**: 2026-05-05T17:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U0 Deploy & Test
+- **アクション**: sam validate → sam build --parallel → sam deploy → スモークテスト
+- **修正事項**:
+  - template.yaml: `AdvancedSecurityMode: OFF` → `"OFF"`（YAML boolean 変換対策）
+- **デプロイ結果**: `geza-app` スタック CREATE_COMPLETE（ap-northeast-1）
+- **Outputs**:
+  - CloudFront: `https://dhamuhqye8mp6.cloudfront.net`
+  - API Gateway: `https://h6a2xx1i30.execute-api.ap-northeast-1.amazonaws.com`
+  - Cognito User Pool: `ap-northeast-1_hwx2hpNGn`
+  - Cognito Client: `2bf54jcqtgpaubsmbe9qoprq1v`
+  - DynamoDB: `geza-data`
+  - S3 Static: `geza-static-890236016419-ap-northeast-1`
+  - S3 Prompts: `geza-prompts-890236016419-ap-northeast-1`
+- **スモークテスト結果**:
+  - CloudFront: HTTP 403（S3 index.html 未アップロード — 正常）✅
+  - API Gateway: HTTP 401（Cognito JWT 認証要求 — 正常）✅
+  - DynamoDB: ACTIVE / PAY_PER_REQUEST ✅
+  - Cognito: AdminOnly=True / MFA=ON ✅
+- **AGENTS.md 更新**: デプロイ手順・スモークテスト手順・既知の環境制約を追記
+- **次のフェーズ**: U1 Functional Design
