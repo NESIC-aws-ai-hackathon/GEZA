@@ -4,13 +4,13 @@
 > 正式版は [`aidlc-docs/inception/requirements/requirements.md`](../aidlc-docs/inception/requirements/requirements.md) を参照してください。
 
 > AI-DLC Requirements Analysis + User Stories に基づき生成。詳細は `aidlc-docs/inception/requirements/requirements.md` を参照。
-> **最終更新**: 2026-04-30（プロトタイプ検証結果 + User Stories 反映）
+> **最終更新**: 2026-05-05（Web会議モード追加 + やらかし深掘り分析 反映: 41ストーリー / 271SP）
 
 ---
 
 ## サービス概要
 
-GEZAは**謝罪丸投げコンシェルジュ**です。  
+GEZAは**謝罪丸投げコンシェルジュ**（別名: 謝罪行動支援AI）です。  
 やらかした内容を一言入れるだけで、謝罪角度判定→台本フル生成→タイミング・手土産提案まで全部AIがやります。あなたは頭を下げるだけ。
 
 ```
@@ -34,7 +34,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | Epic | 機能 | ユーザーストーリー数 | SP |
 |------|------|:-----------:|:--:|
 | Epic 1 | トップ画面 + Cognito認証 | 3 | 16 |
-| Epic 2 | 謝罪プランニング（謝罪角度アセスメント・相手分析・プラン生成・スクリプト・**実施日まで伴走**）【コア】 | 8 | 49 |
+| Epic 2 | 謝罪プランニング（謝罪角度アセスメント・相手分析・プラン生成・スクリプト・**実施日まで伴走**）《コア》 | 9 | 57 |
 | Epic 3 | ストーリーモード（難易度別ステージ・謝罪ボス戦） | 2 | 13 |
 | Epic 4 | 謝罪練習モード（音声/テキスト入力→AI評価→リアルタイム反応）【サブ（任意）】 | 8 | 51 |
 | Epic 5 | 謝罪後支援（再発防止策・フォローメール・準備チェックリスト） | 3 | 15 |
@@ -42,8 +42,8 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 | Epic 7 | 上司向けフィードバック（注意・指導練習モード） | 3 | 23 |
 | Epic 8 | 送る前GEZAチェック・返信GEZA分析（継続的謝罪支援）【P2】 | 3 | 21 |
 | Epic 9 | 謝罪カルテ拡張・謝罪傾向診断（継続的謝罪支援）【P2】 | 2 | 20 |
-| Epic 10 | 謝罪中支援（怒り残量スキャナー・GEZA耳打ちモード）【P3・決勝拡張】 | 3 | 24 |
-| **合計** | | **37** | **245** |
+| Epic 10 | 謝罪中支援（怒り残量スキャナー・GEZA耳打ちモード・Web会議モード）《P3・決勝拡張》 | 6 | 42 |
+| **合計** | | **41** | **271** |
 
 **P0（必須）: Epic 1、2、4、5、6。コア実装対象。**  
 **P1（時間が余れば）: Epic 3（ストーリーモード）・ Epic 7（上司モード）。**  
@@ -60,7 +60,7 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 |----------|------|
 | フロントエンド | HTML/CSS/Vanilla JS（マルチページ構成）、スマホ幅375px中央表示 |
 | バックエンド | AWS Lambda（Python 3.12, 512MB, 30s） + API Gateway HTTP API v2 |
-| LLM | AWS Bedrock（Amazon Nova Lite：軽量用途 / Claude Sonnet：高品質用途）⚠️ |
+| LLM | AWS Bedrock（fast: Amazon Nova Lite / standard: Claude Haiku 4.5 / premium: Claude Sonnet） |
 | 音声入力 | AWS Transcribe |
 | 音声出力 | Amazon Polly（女性: Kazuha / 男性: Takumi, ja-JP, Neural）+ SpeechMarks(Viseme) ⚠️ |
 | アバター | ⚠️ **facesjs v5.0.3（SVGアバター）+ CSS表情制御**（Nova Canvas/Reel 不採用） |
@@ -70,12 +70,13 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 
 ---
 
-## AWS Bedrockモデル選定方針
+## AWS Bedrockモデル選定方針（3プロファイル制）
 
-| 用途 | モデル |
-|------|--------|
-| 評価・分類（角度アセスメント・評価・カルテ分析） | Amazon Nova Lite（1〜3秒応答） |
-| 高品質生成（謝罪相手生成・プラン・フィードバック・メール・再発防止策） | Claude Sonnet |
+| 用途 | モデル | プロファイル |
+|------|--------|--------|
+| 評価・分類・リアルタイム分析 | Amazon Nova Lite | fast |
+| プラン生成・深掘り分析 | Claude Haiku 4.5 | standard |
+| 高品質生成（相手生成・フィードバック等） | Claude Sonnet | premium |
 
 ---
 
@@ -84,23 +85,30 @@ GEZAは**謝罪丸投げコンシェルジュ**です。
 > 当初のMP4動画方式から変更。プロトタイプにより優位性実証済み。
 
 - **実装方式**: facesjs v5.0.3（オープンソース SVGアバター）+ CSS transform による感情制御
-- **感情数**: **30種類**（強い怒り系 → 中立 → 肯定の感情アーク）
+- **感情数**: **200種類**（15カテゴリ構成、怒り爆発→許しの感情アーク）
+- **AI返却単位**: カテゴリID（15種類）→ FEがカテゴリ内感情をランダム選択（2〜4秒間隔で自然な表情揺らぎ）
 - **アバター固定**: facesjs の seed 値を謝罪相手のプロフィールに紐づける → 同じ相手なら常に同じ顔になる
 
-**感情カテゴリ構成（合計30種）**:
+**感情カテゴリ構成（合計200種（15カテゴリ））**:
 
-| カテゴリ | 感情一覧（怒り度順） |
-|---------|-------------------|
-| 強い怒り | rage（激怒）/ anger（怒り）/ fury（憤怒）/ intimidation（威圧） |
-| 不満系 | irritation（苛立ち）/ frustration（もどかしさ）/ impatience（焦燥） |
-| 悲しみ系 | disappointment（失望）/ sadness（悲しみ）/ bitterness（苦々しさ） |
-| 冷たい系 | contempt（軽蔑）/ disgust（嫌悪）/ coldness（冷淡）/ sarcasm（皮肉） |
-| 驚き系 | surprise（驚き）/ shock（衝撃） |
-| 疑い系 | suspicion（疑念）/ skepticism（懐疑） |
-| 諦め系 | weariness（疲弊）/ resignation（諦め） |
-| 中立 | confusion（困惑）/ hesitation（戸惑い）/ thinking（思案） |
-| 好転 | interest（関心）/ empathy（共感） |
-| 肯定 | relief（安堵）/ acceptance（納得）/ appreciation（感謝）/ satisfaction（満足）/ forgiveness（許し） |
+| # | カテゴリID | カテゴリ名 | 感情数 | 主要エフェクト |
+|---|-----------|----------|:------:|----------|
+| 1 | fierce_anger | 激怒・爆発 | 16 | 画面揺れ・赤フラッシュ |
+| 2 | anger | 怒り・攻撃 | 14 | 前のめり・にじり寄り |
+| 3 | intimidation | 威圧・支配 | 12 | 画面暗転・不動 |
+| 4 | irritation | 不満・苛立ち | 14 | ため息・足踏み |
+| 5 | sadness | 失望・悲しみ | 14 | 涙エフェクト・画面青み |
+| 6 | contempt | 軽蔑・嫌悪 | 14 | 顔そむけ・後ずさり |
+| 7 | surprise | 驚き・衝撃 | 12 | 画面揺れ・フラッシュ |
+| 8 | suspicion | 疑い・警戒 | 12 | キョロキョロ・身構え |
+| 9 | resignation | 諮め・脱力 | 12 | ため息・脱力 |
+| 10 | confusion | 困惑・思案 | 14 | 首傾げ・腕組み |
+| 11 | interest | 関心・理解 | 14 | 前のめり・うなずき |
+| 12 | relief | 安堵・緩和 | 14 | 脱力・深呼吸 |
+| 13 | acceptance | 納得・受容 | 14 | うなずき・手を開く |
+| 14 | gratitude | 感謝・満足 | 12 | 画面明るく |
+| 15 | forgiveness | 許し・赦免 | 12 | 画面が明るくなるエフェクト |
+| | | **合計** | **200** | |
 
 **画面エフェクト**: rage/shock → 画面揺れ、forgiveness → 画面明暗変化
 

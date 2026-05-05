@@ -17,8 +17,13 @@ class AvatarController {
   init(containerEl, seed)
 
   // 感情IDに対応するCSS transformを適用する（0.5秒以内のtransition）
-  // emotionId: emotions.jsで定義された30感情ID（例: "rage", "forgiveness"）
+  // emotionId: emotions.jsで定義された200感情ID（例: "rage", "forgiveness"）
   setEmotion(emotionId)
+
+  // AIが返却したカテゴリIDを受け取り、カテゴリ内ランダム遷移を開始する
+  // categoryId: 15カテゴリID（例: "fierce_anger", "forgiveness"）
+  // 2〜4秒間隔で同一カテゴリ内の別感情に自然に遷移
+  setCategoryEmotion(categoryId)
 
   // アイドルアニメーション開始（瞬き・視線移動・頭の揺れ）
   startIdle()
@@ -68,8 +73,18 @@ getEmotionCSS(emotionId)
 // 戻り値: "shake" | "brighten" | null
 getEffect(emotionId)
 
-// 全30感情の定義配列を返す
+// 全200感情の定義配列を返す
 getAllEmotions()
+
+// 指定カテゴリIDに属する感情配列を返す
+getEmotionsByCategory(categoryId)
+
+// カテゴリ内からランダムに1つ選択する（重み付き・連続回避）
+// prevEmotionId: 直前の感情ID（連続回避用）
+pickRandomInCategory(categoryId, prevEmotionId)
+
+// 15カテゴリの定義配列を返す
+getAllCategories()
 ```
 
 ---
@@ -455,8 +470,8 @@ def lambda_handler(event, context):
 # 戻り値: dict（constructiveness_score / harassment_risk / ng_phrases / subordinate_reaction）
 def evaluate_guidance(guidance_text, subordinate_profile, conversation_history)
 
-# 部下の感情状態を更新する（30感情から選択）
-# 戻り値: emotion_label（30感情ID）
+# 部下の感情状態を更新する（15カテゴリから選択）
+# 戻り値: emotion_category（15カテゴリID）
 def update_subordinate_emotion(current_emotion, evaluation_result)
 ```
 

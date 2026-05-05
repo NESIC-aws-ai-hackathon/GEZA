@@ -213,7 +213,7 @@ prototype/
   - **コンセプト**: 謝罪トレーニングアプリ → 総合謝罪支援コンシェルジュ
   - **主要機能再定義**: 謝罪角度アセスメント・プランニング・準備サポートがコア、練習シミュレーションはサブ（任意）
   - **新機能「謝罪の角度」**: 0〜180°の段階判定→SVGメータービジュアル + AI vs 自己申告ギャップ分析
-  - **角度ステージ**: 会釈(0〜15°) / 深謝(16〜45°) / 土下座(46〜90°) / 寝下座(91〜120°) / 焦げ寝下座(121〜150°) / 焼き寝下座(151〜180°)
+  - **角度ステージ**: 会釈(0〜15°) / 深謝(16〜45°) / 土下座(46〜90°) / 寝下座(91〜120°) / 焦げ下座(121〜150°) / 焼き寝下座(151〜180°)
 - **成果物更新**:
   - aidlc-docs/inception/user-stories/stories.md（US-207/208/209追加、SP 154→172、コンセプト更新）
   - aidlc-docs/inception/application-design/application-design.md（アーキテクチャ図・ApologyMeterモジュール・Lambda 14本化）
@@ -664,7 +664,7 @@ prototype/
 
 
 ## エントリ 041 - ApologyMeter UI調整（ライトモード・スマホ縦長・実印風スタンプ）
-- **日時**: 2026-05-03T23:30:00+09:00
+- **日時**: 2026-05-04T01:30:00+09:00
 - **フェーズ**: INCEPTION - Prototype UI Refinement
 - **ユーザーリクエスト（原文）**: 「PCからは元からあるprototypeの画面と同じようにスマホ画面のような縦長で表示されるように / スタンプは実際のスタンプをイメージして。今だと全くスタンプ感がない / ライトモードで作ってください」
 - **アクション**: ApologyMeterプロトタイプをライトモード化し、PC表示時も最大430px幅のスマホ縦長画面として中央表示。スタンプ表現をゾーン色枠から実印風朱肉スタンプ（白い紙面、朱色の二重輪、破線リング、にじみ・かすれ表現）へ変更。
@@ -674,9 +674,86 @@ prototype/
 
 
 ## エントリ 042 - ApologyMeter 音声エンジン刷新 + ステージ選択UI
-- **日時**: 2026-05-04T01:00:00+09:00
+- **日時**: 2026-05-04T02:00:00+09:00
 - **フェーズ**: INCEPTION - Prototype Audio & UX Enhancement
 - **ユーザーリクエスト（原文）**: 「音がしょぼすぎる / スタンプが押されるドンっという音は同じで、追加で角度によって演出を変えるようにしよう / あと、スタンプ演出もプロトタイプでは選択で選べるようにして」
 - **アクション**: 音声エンジンを全面刷新。共通スタンプ衝撃音（playStampSlam：ノイズバースト＋低音サブベース＋ミドルアタックの3レイヤー、角度連動intensity）を追加し、その後120ms遅延でゾーン別追加演出音（playZoneSE：各14パターンの音量・厚み・持続時間を大幅強化）を再生する2段構成に変更。スライダー横に「🔴 スタンプ演出を再生」ボタンを追加し、任意の角度でスタンプ演出フルシーケンス（アニメーション＋音＋パーティクル）をプレビュー可能に。ギャラリーカードタップ時もスタンプ演出付きプレビューに変更。
 - **修正対象**:
   - **prototype/apology-meter.html**: playSE→playStampSlam+playZoneSE 2段構成化、全14音パターン強化、previewStamp()関数追加、「スタンプ演出を再生」ボタン追加、ギャラリークリックをpreviewStamp()に変更
+
+
+## エントリ 043 - やらかし深掘り分析 + Web会議モード追加（37→41ストーリー / 245→271SP）
+- **日時**: 2026-05-04T14:00:00+09:00
+- **フェーズ**: INCEPTION - Concept Expansion
+- **トリガー**: ①AIが追加質問を繰り返しやらかしの本質を炙り出す「深掘り分析」機能追加。②GEZA耳打ちモードをZoom/Teams/Meet対応に拡張する「Web会議モード」追加。
+- **変更方針**:
+  - やらかし深掘り分析（US-212）: probe-incident Lambda（Claude Haiku 4.5/standard）を追加。2〜5ラウンドの追加質問でやらかしの本質・隠れた影響・構造的原因を炙り出す。スキップ可能
+  - Web会議モード（US-1004/1005/1006）: 既存Lambda（analyze-anger/detect-danger-speech）を共用。DuringSupportPageに`supportMode`属性を追加し対面/Web会議を切り替える
+- **数値変更**: 37ストーリー/245SP → **41ストーリー/271SP**、Lambda 20本 → **21本**（+1: probe-incident）、Epic 10: 3→6ストーリー/24→42SP
+- **修正ファイル一覧**:
+  - **aidlc-docs/inception/user-stories/stories.md**: US-212追加（E2/8SP/P0）、US-1004/1005/1006追加（E10/P3）、Journey マップ・サマリーテーブル・合計更新
+  - **aidlc-docs/inception/requirements/requirements.md**: FR-117・FR-1005〜FR-1008追加、Epic 2（9話/57SP）・Epic 10（6話/42SP）・合計（41話/271SP）更新、LLM選定方針3プロファイル制に更新
+  - **aidlc-docs/inception/application-design/application-design.md**: Lambda一覧21本・LLMプロファイル表・プロンプト一覧17件・Web会議モード2モード表追加
+  - **aidlc-docs/inception/application-design/services.md**: POST /incident/probe追加、supportMode属性追加、LLMプロファイル表更新（probe-incident/generate-prevention等）、SAMテンプレート21関数更新
+  - **aidlc-docs/inception/application-design/unit-of-work.md**: U2=57SP・U9=42SP・合計271SP、probe-incidentスタブ・Lambda×21更新
+  - **aidlc-docs/inception/application-design/unit-of-work-story-map.md**: US-212マッピング（U2）・U9セクション（US-1001〜1006/42SP）追加・合計41/271更新
+  - **aidlc-docs/inception/application-design/components.md**: DuringSupportPage supportMode記述・WhisperAdvisor SILENT_PANEL追加・ProbeIncidentLambda追加
+  - **aidlc-docs/inception/application-design/component-dependency.md**: InceptionPage→ProbeIncidentLambda依存追加
+  - **aidlc-docs/inception/plans/execution-plan.md**: U2 Lambda probe-incident追加・U2 SP57・U9 SP42・Lambda21本更新
+  - **README.md**: ドキュメントマップ③/審査基準表/INCEPTIONフェーズ構成 41/271更新・Web会議モード記述追加
+  - **aidlc-docs/aidlc-state.md**: ストーリー数 41/271更新
+  - **AGENTS.md**: 参照表 41/271更新
+  - **docs/requirements.md**: Epic表 41/271更新・サービス名称「謝罪行動支援AI」併記・3プロファイル制反映
+- **整合性確認**: 全ドキュメント間で41ストーリー/271SP/21Lambda/21エンドポイント/10Epicで整合済み
+
+## エントリ 044 - アバター感情システム拡張（30感情→200感情・15カテゴリ）
+- **日時**: 2026-05-06T10:00:00+09:00
+- **フェーズ**: INCEPTION - Emotion System Expansion
+- **トリガー**: ユーザー要件「練習モード等で使うアバターの感情数を200感情に拡張。カテゴリ分けして同一カテゴリ内をランダムに流す。アクションは大げさに。人間に対しての会話感が出るように自然な表情変化」
+- **変更方針**:
+  - 感情総数: 30種類（10カテゴリ）→ **200種類（15カテゴリ）**
+  - AIの返却単位: 個別感情ラベル → **カテゴリID**（15種類）。FEがカテゴリ内の感情をランダムに選択
+  - カテゴリ内ランダム遷移: 2〜4秒間隔で同カテゴリの別感情に自然に変化（CSS transition 200ms ease-in-out 補間）
+  - 大げさモーション設計: 画面揺れ（大/中/小）・赤/白フラッシュ・画面暗転/明転・前のめり/後ずさり・体震え・涙エフェクト等12種の大アクション
+  - 15カテゴリ: fierce_anger(16), anger(14), intimidation(12), irritation(14), sadness(14), contempt(14), surprise(12), suspicion(12), resignation(12), confusion(14), interest(14), relief(14), acceptance(14), gratitude(12), forgiveness(12)
+  - 新規メソッド: setCategoryEmotion(), getEmotionsByCategory(), pickRandomInCategory(), getAllCategories()
+- **修正ファイル一覧**（16ファイル）:
+  - **stories.md**: 感情定義セクション全面刷新（200感情テーブル・15カテゴリ構成サマリー・ランダム遷移ルール・大げさモーション設計表）、AC内の「30種類」→「200種類/15カテゴリ」（3箇所）
+  - **application-design.md**: §6.1を15カテゴリ×代表感情テーブルに拡張
+  - **components.md**: AvatarController/EmotionDefinitions/EvaluateApologyLambdaの感情数・責務更新
+  - **component-methods.md**: setEmotion説明更新・setCategoryEmotion新規追加・getAllEmotions/getEmotionsByCategory/pickRandomInCategory/getAllCategories追加・update_subordinate_emotion更新
+  - **requirements.md（aidlc）**: FR-301/FR-302の感情数・カテゴリ・技術スタック表更新
+  - **docs/requirements.md**: アバター仕様セクション全面刷新（200感情・15カテゴリテーブル）
+  - **unit-of-work.md**: avatar.js/emotions.js説明更新
+  - **unit-of-work-story-map.md**: U3のマイルストーン更新
+  - **unit-of-work-dependency.md**: EmotionDefinitions説明・実装順序フロー更新
+  - **data-model.md**: emotionLabel説明更新
+  - **feasibility-study.md**: スケール再現性・総合判定更新
+  - **aidlc-state.md**: 感情数行更新
+  - **application-design-plan.md**: Q3回答更新
+  - **README.md**: 8箇所の30→200更新（テーマ適合・比較表・感情システム・検証結果・ディレクトリ構成・差別化）
+  - **prototype/README.md**: 本実装拡張先の感情数更新
+  - **audit.md**: 本エントリ追記
+- **整合性確認**: 全ドキュメント間で200感情/15カテゴリ/41ストーリー/271SP/21Lambda/21EP/10Epicで整合済み
+
+## エントリ 045 - 監査対応: ドキュメント整合性修正（W-2/W-4）
+- **日時**: 2026-05-05T10:00:00+09:00
+- **フェーズ**: INCEPTION - Document Consistency Fix
+- **トリガー**: 監査レポートによる指摘（C-1〜C-5 / W-1〜W-4）の検証と修正
+- **監査結果サマリー**:
+  - C-1（stories.md 29/180のまま）: **誤検知** — 現在のstories.mdはすでに41/271SP・全12ストーリー（US-212, US-801〜803, US-901〜902, US-1001〜1006）を含む
+  - C-2（旧キャッチコピー）: **誤検知** — 「土下座はあなたに、誠意はAIに。」に既に更新済み
+  - C-3（200感情未反映）: **誤検知** — エントリ044で200感情/15カテゴリ更新済み
+  - C-4（旧サービス名「総合謝罪支援コンシェルジュ」）: **誤検知** — stories.mdに当該文字列なし
+  - C-5（ペルソナ名「佐藤 美咏」）: **誤検知** — stories.mdでは「佐藤 美咲」（正）を使用済み
+  - W-2（application-design.mdのサービス名）: **修正実施** — "謝罪行動支援AI" → "謝罪丸投げコンシェルジュ（正式名称: 謝罪行動支援AI）"に更新
+  - W-4（aidlc-state.md LLMモデル表記が2プロファイル制のまま）: **修正実施** — 3プロファイル制（Nova Lite / Claude Haiku 4.5 / Claude Sonnet）に更新
+- **追加修正**:
+  - stories.md 最終更新日: 2026-05-04 → 2026-05-05（エントリ044の感情拡張を反映）
+  - aidlc-state.md 感情数テーブル行: 余分なカラム（5→4カラム）を修正
+- **修正ファイル一覧（4件）**:
+  - **stories.md**: 最終更新日更新
+  - **aidlc-state.md**: LLM技術スタック行 + LLMモデル変更確定事項行 + 感情数テーブル修正
+  - **application-design.md**: サービス名にタイトル追記
+  - **audit.md**: 本エントリ追記
+- **整合性確認**: 全ドキュメント間でサービス名/LLMプロファイル/200感情/41ストーリー/271SP整合済み

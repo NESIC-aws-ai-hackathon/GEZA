@@ -131,7 +131,7 @@ Week 2: U3（練習シミュレーション）
   ├── EvaluateApologyLambda（評価・感情）
   ├── TextToSpeechLambda（Polly TTS + viseme）
   ├── TranscribeClient（音声入力）
-  └── 30感情アバター表情 + 口パク確認
+  └── 200感情アバター表情（15カテゴリ内ランダム遷移） + 口パク確認
 
 Week 3: U4（謝罪後支援 + カルテ）
   ├── GenerateFeedbackLambda / GeneratePreventionLambda / GenerateFollowMailLambda

@@ -52,7 +52,7 @@
 |---------|---------|------|
 | フロントエンド | HTML/CSS/Vanilla JS + facesjs SVGアバター | SVGアバターがMP4動画より柔軟・低コスト |
 | バックエンド | Lambda（Python 3.12, 512MB, 30s） | 実測OK |
-| LLM | Amazon Nova Lite（軽量）/ Claude Sonnet（高品質） | Nova Liteで1〜3秒・十分な品質確認 |
+| LLM | Amazon Nova Lite / Claude Haiku 4.5 / Claude Sonnet（3プロファイル制） | Nova Lite: 評価・分類等軽量用途、Haiku 4.5: プラン生成等標準用途、Sonnet: 美文生成等高品質用途 |
 | 音声合成 | Amazon Polly（女性: Kazuha / 男性: Takumi, ja-JP, Neural） + SpeechMarks | Viseme口パク同期実証済み |
 | アバター | facesjs v5.0.3（フォーク・data-feature属性追加） | CSS表情制御実証済み |
 
@@ -61,7 +61,7 @@
 | 項目 | 当初要件 | プロトタイプ後の変更 | 理由 |
 |------|---------|------------------|------|
 | アバター | Nova Canvas/Reel MP4動画（10種類） | facesjs SVGアバター | レスポンス速度・コスト・感情制御の柔軟性 |
-| LLMモデル | Claude Sonnet 3.5 / Haiku 3 | Nova Lite / Claude Sonnet | Nova Liteが軽量用途で十分 |
-| 感情数 | 10種類 | **30種類（確定）** | コンセプト変更で全感情アークを定義 |
+| LLMモデル | Claude Sonnet 3.5 / Haiku 3 | Nova Lite / Claude Haiku 4.5 / Claude Sonnet（3プロファイル制） | 軽量・標準・高品質の用途別割り当て |
+| 感情数 | 10種類 | **200種類（15カテゴリ）（確定）** | カテゴリ内ランダム遷移で自然な表情揺らぎ |
 | 音声出力 | 未定 | Polly + SpeechMarks Viseme | 口パク同期実証済み |
 

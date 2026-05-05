@@ -82,7 +82,7 @@ D. Cognito認証後のセッションは都度APIから取得（フロントstat
 
 A. `avatar.js` として独立させ、他JSから呼び出す（`AvatarController`クラス等）  
 B. 各ページのJSに直接埋め込む（モジュール分離不要）  
-C. `avatar.js` + `emotions.js`（30感情定義）に2分割  
+C. `avatar.js` + `emotions.js`（200感情定義・15カテゴリ）に2分割  
 D. AIに判断させる
 
 [Answer]: C

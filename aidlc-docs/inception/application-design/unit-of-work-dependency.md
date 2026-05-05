@@ -62,7 +62,7 @@
 | 依存コンポーネント | 用途 |
 |-----------------|------|
 | AvatarController (avatar.js) | 練習中のアバター感情表現・viseme口パク |
-| EmotionDefinitions (emotions.js) | 30感情 CSS transform・エフェクト |
+| EmotionDefinitions (emotions.js) | 200感情・15カテゴリ CSS transform・エフェクト・カテゴリ内ランダム選択 |
 | ApiClient (api.js) | `/apology/evaluate` `/tts/synthesize` 呼び出し |
 | StateManager (state.js) | 怒り度/信頼度/会話ターンのリアルタイム管理 |
 | Lambda スタブ × 2（evaluate/tts） | U3 で本実装に置き換え |
@@ -179,7 +179,7 @@ U2 (コンシェルジュコア)
   ▼
 U3 (練習シミュレーション)
   │  アバター対話 + Polly TTS + Transcribe
-  │  30感情表現 + viseme 口パク確認
+  │  200感情表現（15カテゴリ内ランダム遷移） + viseme 口パク確認
   ▼
 U4 (謝罪後支援 + カルテ)
   │  フィードバック/再発防止策/フォローメール生成

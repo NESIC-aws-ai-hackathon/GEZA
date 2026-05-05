@@ -231,7 +231,7 @@ Lambda（Python 3.12, 512MB, 30s）
 | 動画・音声の同期精度 | SpeechMarksのタイムコードで精密同期。タイムラグ実測50ms以内 | **OK** |
 | SVGアバター感情変化速度 | CSS transition 0.5s / 即座（DOM操作のみ） | **OK（1秒以内）** |
 | 感情ラベル精度（5感情で検証） | anger/irritation/disappointment/surprise/acceptance 全て正確に返却 | **OK** |
-| 30感情へのスケール再現性 | CSS transform制御のため感情数増加はCSS定義の追加のみで対応可能。追加求評・再デプロイ不要 | **OK**（追加コストなし） |
+| 200感情へのスケール再現性 | CSS transform制御のため感情数増加はCSS定義の追加のみで対応可能。追加求評・再デプロイ不要 | **OK**（追加コストなし） |
 | 6ターン連続会話コンテキスト保持 | 会話履歴をJSON配列でLambdaに渡し、Bedrock側で文脈保持を確認 | **OK** |
 | Viseme口パク動作 | SpeechMarksのvisemeタイムコードでSVG pathを動的書き換え。自然な口パク実現 | **OK** |
 | 瞬き・視線・うなずきモーション | CSS transform + RAF/setTimeout で実現。アイドル時も自然な動きを確認 | **OK** |
@@ -260,7 +260,7 @@ Lambda（Python 3.12, 512MB, 30s）
 | 2. Transcribe精度・レイテンシ | **OK（公式）・U3実装時に実機検証予定** | ストリーミングAPI採用、プロトタイプはテキスト入力で代替。Cognito Identity Pool 基盤は INCEPTION で確認済み |
 | 3. アバター動画自動生成 | ✅ **方針変更: facesjs SVG採用** | Nova Canvas/Reel不採用。facejsでコスト・速度・柔軟性すべて優位 |
 | 4. 会話品質（LLM謝罪評価） | ✅ **OK（実証済み）** | NGワード検知・感情分類・追撃質問・文脈保持すべて確認 |
-| 5. アバター会話コア機能（最重要） | ✅ **OK（実証済み）** | E2E 2～5秒、Viseme口パク同期、**5感情で検証（30感情への拡張はCSS追加のみ・追加コストなし）**、で6ターン会話すべて動作確認 |
+| 5. アバター会話コア機能（最重要） | ✅ **OK（実証済み）** | E2E 2～5秒、Viseme口パク同期、**5感情で検証（200感情への拡張はCSS追加のみ・追加コストなし）**、で6ターン会話すべて動作確認 |
 | 6. ApologyMeter UI実証 | ✅ **OK（実証済み）** | 謝罪角度測定・印鑑演出・SE音・ギャップ分析すべてWeb Audio APIのみで実現確認 |
 
 **全項目OK → Workflow Planning へ進む**

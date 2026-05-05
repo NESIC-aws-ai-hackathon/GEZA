@@ -61,8 +61,8 @@
 
 | ID | 要件 |
 |----|------|
-| FR-301 | facesjs SVGアバターを画面中央に表示する。CSS transformによる表情制御（30種類の感情）・アイドルアニメーション（瞬き・視線・頭の揺れ・うなずき）・ビジュアルエフェクト（画面揺れ・明暗変化）を含む |
-| FR-302 | **30種類**の感情ラベル（rage/anger/fury/irritation/…/acceptance/appreciation/satisfaction/forgiveness）をAIが返却し、CSS表情制御でリアルタイムに切り替える |
+| FR-301 | facesjs SVGアバターを画面中央に表示する。CSS transformによる表情制御（200種類・15カテゴリ）・アイドルアニメーション（瞬き・視線・頭の揺れ・うなずき）・ビジュアルエフェクト（画面揺れ・明暗変化・フラッシュ・涙）を含む |
+| FR-302 | **200種類**の感情を **15カテゴリ** に分類。AIはカテゴリIDを返却し、FEがカテゴリ内の感情をランダムに選択してCSS表情制御でリアルタイムに切り替える。カテゴリ内ランダム遷移（2〜4秒間隔）で自然な表情揺らぎを実現 |
 | FR-302a | ユーザーの入力（音声またはテキスト）を受信 → LambdaがBedrock+Pollyを並列実行 → 感情ラベルでSVG表情切り替え + Polly MP3音声再生 + SpeechMarks口パク同期、という一連の会話フローをシームレスに実行する |
 | FR-303 | AI感情返却に連動して、Polly 専用音声（女性: Kazuha ja-JP Neural / 男性: Takumi ja-JP Neural）による返答音声を再生する。SpeechMarks Visemeによる口パク同期（50ms以内） |
 | FR-304 | 怒り度・信頼度ゲージをリアルタイムで表示・更新する |
@@ -197,7 +197,7 @@
 | LLM | AWS Bedrock（Amazon Nova Lite：軽量用途 / Claude Sonnet：高品質用途） | プロトタイプでNova Liteの1～3秒応答を実証 |
 | 音声入力 | AWS Transcribe Streaming | リアルタイム音声→テキスト変換（Epic 4から実装） |
 | 音声出力 | Amazon Polly（女性: Kazuha / 男性: Takumi, ja-JP, Neural） + SpeechMarks（Viseme） | opponent_profile.genderで音声を自動選択。プロトタイプで口パク同期実証済 |
-| アバター | facesjs v5.0.3（SVGアバター） + CSS表情制御（30感情） | MP4動画より柔軟度・速度・コスト全て優位、プロトタイプ実証済 |
+| アバター | facesjs v5.0.3（SVGアバター） + CSS表情制御（200感情・15カテゴリ） | MP4動画より柔軟度・速度・コスト全て優位、プロトタイプ実証済 |
 | 認証 | Amazon Cognito（User Pool ログイン + Identity Pool Transcribe一時認証） | 安全なユーザー管理、Epic 1から実装 |
 | データベース | Amazon DynamoDB | サーバーレス、柔軟なスキーマ |
 | 静的ホスティング | S3 + CloudFront | 高速グローバル配信 |

@@ -12,8 +12,8 @@
 
 | コンポーネント | ファイル | 責務 |
 |-------------|---------|------|
-| **AvatarController** | `frontend/shared/avatar.js` | facesjs SVGアバターの初期化・表情制御（30感情）・アイドルアニメーション・エフェクト（画面揺れ/明暗）・アバター外観カスタマイズ |
-| **EmotionDefinitions** | `frontend/shared/emotions.js` | 30感情ラベルのCSS transform値・エフェクト種別・日本語名・カテゴリをシングルトンで管理 |
+| **AvatarController** | `frontend/shared/avatar.js` | facesjs SVGアバターの初期化・表情制御（200感情・15カテゴリ内ランダム遷移）・アイドルアニメーション・エフェクト（画面揺れ/明暗/フラッシュ/涙）・アバター外観カスタマイズ |
+| **EmotionDefinitions** | `frontend/shared/emotions.js` | 200感情ラベル（15カテゴリ）のCSS transform値・エフェクト種別・日本語名・カテゴリをシングルトンで管理。カテゴリ内ランダム選択・遷移補間ロジックを提供 |
 | **StateManager** | `frontend/shared/state.js` | 3層ステート管理（window.AppState: リアルタイム / sessionStorage: セッション引き継ぎ / DynamoDB: 永続） |
 | **ApiClient** | `frontend/shared/api.js` | API GatewayへのHTTPリクエスト共通化（JWT認証ヘッダー付加・エラーハンドリング） |
 | **AuthModule** | `frontend/shared/auth.js` | Cognito User Pool 認証（サインアップ・ログイン・トークン管理・未認証リダイレクト） |
@@ -47,7 +47,7 @@
 | コンポーネント | ディレクトリ | Bedrock モデル | 責務 |
 |-------------|------------|--------------|------|
 | **AssessApologyLambda** | `backend/functions/assess-apology/` | Nova Lite | 謝罪角度アセスメント（0〜180°算出・根拠説明・推奨アプローチ） |
-| **EvaluateApologyLambda** | `backend/functions/evaluate-apology/` | Nova Lite | 謝罪評価・感情分類（30種）・NGワード検知・追撃質問生成・怒り度/信頼度更新 |
+| **EvaluateApologyLambda** | `backend/functions/evaluate-apology/` | Nova Lite | 謝罪評価・感情カテゴリ分類（15カテゴリ）・NGワード検知・追撃質問生成・怒り度/信頼度更新 |
 | **AnalyzeKarteLambda** | `backend/functions/analyze-karte/` | Nova Lite | カルテ傾向分析（NGワード傾向・スコア推移・弱点カテゴリ） |
 | **EvaluateGuidanceLambda** | `backend/functions/evaluate-guidance/` | Nova Lite | 上司モード指導評価・建設性スコア・パワハラリスク・部下リアクション生成 |
 | **AnalyzeAngerLambda** | `backend/functions/analyze-anger/` | Nova Lite | 相手の発言テキストから怒り残量・失望度・許容余地・反論危険度を推定（謝罪中支援） |

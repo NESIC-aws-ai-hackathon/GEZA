@@ -106,8 +106,8 @@ frontend/
     auth.js      # AuthModule（Cognito サインアップ/ログイン/トークン管理）
     api.js       # ApiClient（JWT 認証ヘッダー付き HTTP 共通化）
     state.js     # StateManager（3層ステート管理）
-    avatar.js    # AvatarController（facesjs SVG + 30感情 + viseme + エフェクト）
-    emotions.js  # EmotionDefinitions（30感情定義シングルトン）
+    avatar.js    # AvatarController（facesjs SVG + 200感情・15カテゴリ + viseme + エフェクト）
+    emotions.js  # EmotionDefinitions（200感情定義・カテゴリ内ランダム遷移シングルトン）
     anger-gauge.js  # AngerGauge（怒り残量ゲージコンポーネント）
     whisper-advisor.js  # WhisperAdvisor（耳打ちアドバイス表示コンポーネント）
   assets/

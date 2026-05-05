@@ -10,7 +10,7 @@
 
 ### 1.1 プロダクト概要
 
-GEZAは**謝罪行動支援AI**です。  
+GEZAは**謝罪丸投げコンシェルジュ**（正式名称: 謝罪行動支援AI）です。  
 やらかした内容を一言入れるだけで、謝罪角度判定→台本フル生成→タイミング・手土産提案まで全部AIがやります。あなたは頭を下げるだけ。  
 **AI整え、人間が向き合う** — AIが分析・構成・演出を担い、人間は「誠意を伝える」一点に集中できる謝罪ライフサイクル型アプリ。
 
@@ -246,20 +246,31 @@ backend/prompts/
 
 ## 6. 感情システム
 
-### 6.1 30感情定義
+### 6.1 200感情定義（15カテゴリ）
 
-| カテゴリ | 感情ID一覧 | 特殊エフェクト |
-|---------|-----------|--------------|
-| 強い怒り | rage, anger, fury, intimidation | rage → 画面揺れ |
-| 不満 | irritation, frustration, impatience | — |
-| 悲しみ | disappointment, sadness, bitterness | — |
-| 冷たい | contempt, disgust, coldness, sarcasm | — |
-| 驚き | surprise, shock | shock → 画面揺れ |
-| 疑い | suspicion, skepticism | — |
-| 諦め | weariness, resignation | — |
-| 中立 | confusion, hesitation, thinking | — |
-| 好転 | interest, empathy | — |
-| 肯定 | relief, acceptance, appreciation, satisfaction, forgiveness | forgiveness → 画面明暗変化 |
+AIは **カテゴリID** を返却し、フロントエンドがカテゴリ内の感情をランダムに選択して自然な表情揺らぎを実現する。  
+カテゴリ内ランダム遷移: 2〜4秒間隔、CSS transition 200ms ease-in-out 補間。
+
+| # | カテゴリID | カテゴリ名 | 感情数 | 代表感情ID | 主要エフェクト |
+|---|-----------|----------|:------:|-----------|-------------|
+| 1 | fierce_anger | 激怒・爆発 | 16 | rage, fury, explosive_anger | **画面揺れ（大）** + 赤フラッシュ |
+| 2 | anger | 怒り・攻撃 | 14 | anger, hostile, aggressive | 前のめり・にじり寄り |
+| 3 | intimidation | 威圧・支配 | 12 | intimidation, domineering, tyrannical | 画面暗転・不動 |
+| 4 | irritation | 不満・苛立ち | 14 | irritation, frustration, impatience | ため息・足踏み |
+| 5 | sadness | 失望・悲しみ | 14 | disappointment, sadness, heartbreak | 涙エフェクト・画面青み |
+| 6 | contempt | 軽蔑・嫌悪 | 14 | contempt, disgust, coldness, sarcasm | 顔そむけ・後ずさり |
+| 7 | surprise | 驚き・衝撃 | 12 | surprise, shock, astonishment | **画面揺れ + フラッシュ** |
+| 8 | suspicion | 疑い・警戒 | 12 | suspicion, skepticism, distrust | キョロキョロ・身構え |
+| 9 | resignation | 諦め・脱力 | 12 | weariness, resignation, apathy | ため息・脱力 |
+| 10 | confusion | 困惑・思案 | 14 | confusion, hesitation, thinking | 首傾げ・腕組み |
+| 11 | interest | 関心・理解 | 14 | interest, empathy, curiosity | 前のめり・うなずき |
+| 12 | relief | 安堵・緩和 | 14 | relief, calm, serenity | 脱力・深呼吸 |
+| 13 | acceptance | 納得・受容 | 14 | acceptance, agreement, reconciling | うなずき・手を開く |
+| 14 | gratitude | 感謝・満足 | 12 | appreciation, satisfaction, gratitude | 画面明るく |
+| 15 | forgiveness | 許し・赦免 | 12 | forgiveness, pardon, reconciliation | **画面が明るくなるエフェクト** |
+| | | **合計** | **200** | | |
+
+> 感情一覧の全200件の詳細定義は `stories.md §感情定義` を参照。
 
 ### 6.2 口パクシステム（Viseme）
 
