@@ -1,0 +1,25 @@
+# SAM ビルドキャッシュ
+.aws-sam/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# 環境変数（機密情報）
+.env
+.env.*
+
+# Node.js
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
