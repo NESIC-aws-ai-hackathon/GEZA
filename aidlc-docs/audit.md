@@ -40,6 +40,14 @@
 
 **結論**: U1 スコープ（US-101〜US-108）全件完了。U2 進行承認。
 
+## エントリ 078 - U2 Functional Design Plan 作成・ユーザー承認待ち
+- **日時**: 2026-05-07T00:10:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Functional Design（Part 1: Planning）
+- **アクション**: U2 Functional Design Plan ファイル作成。Q1〜Q10（設計確認事項）を含む計画ファイルをユーザーへ提示。ユーザーの回答待ち。
+- **計画ファイル**: `aidlc-docs/construction/U2/functional-design-plan.md`
+- **対象ストーリー**: US-201 / US-212 / US-207 / US-208 / US-202 / US-203 / US-204 / US-210 / US-211（9件 / 57SP）
+- **対象 Lambda**: assess-apology / probe-incident / generate-opponent / generate-plan（4本）
+
 ## エントリ 001 - ワークスペース検出開始
 - **日時**: 2026-04-29T10:15:00+09:00
 - **フェーズ**: INCEPTION - Workspace Detection
