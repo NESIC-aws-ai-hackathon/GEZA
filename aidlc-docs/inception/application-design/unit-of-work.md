@@ -226,11 +226,60 @@ frontend/
 | US-204 | 謝罪相手のアバターをカスタマイズする | 5 |
 | **合計** | | **57** |
 
+> **U2-EXT（予定外追加）**: U2完了後に「継続的相談機能（プラン再調整チャット）」を追加実装。詳細は下記 U2-EXT セクション参照。
+
 ### 依存 U0/U1 成果物
 - ApiClient, StateManager (U0)
 - AuthModule → 認証ガード (U0/U1)
 - AvatarController (U0)
 - Cognito 認証 (U1)
+
+---
+
+## U2-EXT: 継続的相談機能（U2完了後追加・予定外拡張）
+
+> **追加理由**: U2完了後レビューにて、謝罪プラン生成後に「状況が変わった場合の相談機能」がUX上必要と判断。U2のStep5（謝罪プラン画面）に相談チャットパネルを追加。
+
+### 責務
+- 謝罪プラン生成後にAIへ状況を相談できるチャット機能
+- マルチターン会話（最大10ターン）でプランの再調整を支援
+- プラン修正提案（revised_plan）のユーザー承認フロー
+
+### バックエンド成果物（Lambda実装）
+
+```
+backend/functions/
+  consult-plan/lambda_function.py      # Claude Haiku 4.5: 状況相談 + プラン再調整
+backend/prompts/
+  consult_plan.txt                     # 謝罪コンシェルジュAI相談プロンプト
+```
+
+### フロントエンド成果物（変更）
+
+```
+frontend/
+  pages/
+    inception.html    【変更】Step5に継続相談パネル追加・スーツ色選択UI追加
+    inception.js      【変更】_consultHistory/_doConsult()/_handleConsultSend()/_addConsultBubble()追加
+  style.css           【変更】.consult-bubble/.inc-textarea スタイル追加
+```
+
+### ユーザーストーリー（追加）
+
+| US | タイトル | SP |
+|----|---------|:--:|
+| US-EXT-01 | 謝罪プラン生成後に状況をAIに相談する | 5 |
+| US-EXT-02 | AIの提案を承認してプランを更新する | 3 |
+| **合計** | | **8** |
+
+### AWS リソース追加
+- `ConsultPlanFunction`（Lambda / 256MB / 30s / `POST /plan/consult`）
+- `ConsultPlanLogGroup`（CloudWatch Logs）
+- `ConsultPlanFunctionRole`（IAM Role）
+
+### 依存 U2 成果物
+- inception.html / inception.js（U2）
+- ApologyPlan / OpponentProfile（U2 StateManager）
 
 ---
 

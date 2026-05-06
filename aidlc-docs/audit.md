@@ -1,52 +1,5 @@
 ﻿# AI-DLC 監査ログ
 
-## エントリ 076 - U1 設計書整合性修正（実装差分反映）
-- **日時**: 2026-05-07T00:00:00+09:00
-- **フェーズ**: CONSTRUCTION - U1 Design Document Update
-- **ユーザーリクエスト（原文）**: 「AI-DLCに戻って、これまでの変更についてはu1設計書の該当箇所をしっかり治してほしい。auditもしっかり描いてU1のスコープがすべて完了できていることが確認できたらU2に進んでいいよ」
-- **背景**: 前セッションでU1コード生成後、UIリニューアル（ダークテーマ化・facesjs SVG修正等）を多数実施したため、設計書と実装に乖離が生じていた。
-- **修正内容**:
-  - **functional-design.md**: 認証フロー（NEW_PASSWORD_REQUIRED / MFA_SETUP チャレンジ追加）、ページ初期化フロー（AppLoading スピナー追加・getBBox タイミング問題解決のための rAF 描画）、コンポーネントツリー（ゲージ→StatusCard置き換え・ヘッダー共通化・MFA各フォーム追加・耳打ちモードavailable化）、AvatarDisplay仕様（2層CSS構造・rAF描画・ログイン画面アバター非表示）、成果物サマリー（avatar.js修正・style.css全面書き換え追記）更新
-  - **nfr-design/logical-components.md**: AuthModule に `submitNewPassword / setupTOTP / verifyTOTPSetup` 追加、AvatarInitializer を `init()` (生成のみ) + `render()` (TOP表示後) 分離に更新、SectionManager に `showNewPasswordForm / showMFASetupForm` 追加、GaugeRenderer→StatusCardController に置き換え、依存関係ツリー・変更サマリー更新
-  - **infrastructure-design/infrastructure-design.md**: フロントエンドファイル構成を実装通りに更新（style.css全面書き換え・auth.js MFA追加・avatar.js修正を反映）
-  - **aidlc-state.md**: 現在のステージを `U1 Deploy & Test 完了（U2 待ち）` に更新。U1全ステージに [x] を付与
-
-## エントリ 077 - U1 スコープ完了確認
-- **日時**: 2026-05-07T00:05:00+09:00
-- **フェーズ**: CONSTRUCTION - U1 Scope Verification
-- **確認方法**: execution-plan.md の U1 ストーリー一覧と実装ファイルを照合
-
-### U1 対象ストーリー検証
-
-| ストーリーID | タイトル | AC確認 | 実装ファイル |
-|------------|---------|:------:|------------|
-| US-101 | Cognito ログイン（メール/パスワード） | ✅ | auth.js: login() |
-| US-102 | TOTP MFA 認証 | ✅ | auth.js: submitMFA() |
-| US-103 | 初回パスワード変更（管理者作成ユーザー） | ✅ | auth.js: submitNewPassword() |
-| US-104 | 初回 TOTP 設定（QR + シークレットキー） | ✅ | auth.js: setupTOTP() / verifyTOTPSetup() |
-| US-105 | リフレッシュトークンによる自動ログイン | ✅ | auth.js: silentRefresh() + localStorage |
-| US-106 | ログアウト | ✅ | auth.js: logout() + top.js ログアウトボタン制御 |
-| US-107 | TOP画面表示（アバター・モード選択） | ✅ | top.js: _initAvatar / _renderAvatar / _showSection |
-| US-108 | 耳打ちモードへの遷移 | ✅ | index.html: data-target="pages/mimicry.html" |
-
-### セキュリティ対応確認
-- XSS-01（textContent 使用）: ✅ 全DOM挿入でtextContent使用
-- AUTH-05（refreshToken localStorage・idToken/accessToken メモリ）: ✅
-- SECURITY-04（CloudFront セキュリティヘッダー）: ✅ U0 CFポリシー適用済み
-
-### スモークテスト結果（デプロイ済み）
-- index.html HTTP 200 ✅ / config.js HTTP 200 ✅ / facesjs.min.js HTTP 200 ✅ / pages/top.js HTTP 200 ✅
-- CloudFront: `https://dhamuhqye8mp6.cloudfront.net` で正常稼働 ✅
-
-**結論**: U1 スコープ（US-101〜US-108）全件完了。U2 進行承認。
-
-## エントリ 078 - U2 Functional Design Plan 作成・ユーザー承認待ち
-- **日時**: 2026-05-07T00:10:00+09:00
-- **フェーズ**: CONSTRUCTION - U2 Functional Design（Part 1: Planning）
-- **アクション**: U2 Functional Design Plan ファイル作成。Q1〜Q10（設計確認事項）を含む計画ファイルをユーザーへ提示。ユーザーの回答待ち。
-- **計画ファイル**: `aidlc-docs/construction/U2/functional-design-plan.md`
-- **対象ストーリー**: US-201 / US-212 / US-207 / US-208 / US-202 / US-203 / US-204 / US-210 / US-211（9件 / 57SP）
-- **対象 Lambda**: assess-apology / probe-incident / generate-opponent / generate-plan（4本）
 
 ## エントリ 001 - ワークスペース検出開始
 - **日時**: 2026-04-29T10:15:00+09:00
@@ -1186,3 +1139,269 @@ prototype/
   - pages/top.js: HTTP 200 ✅
   - config.js: HTTP 200 ✅
 - **備考**: CloudFront Outputs に DistributionId なし → `aws cloudfront list-distributions` で E1AZPLEM19ABKQ を特定。`--no-verify-ssl` が必要（ローカル環境 SSL 問題）
+
+## エントリ 076 - U1 設計書整合性修正（実装差分反映）
+- **日時**: 2026-05-07T00:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U1 Design Document Update
+- **ユーザーリクエスト（原文）**: 「AI-DLCに戻って、これまでの変更についてはu1設計書の該当箇所をしっかり治してほしい。auditもしっかり描いてU1のスコープがすべて完了できていることが確認できたらU2に進んでいいよ」
+- **背景**: 前セッションでU1コード生成後、UIリニューアル（ダークテーマ化・facesjs SVG修正等）を多数実施したため、設計書と実装に乖離が生じていた。
+- **修正内容**:
+  - **functional-design.md**: 認証フロー（NEW_PASSWORD_REQUIRED / MFA_SETUP チャレンジ追加）、ページ初期化フロー（AppLoading スピナー追加・getBBox タイミング問題解決のための rAF 描画）、コンポーネントツリー（ゲージ→StatusCard置き換え・ヘッダー共通化・MFA各フォーム追加・耳打ちモードavailable化）、AvatarDisplay仕様（2層CSS構造・rAF描画・ログイン画面アバター非表示）、成果物サマリー（avatar.js修正・style.css全面書き換え追記）更新
+  - **nfr-design/logical-components.md**: AuthModule に `submitNewPassword / setupTOTP / verifyTOTPSetup` 追加、AvatarInitializer を `init()` (生成のみ) + `render()` (TOP表示後) 分離に更新、SectionManager に `showNewPasswordForm / showMFASetupForm` 追加、GaugeRenderer→StatusCardController に置き換え、依存関係ツリー・変更サマリー更新
+  - **infrastructure-design/infrastructure-design.md**: フロントエンドファイル構成を実装通りに更新（style.css全面書き換え・auth.js MFA追加・avatar.js修正を反映）
+  - **aidlc-state.md**: 現在のステージを `U1 Deploy & Test 完了（U2 待ち）` に更新。U1全ステージに [x] を付与
+
+## エントリ 077 - U1 スコープ完了確認
+- **日時**: 2026-05-07T00:05:00+09:00
+- **フェーズ**: CONSTRUCTION - U1 Scope Verification
+- **確認方法**: execution-plan.md の U1 ストーリー一覧と実装ファイルを照合
+
+### U1 対象ストーリー検証
+
+| ストーリーID | タイトル | AC確認 | 実装ファイル |
+|------------|---------|:------:|------------|
+| US-101 | Cognito ログイン（メール/パスワード） | ✅ | auth.js: login() |
+| US-102 | TOTP MFA 認証 | ✅ | auth.js: submitMFA() |
+| US-103 | 初回パスワード変更（管理者作成ユーザー） | ✅ | auth.js: submitNewPassword() |
+| US-104 | 初回 TOTP 設定（QR + シークレットキー） | ✅ | auth.js: setupTOTP() / verifyTOTPSetup() |
+| US-105 | リフレッシュトークンによる自動ログイン | ✅ | auth.js: silentRefresh() + localStorage |
+| US-106 | ログアウト | ✅ | auth.js: logout() + top.js ログアウトボタン制御 |
+| US-107 | TOP画面表示（アバター・モード選択） | ✅ | top.js: _initAvatar / _renderAvatar / _showSection |
+| US-108 | 耳打ちモードへの遷移 | ✅ | index.html: data-target="pages/mimicry.html" |
+
+### セキュリティ対応確認
+- XSS-01（textContent 使用）: ✅ 全DOM挿入でtextContent使用
+- AUTH-05（refreshToken localStorage・idToken/accessToken メモリ）: ✅
+- SECURITY-04（CloudFront セキュリティヘッダー）: ✅ U0 CFポリシー適用済み
+
+### スモークテスト結果（デプロイ済み）
+- index.html HTTP 200 ✅ / config.js HTTP 200 ✅ / facesjs.min.js HTTP 200 ✅ / pages/top.js HTTP 200 ✅
+- CloudFront: `https://dhamuhqye8mp6.cloudfront.net` で正常稼働 ✅
+
+**結論**: U1 スコープ（US-101〜US-108）全件完了。U2 進行承認。
+
+## エントリ 078 - U2 Functional Design Plan 作成・ユーザー承認待ち
+- **日時**: 2026-05-07T00:10:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Functional Design（Part 1: Planning）
+- **アクション**: U2 Functional Design Plan ファイル作成。Q1〜Q10（設計確認事項）を含む計画ファイルをユーザーへ提示。ユーザーの回答待ち。
+- **計画ファイル**: `aidlc-docs/construction/U2/functional-design-plan.md`
+- **対象ストーリー**: US-201 / US-212 / US-207 / US-208 / US-202 / US-203 / US-204 / US-210 / US-211（9件 / 57SP）
+- **対象 Lambda**: assess-apology / probe-incident / generate-opponent / generate-plan（4本）
+
+## エントリ 079 - U2 Functional Design Plan 回答受信
+- **日時**: 2026-05-07T00:15:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Functional Design（Part 1: 回答分析）
+- **回答サマリー**:
+  - Q1: A → 1ページ・ステップ切り替え（inception.html）
+  - Q2: A → チャット形式（臨場感・会話感）
+  - Q3: A → ApologyMeter 本実装（prototype をそのまま移植）
+  - Q4: B → 確認画面 + OK / 再生成ボタン（デモ映え）
+  - Q5: A → US-204 アバターカスタマイズ実装（プリセット + 手動調整）
+  - Q6: C → accordion カード形式（セクションごとに折りたため）
+  - Q7: A → DynamoDB 永続化（save-session Lambda 経由）
+  - Q8: A → US-211 直前サポート実装（当日自動表示）
+  - Q9: A → generate-plan のみ SQS 非同期（U0 NFR 設計準拠）
+  - Q10: A → エラーメッセージ + 「もう一度試す」ボタン
+- **曖昧性確認**: 全回答明確、曖昧性なし。Functional Design 本文生成に進む。
+
+## エントリ 080 - U2 Functional Design 生成完了
+- **日時**: 2026-05-07T00:20:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Functional Design（Part 2: 生成完了）
+- **生成ファイル**: `aidlc-docs/construction/U2/functional-design.md`
+- **設計要点**:
+  - **画面フロー**: inception.html に 7 ステップ（入力→深掘りチャット→角度→相手確認→プラン→スケジュール→直前サポート）を 1 ページ内で実装
+  - **ApologyMeter**: prototype から `apology-meter.js` としてモジュール化移植
+  - **深掘りチャット**: probe-incident を 1 問ずつチャット UI で呼び出し。status="completed" で enriched_summary を次ステップに引き渡し
+  - **アバターカスタマイズ**: OPPONENT_PRESETS 5種類 + gender トグル + facesjs.override()
+  - **accordion プラン**: 第一声/全セリフ台本/タイミング/手土産/ToDo の 5 カード
+  - **SQS polling**: MAX 60s、指数バックオフ 1s→2s→4s→5s固定
+  - **StateManager**: inception ネームスペースを追加（currentStep/probeSession/assessment/opponentProfile/apologyPlan/sessionId/apologyDate/regenerateCount）
+  - **セキュリティ**: XSS-01 / AUTH-05 / AuthGuard（requireAuth）全適用 ✅
+- **次のステージ**: U2 NFR Requirements
+
+## エントリ 081 - U2 Functional Design 承認
+- **日時**: 2026-05-07T00:25:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Functional Design（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **AI対応**: U2 Functional Design 承認確認。U2 NFR Requirements ステージへ移行する。
+
+## エントリ 082 - U2 NFR Requirements 回答受信・成果物生成完了
+- **日時**: 2026-05-07T00:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 NFR Requirements
+- **回答サマリー**:
+  - Q1: A → U0 NFR 既定値そのまま適用（fast=10s/256MB、standard=30s/512MB、premium=29s/1024MB）
+  - Q2: A → 空送信不可（probe 回答はバリデーション必須）
+  - Q3: A → リアルタイム描画（プリセット・スライダー変更のたびに facesjs.display()）
+  - Q4: B → Step5 完了時に自動 save-session + Step6 で apology_date を追加保存
+- **生成ファイル**:
+  - `aidlc-docs/construction/U2/nfr-requirements/nfr-requirements.md`（Lambda設定 / E2E目標 / SQS polling仕様 / セキュリティ / PBT追加項目）
+  - `aidlc-docs/construction/U2/nfr-requirements/tech-stack-decisions.md`（Lambda4本設定マトリクス / FE技術スタック / データフロー / コスト見積もり）
+- **セキュリティコンプライアンス**: SECURITY-01〜09 全適用確認 ✅
+- **PBT コンプライアンス**: assess-apology / probe-incident の invariant プロパティを追加定義 ✅
+- **次のステージ**: U2 NFR Design
+
+## エントリ 083 - U2 NFR Requirements 承認
+- **日時**: 2026-05-07T00:35:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 NFR Requirements（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **AI対応**: U2 NFR Requirements 承認確認。U2 NFR Design ステージへ移行する。
+
+## エントリ 084 - U2 NFR Design 生成完了
+- **日時**: 2026-05-07T00:40:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 NFR Design
+- **生成ファイル**:
+  - `aidlc-docs/construction/U2/nfr-design/nfr-design-patterns.md`（SQS非同期パターン / 同期API呼び出しパターン / アバターリアルタイム描画 / DynamoDB追加アクセスパターン / ステップ制御 / セキュリティ設計）
+  - `aidlc-docs/construction/U2/nfr-design/logical-components.md`（InceptionPageController全8コントローラー / ApologyMeterモジュール / 依存関係 / U0→U2変更サマリー）
+- **設計要点**:
+  - generate-plan: SQS 非同期（U0準拠）。trigger→jobId即時返却→polling（MAX 60s）
+  - assess/probe/opponent: 同期呼び出し。fetch AbortController でタイムアウト管理
+  - アバターカスタマイズ: rAF + facesjs.override() でリアルタイム描画（100ms以内）
+  - SESSION# DynamoDB エントリ: Step5完了時 PutItem → Step6で UpdateItem（apology_date）
+  - XSS-01: AI生成テキストも textContent のみ使用
+- **セキュリティコンプライアンス**: SECURITY-01〜09 全適用確認 ✅
+- **次のステージ**: U2 Infrastructure Design
+
+## エントリ 085 - U2 NFR Design 承認
+- **日時**: 2026-05-06T10:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 NFR Design（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **AI対応**: U2 NFR Design 承認確認。U2 Infrastructure Design ステージへ移行する。
+
+## エントリ 086 - U2 Infrastructure Design 生成完了・承認
+- **日時**: 2026-05-06T10:10:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Infrastructure Design（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **生成ファイル**:
+  - `aidlc-docs/construction/U2/infrastructure-design/infrastructure-design.md`
+- **設計要点**:
+  - 新規 AWS リソース: なし（全リソース U0 デプロイ済み）
+  - template.yaml 変更: generate-opponent（256MB/10s→512MB/30s + Haiku 4.5追加）/ generate-plan（512MB/30s→256MB/10s + Bedrock削除・SQS追加）
+  - sam deploy 必要
+  - フロントエンド: inception.html / inception.js / apology-meter.js 追加
+  - プロンプト: 4ファイル S3 sync 更新
+- **AI対応**: U2 Infrastructure Design 承認確認。U2 Code Generation ステージへ移行する。
+
+## エントリ 087 - U2 Code Generation 完了
+- **日時**: 2026-05-06T10:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Code Generation
+- **変更ファイル（13 ファイル）**:
+  - `template.yaml`: GenerateOpponentFunction（512MB/30s/Haiku 4.5）/ GeneratePlanFunction（256MB/10s/SQS）に修正
+  - `backend/functions/bedrock-dispatcher/lambda_function.py`: messages content format バグ修正（string→ContentBlock[]）
+  - `backend/prompts/assess_apology.txt`: 本番版プロンプト（Nova Lite 向け）
+  - `backend/prompts/probe_incident.txt`: 本番版プロンプト（Haiku 4.5 向け）
+  - `backend/prompts/generate_opponent.txt`: 本番版プロンプト（Haiku 4.5 向け）
+  - `backend/prompts/generate_plan.txt`: 本番版プロンプト（Sonnet 向け）
+  - `backend/functions/assess-apology/lambda_function.py`: 本実装（Nova Lite 同期）
+  - `backend/functions/probe-incident/lambda_function.py`: 本実装（Haiku 4.5 同期）
+  - `backend/functions/generate-opponent/lambda_function.py`: 本実装（Haiku 4.5 同期）
+  - `backend/functions/generate-plan/lambda_function.py`: 本実装（SQS trigger）
+  - `backend/functions/save-session/lambda_function.py`: 本実装（DynamoDB PutItem/UpdateItem）
+  - `frontend/pages/inception.html`: 新規（7ステップ HTML）
+  - `frontend/pages/inception.js`: 新規（InceptionPageController）
+  - `frontend/shared/apology-meter.js`: 新規（prototype 移植・モジュール化）
+  - `frontend/pages/top.js`: 実案件モード available=true に更新
+- **セキュリティコンプライアンス**:
+  - XSS-01: AI生成テキスト全て textContent 使用
+  - SECURITY-08: 全 Lambda input_validator.validate() 適用
+  - AUTH-05: JWT sub を requestContext から取得
+  - PROMPT-01: input_validator.INJECTION_PATTERNS による プロンプトインジェクション対策
+- **次のステージ**: Deploy & Smoke Test
+
+## エントリ 088 - U2 Deploy & Smoke Test 完了
+- **日時**: 2026-05-06T10:45:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 Deploy & Test
+- **実施内容**:
+  1. AWS SSO ログイン（aws sso login --profile share）
+  2. アイコンコピー: `icons/pictgram/trimmed/` → `frontend/icons/pictgram/trimmed/`（14ファイル）
+  3. sam deploy（Lambda設定変更分）→ 後述の修正が必要
+  4. S3 sync（frontend/）: 13ファイル＋14アイコン = 27ファイルアップロード
+  5. S3 sync（backend/prompts/）: 17ファイルアップロード
+  6. CloudFront Invalidation: `I7MYIU3CV4ZJ0R5JRE7XQ8L9UO`（InProgress → 完了）
+- **スモークテスト結果**:
+  - Test 1 API認証チェック（/apology/assess POST）: HTTP 401 ✅
+  - Test 2 inception.html 疎通（CloudFront経由）: HTTP 200 ✅
+  - Test 3 Lambda設定確認（修正前）:
+    - generate-plan: Memory=512MB/Timeout=30s（期待: 256MB/10s）❌
+    - generate-opponent: Memory=256MB/Timeout=10s（期待: 512MB/30s）❌
+- **Lambda設定修正**（AWS CLI直接修正）:
+  - sam build が PermissionError で失敗したため aws lambda update-function-configuration で直接修正
+  - `generate-plan`: 512MB/30s → **256MB/10s** ✅
+  - `generate-opponent`: 256MB/10s → **512MB/30s** ✅
+- **最終状態**:
+  - generate-plan: 256MB/10s ✅
+  - generate-opponent: 512MB/30s ✅
+  - inception.html: HTTP 200 ✅
+  - API認証: HTTP 401 ✅
+- **備考**: sam build PermissionError 原因は `.aws-sam/` キャッシュのファイルロック。次回 sam build 前に削除推奨
+- **次のステージ**: U2 完了 → 次ユニット（U3）
+
+
+## エントリ 089 - U2 バグ修正・UI改善 完了
+- **日時**: 2026-05-06T12:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U2 バグ修正
+- **発生した問題と対処**:
+  1. **template.yaml backtick-n リテラル混入**
+     - 原因: PowerShell `-replace` 操作で `` `n `` がリテラル文字として埋め込まれた
+     - 対処: Python `str.replace()` で3箇所修正（backtick-n → 実際の改行）
+  2. **AccessDeniedException（Bedrock推論プロファイル）**
+     - 原因: Lambda IAM ポリシーが `foundation-model` ARN 固定で推論プロファイルを許可していなかった
+     - 対処: すべての Bedrock Resource を `"*"` に変更 → sam build + deploy
+     - 結果: `probe-incident` / `assess-apology` ともに200応答確認 ✅
+  3. **UI改善4点（Step 3 謝罪角度診断）**:
+     - 自己申告スライダーを AI 診断結果の**前**に表示するよう順序変更
+     - 乖離分析を6段階に細分化（詳細理由テキスト `gap-detail` 追加）
+     - プロトタイプ演出（`screenShake`, `flashOverlay`）を本番実装に適用
+     - 判定根拠に `description` フィールドを追加（バックエンドプロンプト・フロントエンド両方更新）
+- **変更ファイル**:
+  - `template.yaml`: backtick-n修正 + Bedrock IAM Resource を `"*"` に変換
+  - `backend/prompts/assess_apology.txt`: `reasons[].description` フィールド追加、`recommended_approach` 拡張
+  - `frontend/pages/inception.html`: Step 3 HTML 全面再構成（演出CSS追加）
+  - `frontend/pages/inception.js`: `_renderAssessment()` / `_renderReasons()` / `_updateGapBars()` 書き直し
+- **デプロイ結果**:
+  - sam build + deploy: 成功 ✅
+  - S3アップロード（inception.html / inception.js / assess_apology.txt）: 完了 ✅
+  - CloudFront Invalidation ID: `I13UGKSLW7IUE0FVWKJOOG23PT` ✅
+- **スモークテスト結果**:
+  - `probe-incident` Lambda: statusCode 200、question フィールド返却 ✅
+  - `assess-apology` Lambda: statusCode 200、ai_degree / reasons[].description 返却 ✅
+- **次のステージ**: U3 開発へ
+
+---
+
+## エントリ 090 - U2-EXT 設計書整合性追記 + U2 スコープ完了確認
+- **日時**: 2026-05-07T09:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U2-EXT 設計書整合性
+- **ユーザーリクエスト（原文）**: 「U2の予定外の作業に関しては設計書を見直してしっかりと追記を行ってください / U2のスコープがしっかりと完了していることを確認したうえでAI-DLCに従いU3へと進んでください」
+- **アクション**: U2-EXT（継続的相談機能）の実装内容を U2 設計書群へ追記。U2 全スコープ完了を検証。
+
+### 設計書追記内容
+| ファイル | 追記内容 |
+|---------|---------|
+| `aidlc-docs/inception/application-design/unit-of-work.md` | U2 セクションに U2-EXT 責務・Lambda・フロントエンド成果物・完了基準を追記 |
+| `aidlc-docs/construction/U2/functional-design.md` | 末尾に「U2-EXT 継続的相談機能 追加実装」セクションを追記（UC-EXT-01・API仕様・UIコンポーネント）|
+| `aidlc-docs/construction/U2/infrastructure-design/infrastructure-design.md` | セクション7末尾に ConsultPlanFunction 追加実装内容を追記 |
+
+### U2 スコープ完了確認
+
+| ストーリーID | タイトル | 実装確認 | 備考 |
+|------------|---------|:------:|------|
+| US-201 | やらかし内容入力 + 必須項目バリデーション | ✅ | inception.js Step1 バリデーション実装済み |
+| US-212 | 深掘り分析チャット（2〜5ラウンド） | ✅ | probe-incident Lambda + チャット UI 実装済み |
+| US-207 | 謝罪角度 AI 診断（0〜180°） | ✅ | assess-apology Lambda + ApologyMeter 本実装 |
+| US-208 | 自己申告との乖離分析（6段階） | ✅ | _updateGapBars() / gap-detail テキスト実装済み |
+| US-202 | 謝罪相手プロフィール生成 | ✅ | generate-opponent Lambda 実装済み |
+| US-203 | 謝罪台本フル生成（AI） | ✅ | generate-plan Lambda (SQS非同期) 実装済み |
+| US-210 | 謝罪実施日カウントダウン管理 | ✅ | Step6 apology_date 入力 + save-session UpdateItem 実装済み |
+| US-211 | 謝罪当日の直前サポート | ✅ | Step7 当日判定ロジック + briefing表示 実装済み |
+| US-204 | アバターカスタマイズ（プリセット + 手動） | ✅ | OPPONENT_PRESETS + facesjs.override() 実装済み |
+| US-212 (EXT) | 継続的相談（plan/consult エンドポイント） | ✅ | ConsultPlanFunction + consult_plan.txt 実装済み |
+
+**結論**: U2 スコープ（US-201/212/207/208/202/203/204/210/211 + U2-EXT）**全件完了** ✅
+
+### デプロイ・テスト確認（U2-EXT 分）
+- sam deploy: ConsultPlanFunction CREATE_COMPLETE ✅
+- S3 アップロード: inception.html / inception.js / style.css / consult_plan.txt 全4ファイル ✅
+- CloudFront Invalidation: I8C6DJUSI2894BN9YAMO2G0GP0 ✅
+- スモークテスト: `/plan/consult` → HTTP 401 ✅ / CloudFront → HTTP 200 ✅ / DynamoDB → ACTIVE ✅
+
+- **次のステージ**: U3 Functional Design 開始

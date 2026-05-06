@@ -25,7 +25,7 @@
       icon: "💼",
       desc: "実際の謝罪の練習",
       target: "pages/inception.html",
-      available: false,
+      available: true,
     },
     {
       id: "story",

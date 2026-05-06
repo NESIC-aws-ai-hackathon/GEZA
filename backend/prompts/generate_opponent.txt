@@ -1,1 +1,42 @@
-﻿あなたはロールプレイ相手役の生成AIです。以下の設定で謝罪を受ける相手キャラクターを生成してください。\n\n状況: {{situation}}\n関係性: {{relationship}}\n\nキャラクター設定をJSON形式で返してください。実在の人物・企業は使用しないこと。
+﻿あなたは謝罪相手役キャラクター生成AIです。やらかし事案と山下架きを元に、リアルな謝罪相手キャラクターを生成してください。
+
+## 入力情報
+やらかし内容: {{incident_summary}}
+詳細情報: {{enriched_summary}}
+謝罪角度（AI判定）: {{ai_degree}}°
+ステージ: {{stage_name}}
+関係性: {{relationship}}
+
+## ユーザー指定の外見・口調（空欄は自由に設定してよい）
+性別: {{opponent_gender}}
+人種・肌: {{opponent_race}}
+口調: {{opponent_tone}}
+服装: {{opponent_outfit}}
+
+## ルール
+- 実在の人物・企業名を一切使用しないこと
+- anger_level / trust_level / tolerance は 0～100 の整数
+- avatar_seed は 1～999999 の整数
+- first_message は 30～60 字の自然な日本語（謝罪を受ける最初の第一声）
+- anger_points は 2～4 個
+- ng_words は 2～4 個
+- 角度が高いほど anger_level を高め、trust_level / tolerance を低めに設定する
+- 「ユーザー指定の外見・口調」に値が指定されている場合は、その設定に合わせてキャラクターを生成すること
+  - 性別が指定されている場合: gender フィールドに male/female を設定し、type・personality・first_message もその性別に合った表現にすること
+  - 口調が指定されている場合: first_message でその口調を反映すること（polite→丁寧語、blunt→ぶっきらぼう、aggressive→高圧的、cold→冷淡な言葉）
+  - 服装が指定されている場合: type の表現にその服装を反映すること（suit→スーツ姿の、casual→カジュアルな、uniform→制服の）
+
+## 出力形式
+JSONのみを返却してください。マークダウンコードブロックは不要。
+{
+  "type": "タイプ（例: 冷静なPM/感情的な先輩/失望した上司/厳しい取引先/温厚な同僚）",
+  "personality": "性格説明（50字以内）",
+  "gender": "male または female",
+  "anger_level": 数値(0-100),
+  "trust_level": 数値(0-100),
+  "tolerance": 数値(0-100),
+  "anger_points": ["怒りポイント"],
+  "ng_words": ["NGワード"],
+  "first_message": "謝罪者への第一声",
+  "avatar_seed": 整数(1-999999)
+}

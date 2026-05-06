@@ -24,9 +24,9 @@ const ApiClient = (() => {
 
     if (resp.status === 401 && retry) {
       try {
-        await AuthModule.refreshTokens();
+        await AuthModule.silentRefresh();
       } catch {
-        AuthModule.redirectToLogin();
+        AuthModule.requireAuth();
         throw new Error("Session expired");
       }
       return _fetch(path, options, false);

@@ -10,7 +10,7 @@ from shared.decorators import handle_errors
 from shared.structured_logger import get_structured_logger
 
 _dynamodb = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-northeast-1"))
-_table = _dynamodb.Table(os.environ["TABLE_NAME"])
+_table = _dynamodb.Table(os.environ["DYNAMODB_TABLE_NAME"])
 
 
 @handle_errors

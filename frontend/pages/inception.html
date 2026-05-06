@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEZA - 謝罪コンシェルジュ</title>
+  <link rel="icon" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    /* ── ApologyMeter CSS ── */
+    :root {
+      --z-daily:   #2ecc71;
+      --z-biz:     #f1c40f;
+      --z-crisis:  #e67e22;
+      --z-resolve: #e74c3c;
+      --z-beyond:  #2c2c2c;
+      --z-ascend:  #f0d060;
+    }
+    .am-stamp-stage {
+      position: relative;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 24px 0 8px;
+    }
+    .am-stamp-wrap {
+      --sc: 184, 32, 22;
+      position: relative; display: inline-block;
+      opacity: 0; transform: scale(2.5) rotate(-12deg); transition: none;
+    }
+    .am-stamp-wrap.am-stamped {
+      animation: amStampDrop .4s cubic-bezier(.22,.61,.36,1) forwards;
+    }
+    @keyframes amStampDrop {
+      0%   { opacity:0; transform:scale(2.5) rotate(-12deg); }
+      40%  { opacity:1; transform:scale(.85) rotate(2deg); }
+      60%  { transform:scale(1.06) rotate(-1deg); }
+      100% { opacity:1; transform:scale(1) rotate(0deg); }
+    }
+    .am-stamp-ring {
+      position:absolute; inset:0; border-radius:50%; background:transparent;
+      border:7px solid rgb(var(--sc));
+      box-shadow: inset 0 0 0 6px var(--bg,#1a1a2e),inset 0 0 0 10px rgba(var(--sc),.85),
+                  inset 0 0 0 20px var(--bg,#1a1a2e),inset 0 0 0 23px rgba(var(--sc),.58);
+      filter:url(#am-stamp-worn); pointer-events:none; z-index:4;
+    }
+    .am-stamp-circle {
+      position:relative; width:200px; height:200px; border-radius:50%;
+      background:radial-gradient(circle at 38% 32%,#fff 0%,#fff7ed 72%,#f2e6d8 100%);
+      box-shadow:0 10px 24px rgba(95,54,34,.2);
+      display:flex; align-items:center; justify-content:center; overflow:visible;
+    }
+    .am-stamp-circle img {
+      position:relative; z-index:1; width:120px; height:120px;
+      object-fit:contain;
+      filter:contrast(1.08) drop-shadow(0 1px 1px rgba(0,0,0,.14));
+      pointer-events:none;
+    }
+    .am-stamp-label {
+      position:absolute; z-index:2; bottom:14px; left:50%; transform:translateX(-50%);
+      background:rgba(var(--sc),.92); color:#fffdf8;
+      font-size:.6rem; font-weight:800; padding:2px 10px; border-radius:2px;
+      letter-spacing:.06em; white-space:nowrap;
+    }
+    .am-stamp-degree {
+      position:absolute; z-index:5; top:6px; right:6px;
+      background:rgb(var(--sc)); color:#fff;
+      font-size:.9rem; font-weight:900; width:44px; height:44px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; line-height:1;
+      box-shadow:0 2px 8px rgba(184,32,22,.25);
+    }
+    .am-stamp-degree small { font-size:.5rem; font-weight:600; }
+    .am-stamp-level {
+      position:absolute; z-index:5; top:10px; left:10px;
+      font-size:.55rem; font-weight:700; padding:2px 7px; border-radius:3px;
+      background:rgba(36,33,31,.82); color:#fff; white-space:nowrap;
+    }
+    .am-impact-flash {
+      position:absolute; top:50%; left:50%; width:0; height:0; border-radius:50%;
+      background:radial-gradient(circle,rgba(216,59,36,.18) 0%,transparent 70%);
+      transform:translate(-50%,-50%); pointer-events:none;
+    }
+    .am-impact-flash.am-pop { animation:amFlashPop .5s ease-out forwards; }
+    @keyframes amFlashPop {
+      0%   { width:60px;  height:60px;  opacity:1; }
+      100% { width:340px; height:340px; opacity:0; }
+    }
+    .am-ink-p {
+      position:absolute; width:5px; height:5px; border-radius:50%;
+      opacity:0; pointer-events:none;
+    }
+    .am-ink-burst { animation:amInkB .55s ease-out forwards; }
+    @keyframes amInkB {
+      0%   { opacity:.7; transform:translate(0,0) scale(1); }
+      100% { opacity:0;  transform:translate(var(--tx),var(--ty)) scale(.2); }
+    }
+    .am-shockwave {
+      position:absolute; top:50%; left:50%; border-radius:50%;
+      border:3px solid var(--sw-c,#e74c3c);
+      transform:translate(-50%,-50%); pointer-events:none;
+      animation:amSwExpand .6s ease-out forwards;
+    }
+    @keyframes amSwExpand {
+      0%   { width:100px;  height:100px;  opacity:.6; }
+      100% { width:380px;  height:380px;  opacity:0; border-width:1px; }
+    }
+    .am-stage-info {
+      text-align:center; margin-top:12px;
+      opacity:0; transform:translateY(10px); transition:all .4s ease .45s;
+    }
+    .am-stage-info.am-show { opacity:1; transform:translateY(0); }
+    .am-stage-name { font-size:1.3rem; font-weight:800; }
+    .am-stage-posture { font-size:.75rem; color:var(--text-dim,#888); margin-top:2px; }
+    .am-zone-badge {
+      display:inline-block; margin-top:8px; padding:4px 14px; border-radius:6px;
+      font-size:.72rem; font-weight:700;
+    }
+    .am-scale {
+      margin:16px 0 4px; height:8px; border-radius:4px;
+      background:linear-gradient(90deg,
+        var(--z-daily) 0%,var(--z-daily) 17%,
+        var(--z-biz) 25%,var(--z-biz) 33%,
+        var(--z-crisis) 42%,var(--z-crisis) 50%,
+        var(--z-resolve) 56%,var(--z-resolve) 67%,
+        var(--z-beyond) 75%,var(--z-beyond) 83%,
+        var(--z-ascend) 92%,var(--z-ascend) 100%);
+      position:relative;
+    }
+    .am-pin {
+      position:absolute; top:-4px; width:4px; height:16px; background:#fff;
+      border-radius:2px; box-shadow:0 0 0 2px rgba(0,0,0,.5);
+      transform:translateX(-50%); transition:left .9s cubic-bezier(.34,1.56,.64,1);
+    }
+    .am-scale-labels {
+      display:flex; justify-content:space-between;
+      font-size:.5rem; color:var(--text-dim,#888); margin-top:2px;
+    }
+
+    /* ── Inception Layout ── */
+    .inception-page { max-width: 480px; margin: 0 auto; padding: 16px; }
+    .inc-header {
+      text-align: center; padding: 20px 16px 12px;
+      border-bottom: 1px solid var(--border,#333);
+    }
+    .inc-header h1 { font-size: 1.2rem; font-weight: 800; color: var(--accent,#e74c3c); }
+    .inc-header .step-indicator { font-size: .72rem; color: #888; margin-top: 4px; }
+    .inc-step { padding: 16px 0; }
+    .inc-section-title { font-size: .95rem; font-weight: 700; margin-bottom: 12px; }
+    .inc-label { display: block; font-size: .78rem; color: #888; margin-bottom: 4px; }
+    .inc-textarea {
+      width: 100%; min-height: 80px; background: var(--card,#252535);
+      border: 1px solid var(--border,#333); border-radius: 10px;
+      color: var(--text,#eee); padding: 10px 12px; font-size: .92rem;
+      resize: vertical; outline: none; font-family: inherit;
+    }
+    .inc-textarea:focus { border-color: var(--accent,#e74c3c); }
+    .inc-input, .inc-select {
+      width: 100%; background: var(--card,#252535);
+      border: 1px solid var(--border,#333); border-radius: 8px;
+      color: var(--text,#eee); padding: 9px 12px; font-size: .9rem;
+      outline: none; font-family: inherit;
+    }
+    .inc-input:focus, .inc-select:focus { border-color: var(--accent,#e74c3c); }
+    .inc-row { display: flex; gap: 10px; margin-top: 10px; }
+    .inc-row .inc-col { flex: 1; }
+    .inc-btn {
+      display: block; width: 100%; padding: 13px; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; color: #fff; cursor: pointer;
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      box-shadow: 0 6px 16px rgba(231,76,60,.2);
+      transition: transform .1s, opacity .2s;
+      margin-top: 16px;
+    }
+    .inc-btn:active { transform: scale(.97); }
+    .inc-btn:disabled { opacity: .45; cursor: default; }
+    .inc-btn-secondary {
+      display: inline-block; padding: 8px 18px; border: 1px solid #555;
+      border-radius: 8px; font-size: .85rem; font-weight: 600; color: #aaa;
+      background: transparent; cursor: pointer; margin-top: 10px;
+    }
+    .inc-btn-secondary:hover { border-color: #888; color: #fff; }
+    .inc-error {
+      color: var(--accent,#e74c3c); font-size: .8rem; margin-top: 6px;
+      min-height: 1.2em;
+    }
+
+    /* ── Chat bubbles ── */
+    .chat-area { min-height: 200px; margin-bottom: 12px; }
+    .chat-bubble {
+      max-width: 80%; padding: 10px 14px; border-radius: 14px;
+      margin-bottom: 10px; font-size: .9rem; line-height: 1.55;
+    }
+    .chat-bubble.ai {
+      background: #252535; border-radius: 14px 14px 14px 2px;
+      margin-right: auto;
+    }
+    .chat-bubble.user {
+      background: var(--accent,#e74c3c); color: #fff;
+      border-radius: 14px 14px 2px 14px; margin-left: auto;
+    }
+    .chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+    .chat-input-row textarea {
+      flex: 1; background: var(--card,#252535); border: 1px solid var(--border,#333);
+      border-radius: 8px; color: var(--text,#eee); padding: 9px 12px;
+      font-size: .9rem; resize: none; outline: none; font-family: inherit;
+      min-height: 44px; max-height: 120px;
+    }
+    .chat-input-row textarea:focus { border-color: var(--accent,#e74c3c); }
+    .chat-send-btn {
+      padding: 10px 16px; border: none; border-radius: 8px;
+      background: var(--accent,#e74c3c); color: #fff;
+      font-weight: 700; font-size: .9rem; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .chat-send-btn:disabled { opacity: .45; cursor: default; }
+
+    /* ── Assessment ── */
+    .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .bar-label { width: 60px; font-size: .72rem; color: #888; text-align: right; }
+    .bar-track { flex: 1; height: 20px; background: #2a2a3a; border-radius: 4px; overflow: hidden; }
+    .bar-fill {
+      height: 100%; border-radius: 4px;
+      display: flex; align-items: center; justify-content: flex-end; padding-right: 6px;
+      font-size: .68rem; font-weight: 700; color: #fff;
+      transition: width 1s cubic-bezier(.34,1.56,.64,1);
+    }
+    .bar-fill.ai   { background: linear-gradient(90deg,#e74c3c,#c0392b); }
+    .bar-fill.user { background: linear-gradient(90deg,#3498db,#2980b9); }
+    .gap-msg {
+      margin-top: 10px; padding: 10px 12px;
+      background: rgba(231,76,60,.1); border-left: 3px solid #e74c3c;
+      border-radius: 0 8px 8px 0; font-size: .82rem; line-height: 1.55;
+    }
+    .factor-row {
+      display: flex; align-items: center; gap: 8px; padding: 7px 0;
+      border-bottom: 1px solid #333; font-size: .82rem;
+    }
+    .factor-row:last-child { border-bottom: none; }
+    .factor-weight {
+      min-width: 28px; text-align: center; padding: 2px 5px;
+      background: #e74c3c; color: #fff; font-size: .65rem; font-weight: 700; border-radius: 4px;
+    }
+    .factor-weight.mid { background: #e67e22; }
+    .factor-weight.low { background: #3498db; }
+    .self-report-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .self-report-row input[type="range"] { flex: 1; accent-color: #3498db; }
+    .self-report-val { font-size: 1.1rem; font-weight: 800; min-width: 40px; }
+
+    /* ── Opponent ── */
+    .opponent-card {
+      background: var(--card,#252535); border-radius: 12px;
+      padding: 16px; margin-bottom: 14px;
+    }
+    .opponent-card .label { font-size: .7rem; color: #888; }
+    .opponent-card .value { font-size: .92rem; font-weight: 600; margin-top: 2px; }
+    .avatar-frame-opponent {
+      position: relative; overflow: hidden;
+      width: 200px; height: 240px; margin: 0 auto 12px;
+    }
+    .avatar-frame-opponent .facesjs-container {
+      position: absolute; top: -40px; left: 0; right: 0; bottom: 0;
+    }
+    .stat-row { display: flex; gap: 8px; margin-top: 8px; }
+    .stat-badge {
+      flex: 1; text-align: center; padding: 6px 4px;
+      background: #1e1e2e; border-radius: 8px;
+    }
+    .stat-badge .s-label { font-size: .62rem; color: #888; }
+    .stat-badge .s-val { font-size: 1rem; font-weight: 800; margin-top: 1px; }
+    .first-msg-bubble {
+      background: #252535; border-radius: 12px 12px 12px 2px;
+      padding: 10px 14px; font-size: .88rem; line-height: 1.55; margin-top: 12px;
+      border: 1px solid #333;
+    }
+    .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .preset-btn {
+      padding: 5px 12px; border-radius: 14px; border: 1px solid #444;
+      background: #1e1e2e; color: #bbb; font-size: .78rem; cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .preset-btn.active { border-color: var(--accent,#e74c3c); background: rgba(231,76,60,.15); color: #fff; }
+    .regen-count { font-size: .72rem; color: #888; margin-top: 6px; text-align: right; }
+
+    /* ── Plan accordion ── */
+    .plan-loading {
+      text-align: center; padding: 40px 0; color: #888; font-size: .9rem;
+    }
+    .plan-loading .spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid #333; border-top-color: var(--accent,#e74c3c);
+      animation: spin .8s linear infinite; margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .plan-card {
+      background: var(--card,#252535); border-radius: 12px;
+      margin-bottom: 10px; overflow: hidden;
+    }
+    .plan-card summary {
+      padding: 14px 16px; cursor: pointer; font-weight: 700; font-size: .9rem;
+      list-style: none; display: flex; justify-content: space-between; align-items: center;
+    }
+    .plan-card summary::after { content: "▼"; font-size: .65rem; color: #888; }
+    .plan-card[open] summary::after { content: "▲"; }
+    .plan-card .plan-content {
+      padding: 0 16px 14px; font-size: .87rem; line-height: 1.65; color: #ccc;
+      white-space: pre-wrap;
+    }
+    .plan-error {
+      background: rgba(231,76,60,.1); border: 1px solid #e74c3c;
+      border-radius: 12px; padding: 16px; text-align: center; color: #e74c3c;
+    }
+    .todo-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 6px 0; border-bottom: 1px solid #2a2a3a; font-size: .85rem;
+    }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-priority {
+      font-size: .65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .todo-priority.high { background: #e74c3c; color: #fff; }
+    .todo-priority.mid  { background: #e67e22; color: #fff; }
+    .todo-priority.low  { background: #3498db; color: #fff; }
+    .todo-deadline { font-size: .7rem; color: #888; white-space: nowrap; flex-shrink: 0; }
+
+    /* ── Schedule ── */
+    .countdown-display {
+      text-align: center; padding: 24px 0;
+    }
+    .countdown-display .days { font-size: 4rem; font-weight: 900; color: var(--accent,#e74c3c); }
+    .countdown-display .days-label { font-size: .8rem; color: #888; }
+    .date-input-wrap { margin-bottom: 14px; }
+    input[type="date"].inc-input { color-scheme: dark; }
+
+    /* ── Day Support ── */
+    .checklist-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #2a2a3a; font-size: .9rem;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .checklist-item input[type="checkbox"] {
+      width: 18px; height: 18px; flex-shrink: 0;
+      accent-color: var(--accent,#e74c3c); margin-top: 1px;
+    }
+    .checklist-item label { cursor: pointer; line-height: 1.5; }
+    .inc-card {
+      background: var(--card,#252535); border-radius: 12px; padding: 16px;
+      margin-bottom: 12px;
+    }
+    .inc-card h3 { font-size: .88rem; color: var(--accent,#e74c3c); margin-bottom: 10px; }
+    .approach-text { font-size: .87rem; line-height: 1.65; color: #ccc; }
+
+    /* ── 演出エフェクト（プロトタイプ由来） ── */
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0,0) rotate(0deg); }
+      10%  { transform: translate(-6px,-3px) rotate(-.7deg); }
+      25%  { transform: translate(6px,-2px) rotate(.5deg); }
+      40%  { transform: translate(-5px,5px) rotate(-.5deg); }
+      55%  { transform: translate(5px,-4px) rotate(.6deg); }
+      70%  { transform: translate(-4px,3px) rotate(-.4deg); }
+      85%  { transform: translate(4px,2px) rotate(.2deg); }
+    }
+    .screen-shake { animation: screenShake 0.55s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes amOverlayFade {
+      0%   { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .am-flash-overlay {
+      position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+      animation: amOverlayFade 0.65s ease-out forwards;
+    }
+    #self-meter-preview {
+      font-size: 1.05rem; font-weight: 700; min-height: 1.4em;
+      transition: color .2s;
+    }
+    .factor-header { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+    .factor-desc { font-size: .74rem; color: #999; margin-top: 3px; line-height: 1.5; }
+    .gap-detail {
+      margin-top: 8px; font-size: .8rem; color: #aaa; line-height: 1.6;
+      padding: 8px 10px; background: rgba(255,255,255,.04); border-radius: 6px;
+    }
+    #self-report-card { transition: opacity .5s, transform .5s; }
+    #self-report-card.revealed { opacity: .55; pointer-events: none; }
+    .reveal-hint {
+      font-size: .72rem; color: #666; text-align: center; margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ローディングスピナー -->
+  <div id="app-loading" style="display:flex;align-items:center;justify-content:center;height:100dvh">
+    <div style="text-align:center">
+      <div style="width:40px;height:40px;border-radius:50%;border:3px solid #333;border-top-color:#e74c3c;animation:spin .8s linear infinite;margin:0 auto 12px"></div>
+      <div style="color:#888;font-size:.85rem">読み込み中...</div>
+    </div>
+  </div>
+
+  <!-- インセプションアプリ -->
+  <div id="inception-app" hidden>
+    <div class="inception-page">
+
+      <div class="inc-header">
+        <h1>GEZA 謝罪コンシェルジュ</h1>
+        <div class="step-indicator" id="step-indicator">Step 1 / 7</div>
+      </div>
+
+      <!-- ─── Step 1: やらかし入力 ─── -->
+      <div id="step-input" class="inc-step">
+        <div class="inc-section-title">① やらかし内容を教えてください</div>
+        <label class="inc-label" for="incident-summary">何が起きましたか？</label>
+        <textarea id="incident-summary" class="inc-textarea" maxlength="2000"
+          placeholder="例: 本番環境にバグをリリースして3社に影響が出た"></textarea>
+        <div class="inc-row">
+          <div class="inc-col">
+            <label class="inc-label" for="relationship">相手との関係性</label>
+            <select id="relationship" class="inc-select">
+              <option value="上司">上司</option>
+              <option value="取引先">取引先</option>
+              <option value="顧客">顧客</option>
+              <option value="同僚">同僚</option>
+              <option value="友人">友人</option>
+              <option value="家族">家族</option>
+              <option value="部下">部下</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+          <div class="inc-col">
+            <label class="inc-label" for="categories">カテゴリ</label>
+            <select id="categories" class="inc-select">
+              <option value="仕事上のミス">仕事上のミス</option>
+              <option value="約束破り">約束破り</option>
+              <option value="言動・態度">言動・態度</option>
+              <option value="情報漏洩・不正">情報漏洩・不正</option>
+              <option value="その他">その他</option>
+            </select>
+          </div>
+        </div>
+        <div id="input-error" class="inc-error"></div>
+        <button id="btn-start-analyze" class="inc-btn" data-testid="btn-start-analyze">
+          🔍 謝罪角度を診断する
+        </button>
+      </div>
+
+      <!-- ─── Step 2: 深掘りチャット ─── -->
+      <div id="step-probe" class="inc-step" hidden>
+        <div class="inc-section-title">② 状況をもう少し教えてください</div>
+        <p style="font-size:.8rem;color:#888;margin-bottom:12px">AIがいくつか確認します（最大5問）</p>
+        <div id="chat-area" class="chat-area"></div>
+        <div class="chat-input-row">
+          <textarea id="chat-answer" placeholder="回答を入力…" rows="2" maxlength="500"
+            data-testid="chat-answer"></textarea>
+          <button id="btn-chat-send" class="chat-send-btn" data-testid="btn-chat-send">送信</button>
+        </div>
+        <div id="probe-error" class="inc-error"></div>
+        <button id="btn-skip-probe" class="inc-btn-secondary" data-testid="btn-skip-probe">
+          スキップして次へ →
+        </button>
+      </div>
+
+      <!-- ─── Step 3: 角度アセスメント ─── -->
+      <div id="step-assessment" class="inc-step" hidden>
+        <div class="inc-section-title">③ 謝罪角度診断</div>
+
+        <!-- 自己申告（診断演出の前に表示） -->
+        <div class="inc-card" id="self-report-card">
+          <h3>🤔 あなたのやらかし度は？</h3>
+          <p style="font-size:.8rem;color:#888;margin:4px 0 14px">
+            AIが診断する前に、自分でやらかし度を予測してみましょう
+          </p>
+          <div class="self-report-row">
+            <input type="range" id="self-degree-slider" min="0" max="180" value="45"
+              data-testid="self-degree-slider">
+            <div class="self-report-val"><span id="self-degree-val">45</span>°</div>
+          </div>
+          <div id="self-meter-preview" style="margin-top:10px;text-align:center;color:#888">
+            目礼（🟢 日常）
+          </div>
+          <div class="reveal-hint">スライダーを動かして予測してから診断ボタンを押してください</div>
+          <button id="btn-reveal-result" class="inc-btn" style="margin-top:18px">
+            🔍 謝罪角度を診断する！
+          </button>
+        </div>
+
+        <!-- 診断結果（スタンプ演出後に表示） -->
+        <div id="assessment-result" hidden>
+          <div id="meter-container" style="margin-bottom:14px"></div>
+
+          <!-- 自己申告との比較 -->
+          <div class="inc-card" id="gap-card">
+            <h3>📊 自己申告 vs AI判定</h3>
+            <div class="bar-row">
+              <span class="bar-label">AI判定</span>
+              <div class="bar-track"><div class="bar-fill ai" id="bar-ai" style="width:0%"></div></div>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">自己申告</span>
+              <div class="bar-track"><div class="bar-fill user" id="bar-user" style="width:0%"></div></div>
+            </div>
+            <div class="gap-msg" id="gap-msg"></div>
+            <div class="gap-detail" id="gap-detail"></div>
+          </div>
+
+          <!-- 判定根拠（詳細） -->
+          <div class="inc-card" id="reasons-card" style="margin-top:14px">
+            <h3>🔎 判定根拠（詳細）</h3>
+            <div id="reasons-list"></div>
+            <div class="approach-text" id="recommended-approach"
+              style="margin-top:12px;padding:10px 12px;background:rgba(231,76,60,.08);border-radius:8px;font-size:.84rem"></div>
+          </div>
+
+          <!-- 相手の外見・口調設定 -->
+          <div class="inc-card" id="opponent-appearance-card" style="margin-top:14px">
+            <h3>👤 相手の外見・口調を設定しよう</h3>
+            <p style="font-size:.8rem;color:#888;margin-bottom:12px">性別・髪色・アクセサリー・服装はアバターに反映。口調は相手の第一声に反映されます</p>
+            <div class="inc-row">
+              <div class="inc-col">
+                <label class="inc-label" for="opp-gender">性別</label>
+                <select id="opp-gender" class="inc-select">
+                  <option value="any">指定なし</option>
+                  <option value="male">男性</option>
+                  <option value="female">女性</option>
+                </select>
+              </div>
+              <div class="inc-col">
+                <label class="inc-label" for="opp-race">人種・肌の色</label>
+                <select id="opp-race" class="inc-select">
+                  <option value="any">指定なし</option>
+                  <option value="asian">アジア系</option>
+                  <option value="white">白人系</option>
+                  <option value="brown">褐色系</option>
+                  <option value="black">黒人系</option>
+                </select>
+              </div>
+            </div>
+            <div class="inc-row">
+              <div class="inc-col">
+                <label class="inc-label" for="opp-hair-color">髪色</label>
+                <select id="opp-hair-color" class="inc-select">
+                  <option value="any">指定なし</option>
+                  <option value="black">黒</option>
+                  <option value="brown">茶</option>
+                  <option value="blonde">金</option>
+                  <option value="gray">グレー</option>
+                  <option value="red">赤</option>
+                </select>
+              </div>
+              <div class="inc-col">
+                <label class="inc-label" for="opp-glasses">アクセサリー</label>
+                <select id="opp-glasses" class="inc-select">
+                  <option value="random">指定なし</option>
+                  <option value="on">メガネあり</option>
+                  <option value="off">メガネなし</option>
+                </select>
+              </div>
+            </div>
+            <div class="inc-row">
+              <div class="inc-col">
+                <label class="inc-label" for="opp-outfit">服装</label>
+                <select id="opp-outfit" class="inc-select">
+                  <option value="any">指定なし</option>
+                  <option value="suit">スーツ</option>
+                  <option value="casual">カジュアル</option>
+                  <option value="uniform">制服</option>
+                </select>
+              </div>
+              <div class="inc-col" id="suit-color-col" style="display:none">
+                <label class="inc-label" for="opp-suit-color">スーツの色</label>
+                <select id="opp-suit-color" class="inc-select">
+                  <option value="black">ブラック</option>
+                  <option value="navy">ネイビー</option>
+                  <option value="gray">グレー</option>
+                  <option value="beige">ベージュ</option>
+                  <option value="brown">ブラウン</option>
+                </select>
+              </div>
+            </div>
+            <div class="inc-row">
+                <div class="inc-col">
+                  <label class="inc-label" for="opp-tone">口調</label>
+                  <select id="opp-tone" class="inc-select">
+                    <option value="any">指定なし</option>
+                    <option value="polite">丁寧</option>
+                    <option value="blunt">ぶっきらぼう</option>
+                    <option value="aggressive">高圧的</option>
+                    <option value="cold">冷淡</option>
+                  </select>
+                </div>
+            </div>
+          </div>
+
+          <button id="btn-generate-opponent" class="inc-btn" data-testid="btn-generate-opponent" style="margin-top:16px">
+            👤 相手を生成する
+          </button>
+          <div id="assessment-gen-error" class="inc-error"></div>
+        </div>
+      </div>
+
+      <!-- ─── Step 4: 相手確認 ─── -->
+      <div id="step-opponent" class="inc-step" hidden>
+        <div class="inc-section-title">④ 相手のプロフィール</div>
+
+        <div class="avatar-frame-opponent" id="opponent-avatar-frame">
+          <div class="facesjs-container" id="opponent-avatar"></div>
+        </div>
+
+        <div class="opponent-card">
+          <div class="inc-label">タイプ</div>
+          <div class="value" id="opp-type"></div>
+          <div class="inc-label" style="margin-top:8px">性格</div>
+          <div class="value" id="opp-personality"></div>
+          <div class="stat-row">
+            <div class="stat-badge">
+              <div class="s-label">怒り度</div>
+              <div class="s-val" id="opp-anger" style="color:#e74c3c"></div>
+            </div>
+            <div class="stat-badge">
+              <div class="s-label">信頼度</div>
+              <div class="s-val" id="opp-trust" style="color:#3498db"></div>
+            </div>
+            <div class="stat-badge">
+              <div class="s-label">許容度</div>
+              <div class="s-val" id="opp-tolerance" style="color:#2ecc71"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="inc-card">
+          <h3>💬 相手の第一声</h3>
+          <div class="first-msg-bubble" id="opp-first-msg"></div>
+        </div>
+
+        <div class="inc-card">
+          <h3>⚠️ 怒りポイント / NGワード</h3>
+          <div id="opp-anger-points" style="font-size:.85rem;margin-bottom:8px"></div>
+          <div id="opp-ng-words" style="font-size:.82rem;color:#e74c3c"></div>
+        </div>
+
+        <div class="inc-card">
+          <h3>🎨 アバタープリセット</h3>
+          <div class="preset-row" id="preset-row">
+            <button class="preset-btn active" data-preset="default">デフォルト</button>
+            <button class="preset-btn" data-preset="serious">シリアス</button>
+            <button class="preset-btn" data-preset="angry">怒り</button>
+            <button class="preset-btn" data-preset="disappointed">失望</button>
+            <button class="preset-btn" data-preset="mild">温和</button>
+          </div>
+        </div>
+
+        <div id="opponent-error" class="inc-error"></div>
+        <div class="regen-count">再生成 <span id="regen-count">0</span>/3</div>
+        <button id="btn-regen-opponent" class="inc-btn-secondary" data-testid="btn-regen-opponent">
+          🔄 再生成
+        </button>
+        <button id="btn-opponent-ok" class="inc-btn" data-testid="btn-opponent-ok">
+          この相手でOK → プランを作成
+        </button>
+      </div>
+
+      <!-- ─── Step 5: 謝罪プラン ─── -->
+      <div id="step-plan" class="inc-step" hidden>
+        <div class="inc-section-title">⑤ 謝罪プラン</div>
+
+        <div id="plan-loading" class="plan-loading">
+          <div class="spinner"></div>
+          <p>謝罪プランを生成中...<br><span style="font-size:.75rem">(最大60秒かかることがあります)</span></p>
+        </div>
+
+        <div id="plan-content" hidden>
+          <details class="plan-card" open>
+            <summary>💬 第一声</summary>
+            <div class="plan-content" id="plan-first-words"></div>
+          </details>
+          <details class="plan-card">
+            <summary>📜 全セリフ台本</summary>
+            <div class="plan-content" id="plan-full-script"></div>
+          </details>
+          <details class="plan-card">
+            <summary>📍 タイミング・場所</summary>
+            <div class="plan-content" id="plan-timing"></div>
+          </details>
+          <details class="plan-card">
+            <summary>🎁 手土産</summary>
+            <div class="plan-content" id="plan-gift"></div>
+          </details>
+          <details class="plan-card">
+            <summary>✅ ToDoリスト</summary>
+            <div id="plan-todo-list" class="plan-content"></div>
+          </details>
+
+          <button id="btn-to-schedule" class="inc-btn" data-testid="btn-to-schedule">
+            📅 実施日を設定する
+          </button>
+
+          <!-- 継続相談パネル -->
+          <div class="inc-card" id="consult-panel" style="margin-top:20px">
+            <h3 style="cursor:pointer" id="consult-toggle">💬 AIに相談する <span id="consult-toggle-icon" style="font-size:.8rem;color:#888">▼ 開く</span></h3>
+            <div id="consult-body" hidden>
+              <p style="font-size:.8rem;color:#888;margin-bottom:10px">プランへの疑問・状況変化・困ったことを何でも相談できます</p>
+              <div id="consult-chat-area" style="max-height:300px;overflow-y:auto;margin-bottom:10px;display:flex;flex-direction:column;gap:8px"></div>
+              <div id="consult-revised-notice" hidden style="background:rgba(46,204,113,.15);border-left:3px solid #2ecc71;padding:10px;margin-bottom:10px;border-radius:4px;font-size:.85rem">
+                <span id="consult-revised-msg"></span>
+                <button id="btn-apply-revised" class="inc-btn" style="max-width:180px;margin-top:8px;padding:8px 12px;font-size:.8rem">✅ プランを更新する</button>
+              </div>
+              <div style="display:flex;gap:8px;align-items:flex-end">
+                <textarea id="consult-input" class="inc-textarea" rows="3"
+                  placeholder="例：謝ろうとしたが席を外していた。次はどうすれば？"
+                  style="flex:1;resize:vertical;min-height:60px"></textarea>
+                <button id="btn-consult-send" class="inc-btn" style="max-width:80px;padding:10px;align-self:flex-end">送信</button>
+              </div>
+              <div id="consult-error" class="inc-error"></div>
+              <div id="consult-turn-limit" hidden style="font-size:.8rem;color:#888;text-align:center;margin-top:8px">相談は最大10ターンまでです</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="plan-error" class="plan-error" hidden>
+          <p id="plan-error-msg"></p>
+          <button id="btn-retry-plan" class="inc-btn" style="max-width:200px;margin:12px auto 0">
+            もう一度試す
+          </button>
+        </div>
+      </div>
+
+      <!-- ─── Step 6: スケジュール ─── -->
+      <div id="step-schedule" class="inc-step" hidden>
+        <div class="inc-section-title">⑥ 謝罪実施日を設定</div>
+
+        <div class="date-input-wrap">
+          <label class="inc-label" for="apology-date">謝罪実施日</label>
+          <input type="date" id="apology-date" class="inc-input" data-testid="apology-date">
+        </div>
+
+        <div id="schedule-error" class="inc-error"></div>
+        <button id="btn-save-date" class="inc-btn" data-testid="btn-save-date">
+          💾 保存する
+        </button>
+
+        <div id="countdown-area" hidden>
+          <div class="countdown-display">
+            <div class="days" id="countdown-days">-</div>
+            <div class="days-label">日後に謝罪予定</div>
+          </div>
+          <div class="inc-card">
+            <h3>📊 進捗</h3>
+            <div style="font-size:.85rem;color:#ccc">
+              練習回数: <strong id="practice-count">0</strong> 回
+            </div>
+          </div>
+          <button id="btn-to-top" class="inc-btn-secondary" onclick="location.href='/'">
+            ← TOPに戻る
+          </button>
+        </div>
+      </div>
+
+      <!-- ─── Step 7: 当日直前サポート ─── -->
+      <div id="step-day-support" class="inc-step" hidden>
+        <div class="inc-section-title">⑦ 今日がその日です！</div>
+        <p style="font-size:.85rem;color:#e74c3c;margin-bottom:16px">
+          謝罪当日です。以下を確認して臨みましょう。
+        </p>
+
+        <div class="inc-card">
+          <h3>☑️ 直前チェックリスト</h3>
+          <div id="day-checklist"></div>
+        </div>
+
+        <div class="inc-card" id="day-approach-card">
+          <h3>💡 直前アドバイス</h3>
+          <div class="approach-text" id="day-approach"></div>
+        </div>
+
+        <button id="btn-start-practice" class="inc-btn" data-testid="btn-start-practice"
+          onclick="location.href='practice.html'">
+          🎯 練習モードで最終確認
+        </button>
+        <button class="inc-btn-secondary" onclick="location.href='/'">
+          ← TOPに戻る
+        </button>
+      </div>
+
+    </div><!-- /.inception-page -->
+  </div><!-- /#inception-app -->
+
+  <script src="../config.js"></script>
+  <script src="../assets/facesjs.min.js"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="../shared/avatar.js"></script>
+  <script src="../shared/apology-meter.js"></script>
+  <script src="inception.js"></script>
+</body>
+</html>

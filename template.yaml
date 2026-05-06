@@ -341,8 +341,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -368,8 +368,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -395,8 +395,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -422,8 +422,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -449,8 +449,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -476,8 +476,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -503,8 +503,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/amazon.nova-lite-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -531,8 +531,8 @@ Resources:
               Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-haiku-4-5-v1:0
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -544,40 +544,13 @@ Resources:
             Method: POST
             Path: /incident/probe
 
+  # fast trigger (256MB / 10s / SQS only)  EU2: generate-plan enqueues to SQS, bedrock-dispatcher handles LLM
   GeneratePlanFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: generate-plan
       Handler: lambda_function.lambda_handler
       CodeUri: backend/functions/generate-plan/
-      MemorySize: 512
-      Timeout: 30
-      Policies:
-        - Statement:
-            - Effect: Allow
-              Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
-              Resource: !GetAtt GezaDataTable.Arn
-            - Effect: Allow
-              Action: bedrock:InvokeModel
-              Resource: arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-haiku-4-5-v1:0
-            - Effect: Allow
-              Action: s3:GetObject
-              Resource: !Sub "${GezaPromptsBucket.Arn}/*"
-      Events:
-        Api:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref GezaHttpApi
-            Method: POST
-            Path: /plan/generate
-
-  # premium trigger (256MB / 10s / no Bedrock call)
-  GenerateOpponentFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: generate-opponent
-      Handler: lambda_function.lambda_handler
-      CodeUri: backend/functions/generate-opponent/
       MemorySize: 256
       Timeout: 10
       Policies:
@@ -588,6 +561,34 @@ Resources:
             - Effect: Allow
               Action: sqs:SendMessage
               Resource: !GetAtt GezaAsyncJobsQueue.Arn
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GezaHttpApi
+            Method: POST
+            Path: /plan/generate
+
+  # standard sync (512MB / 30s / Haiku 4.5)  EU2: generate-opponent is synchronous
+  GenerateOpponentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-opponent
+      Handler: lambda_function.lambda_handler
+      CodeUri: backend/functions/generate-opponent/
+      MemorySize: 512
+      Timeout: 30
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [dynamodb:GetItem, dynamodb:PutItem, dynamodb:Query]
+              Resource: !GetAtt GezaDataTable.Arn
+            - Effect: Allow
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub "${GezaPromptsBucket.Arn}/*"
       Events:
         Api:
           Type: HttpApi
@@ -776,7 +777,7 @@ Resources:
       Policies:
         - Statement:
             - Effect: Allow
-              Action: dynamodb:PutItem
+              Action: [dynamodb:PutItem, dynamodb:UpdateItem, dynamodb:GetItem]
               Resource: !GetAtt GezaDataTable.Arn
       Events:
         Api:
@@ -785,6 +786,27 @@ Resources:
             ApiId: !Ref GezaHttpApi
             Method: POST
             Path: /sessions
+
+  ConsultPlanFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: consult-plan
+      Handler: lambda_function.lambda_handler
+      CodeUri: backend/functions/consult-plan/
+      MemorySize: 256
+      Timeout: 30
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource: "*"
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GezaHttpApi
+            Method: POST
+            Path: /plan/consult
 
   GetKarteFunction:
     Type: AWS::Serverless::Function
@@ -894,10 +916,9 @@ Resources:
               Action: [dynamodb:UpdateItem, dynamodb:PutItem]
               Resource: !GetAtt GezaDataTable.Arn
             - Effect: Allow
-              Action: bedrock:InvokeModel
+              Action: [bedrock:InvokeModel, bedrock:Converse]
               Resource:
-                - arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-sonnet-4-5-v1:0
-                - arn:aws:bedrock:ap-northeast-1::foundation-model/anthropic.claude-haiku-4-5-v1:0
+                - "*"
             - Effect: Allow
               Action: s3:GetObject
               Resource: !Sub "${GezaPromptsBucket.Arn}/*"
@@ -993,6 +1014,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/save-session
+      RetentionInDays: 7
+
+  ConsultPlanLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/consult-plan
       RetentionInDays: 7
 
   GetKarteLogGroup:

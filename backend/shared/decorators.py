@@ -46,7 +46,7 @@ def handle_errors(func):
             logger.error("Bedrock throttled after retries")
             return _build_response(503, {"error": "一時的に混雑しています。しばらくしてから再試行してください", "request_id": request_id})
         except Exception as exc:
-            logger.error("Unexpected error", extra={"error_type": type(exc).__name__})
+            logger.error("Unexpected error", extra={"error_type": type(exc).__name__, "error_msg": str(exc)[:500]})
             return _build_response(500, {"error": "サーバーエラーが発生しました", "request_id": request_id})
     return wrapper
 

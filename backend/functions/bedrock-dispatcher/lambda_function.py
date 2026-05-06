@@ -11,7 +11,7 @@ from shared.prompt_loader import load as load_prompt
 from shared.structured_logger import get_structured_logger
 
 _dynamodb = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-northeast-1"))
-_table = _dynamodb.Table(os.environ["TABLE_NAME"])
+_table = _dynamodb.Table(os.environ["DYNAMODB_TABLE_NAME"])
 
 # functionType → (prompt_name, model_profile) マッピング
 _FUNCTION_MAP = {
@@ -69,7 +69,8 @@ def lambda_handler(event, context):
             prompt_name, model_profile = _FUNCTION_MAP[function_type]
             system_prompt = load_prompt(prompt_name, variables)
 
-            messages = [{"role": "user", "content": variables.get("user_message", "")}]
+            user_msg = variables.get("user_message", "アクションを実行してください。")
+            messages = [{"role": "user", "content": [{"text": user_msg}]}]
             result_text = bedrock_call(model_profile, messages, system_prompt)
 
             _update_status(pk, sk, "COMPLETED", result=result_text)

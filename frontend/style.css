@@ -429,6 +429,47 @@ body {
 .totp-qr-container canvas {
   border-radius: 8px;
   border: 2px solid #533483;
+}
+
+/* ──────────────────────────────
+   継続相談チャット（U2-EXT）
+────────────────────────────── */
+.consult-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: .85rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.consult-bubble.user {
+  background: #533483;
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.consult-bubble.assistant {
+  background: rgba(255,255,255,.08);
+  color: #e0e0e0;
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+.inc-textarea {
+  width: 100%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  color: #f0f0f0;
+  padding: 10px 12px;
+  font-size: .9rem;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.inc-textarea:focus {
+  outline: none;
+  border-color: #533483;
+}
   box-shadow: 0 4px 16px rgba(0,0,0,0.3);
 }
 
