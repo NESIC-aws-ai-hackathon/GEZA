@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GEZA — 練習結果フィードバック</title>
+  <link rel="icon" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body {
+      background: var(--bg, #1a1a2e);
+      color: var(--text, #e0e0e0);
+      min-height: 100vh;
+    }
+    .feedback-layout {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+    .feedback-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .feedback-header h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 0;
+      color: #e0d4f7;
+    }
+
+    /* スコアサマリー */
+    .score-summary {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .score-card {
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+    .score-card .label {
+      font-size: .72rem;
+      color: rgba(255,255,255,.5);
+      margin-bottom: 4px;
+    }
+    .score-card .value {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+    .score-card.anger  .value { color: #e74c3c; }
+    .score-card.trust  .value { color: #2ecc71; }
+    .score-card.turn   .value { color: #f39c12; }
+    .score-card.ng     .value { color: #e67e22; }
+    .result-badge {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: .95rem;
+    }
+    .result-badge.clear    { background: rgba(46,204,113,.15); color: #2ecc71; border: 1px solid rgba(46,204,113,.3); }
+    .result-badge.give_up  { background: rgba(255,255,255,.05); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.1); }
+
+    /* セクション */
+    .section {
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: .85rem;
+      font-weight: 700;
+      color: rgba(255,255,255,.5);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    /* ローディング */
+    .loading-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      padding: 28px;
+      text-align: center;
+      color: rgba(255,255,255,.45);
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,.1);
+      border-top-color: #7c6fe0;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 問題点リスト */
+    .problems-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .problems-list li {
+      background: rgba(231,76,60,.08);
+      border: 1px solid rgba(231,76,60,.2);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .88rem;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .problems-list li::before { content: "▶"; color: #e74c3c; flex-shrink: 0; }
+
+    /* 改善謝罪文 */
+    .improved-text-card {
+      background: rgba(124,111,224,.08);
+      border: 1px solid rgba(124,111,224,.2);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: .9rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    /* 総評 */
+    .overall-card {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: .9rem;
+      line-height: 1.7;
+    }
+
+    /* エラー */
+    .error-card {
+      background: rgba(231,76,60,.1);
+      border: 1px solid rgba(231,76,60,.3);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: .88rem;
+      color: #e74c3c;
+    }
+
+    /* ボタングループ */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 28px;
+    }
+    .btn-primary {
+      background: #7c6fe0;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      padding: 12px 28px;
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-primary:hover { background: #6c5ec8; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 8px;
+      color: rgba(255,255,255,.7);
+      padding: 12px 24px;
+      font-size: .9rem;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,.5); color: #fff; }
+  </style>
+</head>
+<body>
+<div class="feedback-layout">
+
+  <!-- ヘッダー -->
+  <header class="feedback-header">
+    <h1>📊 練習結果フィードバック</h1>
+  </header>
+
+  <!-- スコアサマリー -->
+  <div class="score-summary" id="score-summary">
+    <div class="score-card anger">
+      <div class="label">最終怒り度</div>
+      <div class="value" id="final-anger">--</div>
+    </div>
+    <div class="score-card trust">
+      <div class="label">最終信頼度</div>
+      <div class="value" id="final-trust">--</div>
+    </div>
+    <div class="score-card turn">
+      <div class="label">ターン数</div>
+      <div class="value" id="turn-count">--</div>
+    </div>
+    <div class="score-card ng">
+      <div class="label">NGワード</div>
+      <div class="value" id="ng-count">--件</div>
+    </div>
+    <div class="result-badge give_up" id="result-badge">-- 結果</div>
+  </div>
+
+  <!-- AI フィードバックセクション -->
+  <div class="section">
+    <div class="section-title">AI フィードバック</div>
+    <div id="feedback-content">
+      <div class="loading-card">
+        <div class="spinner"></div>
+        <div>フィードバックを生成中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ボタングループ -->
+  <div class="btn-group">
+    <button class="btn-primary" id="btn-retry">再挑戦する</button>
+    <button class="btn-secondary" id="btn-top">トップへ戻る</button>
+  </div>
+
+</div>
+
+<!-- スクリプト -->
+<script src="../config.js"></script>
+<script src="../shared/auth.js"></script>
+<script src="../shared/state.js"></script>
+<script src="../shared/api.js"></script>
+<script src="feedback.js"></script>
+</body>
+</html>

@@ -1404,4 +1404,130 @@ prototype/
 - CloudFront Invalidation: I8C6DJUSI2894BN9YAMO2G0GP0 ✅
 - スモークテスト: `/plan/consult` → HTTP 401 ✅ / CloudFront → HTTP 200 ✅ / DynamoDB → ACTIVE ✅
 
-- **次のステージ**: U3 Functional Design 開始
+- **次のステージ**: U3 NFR Requirements 開始
+
+---
+
+## エントリ 092 - U3 NFR Requirements 承認
+- **日時**: 2026-05-07T09:45:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 NFR Requirements（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **生成ファイル**:
+  - `aidlc-docs/construction/U3/nfr-requirements/nfr-requirements.md`
+  - `aidlc-docs/construction/U3/nfr-requirements/tech-stack-decisions.md`
+- **主要決定事項**:
+  - evaluate-apology: fast 10s/256MB/Nova Lite（同期）
+  - text-to-speech: fast 10s/256MB/Polly のみ（同期）
+  - generate-feedback: premium 29s/1024MB/Sonnet（同期）
+  - 無音検出: 3秒 / 最大ターン数: 10 / Polly再生中: 送信 disabled
+  - Cognito Identity Pool: 認証済みユーザーのみ
+- **次のステージ**: U3 NFR Design
+
+---
+
+## エントリ 093 - U3 NFR Design 承認
+- **日時**: 2026-05-07T10:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 NFR Design（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **生成ファイル**:
+  - `aidlc-docs/construction/U3/nfr-design/nfr-design-patterns.md`
+  - `aidlc-docs/construction/U3/nfr-design/logical-components.md`
+- **主要設計決定**:
+  - evaluate-apology: AbortController 9.5s タイムアウト制御 + フォールバックパターン（固定返答→エラーバナー）
+  - Polly 再生中は送信/マイク disabled。Blob URL を再生後に revokeObjectURL で破棄
+  - Transcribe: SigV4 署名 WebSocket 直接接続。Safari は ScriptProcessorNode で PCM 変換。無音3秒で自動停止
+  - AuthModule に getCognitoIdentityCredentials() を追加（Transcribe 用一時認証情報）
+  - 新規コンポーネント: PracticePageController / FeedbackPageController / TranscribeClient / PollySyncController
+- **次のステージ**: U3 Infrastructure Design
+
+---
+
+## エントリ 094 - U3 Infrastructure Design 生成
+- **日時**: 2026-05-07T10:10:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Infrastructure Design（承認待ち）
+- **アクション**: U3 Infrastructure Design 成果物生成
+- **生成ファイル**:
+  - `aidlc-docs/construction/U3/infrastructure-design/infrastructure-design.md`
+  - `aidlc-docs/construction/U3/infrastructure-design/deployment-architecture.md`
+- **主要確認事項**:
+  - GezaIdentityPool / GezaIdentityPoolAuthRole / GezaIdentityPoolRoles: U0 時点で実装済み（変更不要）
+  - EvaluateApologyFunction: 256MB/10s/Bedrock+S3 ✅ すでに正しい設定
+  - TextToSpeechFunction: 256MB/10s/Polly ✅ すでに正しい設定
+  - GenerateFeedbackFunction: 256MB/10s → **1024MB/29s/Bedrock+S3** への変更が必要
+  - フロントエンド新規ファイル: practice.html/js / feedback.html/js / transcribe.js / polly-sync.js
+  - フロントエンド更新ファイル: auth.js（getCognitoIdentityCredentials追加）/ state.js（practiceネームスペース）
+  - バックエンドプロンプト: evaluate_apology.txt / generate_feedback.txt（新規）
+- **次のステージ**: U3 Code Generation
+
+---
+
+## エントリ 096 - U3 Code Generation 完了
+- **日時**: 2026-05-06T11:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Code Generation
+- **実装内容**:
+  - **template.yaml**: GenerateFeedbackFunction 変更（256MB/10s → 1024MB/29s、IAM権限: Bedrock+S3）
+  - **backend/functions/evaluate-apology/lambda_function.py**: 本実装（Nova Lite 謝罪評価・感情スコア・NGワード検出）
+  - **backend/functions/text-to-speech/lambda_function.py**: 本実装（Polly MP3 + Viseme SpeechMarks）
+  - **backend/functions/generate-feedback/lambda_function.py**: 本実装（Claude Sonnet フィードバック生成）
+  - **backend/prompts/evaluate_apology.txt**: ロールプレイ評価プロンプト（完全更新）
+  - **backend/prompts/generate_feedback.txt**: フィードバック生成プロンプト（完全更新）
+  - **frontend/config.js**: identityPoolId 追加（ap-northeast-1:b5c5fe00-2039-44d6-82eb-6becfc1638a6）
+  - **frontend/shared/auth.js**: getCognitoIdentityCredentials() 追加
+  - **frontend/shared/state.js**: StateManager.practice ネームスペース追加
+  - **frontend/shared/avatar.js**: setCategoryEmotion() / setMouthViseme() 追加
+  - **frontend/shared/transcribe.js**: TranscribeClient 新規（SigV4署名 WebSocket）
+  - **frontend/shared/polly-sync.js**: PollySyncController 新規（MP3 + Viseme 同期）
+  - **frontend/pages/practice.html**: リハーサル練習画面 新規
+  - **frontend/pages/practice.js**: PracticePageController 新規
+  - **frontend/pages/feedback.html**: フィードバック画面 新規
+  - **frontend/pages/feedback.js**: FeedbackPageController 新規
+  - **frontend/pages/top.js**: リハーサルモード available=true 追加
+- **次のステージ**: U3 Deploy & Smoke Test
+- **日時**: 2026-05-06T10:20:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Infrastructure Design（承認）
+
+## エントリ 097 - U3 Deploy & Test 完了
+- **日時**: 2026-05-07T11:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Deploy & Test
+- **実施内容**:
+  - `sam build --parallel --build-dir "C:\Temp\geza-build4"` → Build Succeeded
+  - `sam deploy` → UPDATE_COMPLETE（geza-app in ap-northeast-1）
+  - S3 sync: 13ファイル全アップロード（frontend/pages, frontend/shared, backend/prompts）
+  - CloudFront Invalidation: IE49LZW2S7J72G71WHKC8FMRE3（完了）
+- **スモークテスト結果**:
+  - API `/apology/evaluate` → HTTP 401 ✅
+  - API `/tts/synthesize` → HTTP 401 ✅
+  - API `/feedback/generate` → HTTP 401 ✅
+  - CloudFront トップ → HTTP 200 ✅
+  - CloudFront `/pages/practice.html` → HTTP 200 ✅
+  - CloudFront `/pages/feedback.html` → HTTP 200 ✅
+  - DynamoDB `geza-data` → ACTIVE ✅
+  - Lambda `generate-feedback` → Memory=1024MB, Timeout=29s ✅
+- **判定**: 全スモークテスト PASS
+- **次のステージ**: U4（次ユニット）
+- **ユーザー入力（原文）**: 「承認します」
+- **承認内容**:
+  - GenerateFeedbackFunction: 256MB/10s → 1024MB/29s / Bedrock+S3権限
+  - 新規 AWS リソースなし（IdentityPool は U0 実装済み確認）
+  - フロントエンド6ファイル新規 / 2ファイル更新
+  - バックエンドプロンプト2ファイル新規
+- **次のステージ**: U3 Code Generation
+
+---
+
+## エントリ 091 - U3 Functional Design 承認
+- **日時**: 2026-05-07T09:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Functional Design（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **生成ファイル**: `aidlc-docs/construction/U3/functional-design.md`
+- **設計要点**:
+  - practice.html（独立ページ）+ feedback.html（独立ページ・U4拡張土台）
+  - Transcribe Streaming 直接 WebSocket（Cognito Identity Pool 経由）→ U3 で Identity Pool を追加
+  - テキスト入力 + マイクボタン常時並列表示
+  - evaluate-apology: 同期呼び出し（Nova Lite fast プロファイル）
+  - クリア条件: 信頼度 ≥ 80 AND 怒り度 ≤ 20 OR 手動終了ボタン
+  - フォールバック: 1回目固定返答 → 2回連続エラーでエラー通知（C複合型）
+  - フィードバック: generate-feedback Lambda（Claude Sonnet）呼び出し
+  - 会話履歴: フロントエンドメモリのみ（DynamoDB 保存なし）
+  - 新規インフラ: CognitoIdentityPool + GezaAuthenticatedRole（Transcribe 権限）
+- **次のステージ**: U3 NFR Requirements

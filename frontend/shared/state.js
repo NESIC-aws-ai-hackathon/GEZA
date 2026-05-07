@@ -80,4 +80,15 @@ const StateManager = (() => {
   };
 })();
 
+/** practice ネームスペース（U3 リハーサルモード用セッション状態） */
+StateManager.practice = {
+  conversationHistory: [],
+  currentAngryScore: 0,
+  currentTrustScore: 0,
+  turnCount: 0,
+  consecutiveErrors: 0,
+  sessionResult: null,
+  sessionId: null,
+};
+
 window.StateManager = StateManager;

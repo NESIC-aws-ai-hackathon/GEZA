@@ -199,9 +199,59 @@ const AuthModule = (() => {
   }
 
   /**
-   * グローバルサインアウト（全デバイスのセッション無効化）
+   * Cognito Identity Pool から Transcribe 用一時認証情報を取得する（U3）
+   * @returns {{ accessKeyId, secretAccessKey, sessionToken }}
    */
-  async function logout() {
+  async function getCognitoIdentityCredentials() {
+    const idToken = _idToken;
+    if (!idToken) throw new Error("ID token is not available. Please login first.");
+
+    const region         = window.GEZA_CONFIG?.region         ?? "ap-northeast-1";
+    const identityPoolId = window.GEZA_CONFIG?.identityPoolId ?? "";
+    const userPoolId     = window.GEZA_CONFIG?.userPoolId     ?? "";
+    const providerName   = `cognito-idp.${region}.amazonaws.com/${userPoolId}`;
+    const identityEndpoint = `https://cognito-identity.${region}.amazonaws.com/`;
+
+    // Step 1: GetId
+    const getIdResp = await fetch(identityEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-amz-json-1.1",
+        "X-Amz-Target": "AWSCognitoIdentityService.GetId",
+      },
+      body: JSON.stringify({
+        IdentityPoolId: identityPoolId,
+        Logins: { [providerName]: idToken },
+      }),
+    });
+    if (!getIdResp.ok) throw new Error(`GetId failed: ${getIdResp.status}`);
+    const { IdentityId } = await getIdResp.json();
+
+    // Step 2: GetCredentialsForIdentity
+    const getCredsResp = await fetch(identityEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-amz-json-1.1",
+        "X-Amz-Target": "AWSCognitoIdentityService.GetCredentialsForIdentity",
+      },
+      body: JSON.stringify({
+        IdentityId,
+        Logins: { [providerName]: idToken },
+      }),
+    });
+    if (!getCredsResp.ok) throw new Error(`GetCredentials failed: ${getCredsResp.status}`);
+    const data = await getCredsResp.json();
+    const creds = data.Credentials;
+    return {
+      accessKeyId:     creds.AccessKeyId,
+      secretAccessKey: creds.SecretKey,
+      sessionToken:    creds.SessionToken,
+    };
+  }
+
+  /**
+   * グローバルサインアウト（全デバイスのセッション無効化）
+   */  async function logout() {
     if (_accessToken) {
       try {
         await _cognitoPost("AWSCognitoIdentityProviderService.GlobalSignOut", {
@@ -290,6 +340,7 @@ const AuthModule = (() => {
     silentRefresh,
     logout,
     requireAuth,
+    getCognitoIdentityCredentials,
   };
 })();
 

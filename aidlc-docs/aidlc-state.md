@@ -4,7 +4,7 @@
 - **プロジェクト名**: GEZA（謝罪丸投げコンシェルジュ）
 - **プロジェクトタイプ**: Greenfield
 - **開始日**: 2026-04-29
-- **現在のステージ**: CONSTRUCTION - U3 Functional Design（承認待ち）
+- **現在のステージ**: CONSTRUCTION - U3 完了 / 次ユニット未定
 - **コンセプト**: 謝罪丸投げコンシェルジュ（コア: 謝罪角度アセスメント・台本フル生成、謝罪中支援: 怒り残量スキャナー・GEZA耳打ちモード【決勝拡張】、継続支援: 送る前チェック・返信分析・謝罪カルテ・傾向診断、オプション: リハーサルモード）
 
 ## ワークスペース状態
@@ -60,7 +60,12 @@
 - [x] Infrastructure Design — U2-EXT ✅ 承認済み
 - [x] Code Generation — U2-EXT ✅ 完了（ConsultPlanFunction / consult_plan.txt / inception.html・inception.js・style.css更新）
 - [x] Deploy & Test — U2-EXT ✅ 完了（2026-05-06）✅ sam deploy成功（ConsultPlanFunction CREATE_COMPLETE） / S3アップロード全4ファイル完了 / CF Invalidation実行（I8C6DJUSI2894BN9YAMO2G0GP0） / スモークテスト PASS（/plan/consult→401・CloudFront→200・DynamoDB→ACTIVE）
-- [ ] Functional Design — U3 ← **現在（承認待ち）**
+- [x] Functional Design — U3 ✅ 承認済み
+- [x] NFR Requirements — U3 ✅ 承認済み
+- [x] NFR Design — U3 ✅ 承認済み
+- [x] Infrastructure Design — U3 ✅ 承認済み
+- [x] Code Generation — U3 ✅ 完了
+- [x] Deploy & Test — U3 ✅ 完了（2026-05-07）✅ sam deploy成功 / S3 sync 13ファイル / CloudFront Invalidation / スモークテスト全PASS（API 401×3・CF 200×3・DynamoDB ACTIVE・Lambda 1024MB/29s）
 
 ---
 

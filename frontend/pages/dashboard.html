@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <title>GEZA — 実案件モード</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* ── ダッシュボード固有 ── */
+    .dash-wrap {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+    .dash-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .dash-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e0d4f7;
+    }
+    .btn-new-case {
+      background: #533483;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn-new-case:hover { background: #6d28d9; }
+
+    /* ── 案件カード ── */
+    .cases-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .case-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .case-card:hover {
+      border-color: #533483;
+      background: rgba(83,52,131,0.12);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(83,52,131,0.2);
+    }
+    .case-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .case-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e0e0e0;
+      line-height: 1.4;
+      flex: 1;
+    }
+    .case-card-date {
+      font-size: 11px;
+      color: #666;
+      white-space: nowrap;
+    }
+    .case-card-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .case-meta-badge {
+      font-size: 10px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #aaa;
+    }
+    .case-meta-badge.anger {
+      background: rgba(233,69,96,0.15);
+      color: #e94560;
+    }
+    .case-card-summary {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .case-card-footer {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .btn-case-action {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: #ccc;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-case-action:hover { border-color: #533483; color: #a78bfa; background: rgba(83,52,131,0.2); }
+    .btn-case-action.rehearsal { border-color: #7c3aed; color: #a78bfa; }
+    .btn-case-action.rehearsal:hover { background: rgba(124,58,237,0.2); }
+    .btn-case-action.delete { color: #e94560; }
+    .btn-case-action.delete:hover { border-color: #e94560; background: rgba(233,69,96,0.1); }
+
+    /* ── 空状態 ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 48px 24px;
+      color: #555;
+      text-align: center;
+    }
+    .empty-state-icon { font-size: 48px; }
+    .empty-state-title { font-size: 15px; color: #888; font-weight: 600; }
+    .empty-state-desc { font-size: 12px; line-height: 1.6; }
+
+    /* ── 削除確認モーダル ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal-box {
+      background: #16213e;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 320px;
+      width: calc(100% - 48px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; color: #eee; }
+    .modal-desc  { font-size: 13px; color: #999; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .modal-actions button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-modal-cancel { background: rgba(255,255,255,0.1); color: #ccc; }
+    .btn-modal-cancel:hover { background: rgba(255,255,255,0.15); }
+    .btn-modal-delete { background: #e94560; color: #fff; }
+    .btn-modal-delete:hover { background: #c0392b; }
+  </style>
+</head>
+<body>
+  <div id="global-banner" class="global-banner" role="alert" aria-live="assertive"></div>
+
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="app-header" data-testid="app-header">
+      <button
+        id="back-btn"
+        class="app-header-logout"
+        type="button"
+        style="left:16px; right:auto;"
+        aria-label="戻る"
+      >← 戻る</button>
+      <div class="app-header-brand">
+        <img src="../icons/geza_icon.png" alt="GEZA" class="app-header-icon" />
+        <span class="app-header-title">GEZA</span>
+      </div>
+      <button
+        id="logout-btn"
+        class="app-header-logout"
+        type="button"
+        data-testid="logout-btn"
+      >ログアウト</button>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main id="dashboard-main">
+      <div class="dash-wrap">
+        <!-- トップバー -->
+        <div class="dash-top-bar">
+          <span class="dash-title">📋 案件一覧</span>
+          <button class="btn-new-case" id="btn-new-case" type="button">
+            ＋ 新しい案件
+          </button>
+        </div>
+
+        <!-- 案件リスト -->
+        <div id="cases-list" class="cases-list" role="list" aria-label="案件一覧">
+          <!-- JS で動的生成 -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 削除確認モーダル -->
+  <div id="delete-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
+    <div class="modal-box">
+      <p class="modal-title" id="modal-title-text">案件を削除しますか？</p>
+      <p class="modal-desc" id="modal-desc-text">この操作は取り消せません。</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="btn-modal-cancel">キャンセル</button>
+        <button class="btn-modal-delete" id="btn-modal-delete">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

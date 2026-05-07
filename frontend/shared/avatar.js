@@ -81,7 +81,55 @@ const AvatarController = (() => {
     return map[emotionKey] ?? {};
   }
 
-  return { init, setEmotion, setAngerLevel, startAnimation, stopAnimation };
+  /** Viseme 値に応じて口パクを更新する（Polly SpeechMarks 連携） */
+  function setMouthViseme(visemeValue) {
+    if (!_currentFace) return;
+    const mouthId = _visemeToMouth(visemeValue);
+    const updated = window.facesjs.override(_currentFace, { mouth: { id: mouthId } });
+    _renderFace(updated);
+  }
+
+  /**
+   * 感情カテゴリ ID でアバター表情を設定する（U3 evaluate-apology の emotion_label 対応）
+   * 15 カテゴリ → AvatarController の表情マッピング
+   */
+  function setCategoryEmotion(emotionLabel) {
+    const categoryMap = {
+      anger:          "furious",
+      contempt:       "furious",
+      disgust:        "angry",
+      frustration:    "angry",
+      irritation:     "irritated",
+      disappointment: "sad",
+      sadness:        "sad",
+      confusion:      "neutral",
+      surprise:       "surprised",
+      suspicion:      "irritated",
+      relief:         "calm",
+      acceptance:     "calm",
+      trust:          "calm",
+      satisfaction:   "calm",
+      neutral:        "neutral",
+    };
+    setEmotion(categoryMap[emotionLabel] ?? "neutral");
+  }
+
+  function _visemeToMouth(viseme) {
+    const map = {
+      sil: "mouth-neutral",
+      a:   "mouth-open",
+      e:   "mouth-open",
+      i:   "mouth-neutral",
+      o:   "mouth-open",
+      u:   "mouth-neutral",
+      p:   "mouth-neutral",
+      f:   "mouth-neutral",
+      t:   "mouth-neutral",
+    };
+    return map[viseme] ?? "mouth-neutral";
+  }
+
+  return { init, setEmotion, setCategoryEmotion, setAngerLevel, setMouthViseme, startAnimation, stopAnimation };
 })();
 
 window.AvatarController = AvatarController;

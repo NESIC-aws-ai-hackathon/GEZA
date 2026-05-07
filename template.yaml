@@ -627,16 +627,16 @@ Resources:
       FunctionName: generate-feedback
       Handler: lambda_function.lambda_handler
       CodeUri: backend/functions/generate-feedback/
-      MemorySize: 256
-      Timeout: 10
+      MemorySize: 1024
+      Timeout: 29
       Policies:
         - Statement:
             - Effect: Allow
-              Action: dynamodb:PutItem
-              Resource: !GetAtt GezaDataTable.Arn
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
-              Action: sqs:SendMessage
-              Resource: !GetAtt GezaAsyncJobsQueue.Arn
+              Action: s3:GetObject
+              Resource: !Sub "${GezaPromptsBucket.Arn}/*"
       Events:
         Api:
           Type: HttpApi

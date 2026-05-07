@@ -5,9 +5,10 @@
  */
 window.GEZA_CONFIG = {
   // ---- Cognito ----
-  region:      "ap-northeast-1",
-  userPoolId:  "ap-northeast-1_hwx2hpNGn",
-  clientId:    "2bf54jcqtgpaubsmbe9qoprq1v",
+  region:         "ap-northeast-1",
+  userPoolId:     "ap-northeast-1_hwx2hpNGn",
+  clientId:       "2bf54jcqtgpaubsmbe9qoprq1v",
+  identityPoolId: "ap-northeast-1:b5c5fe00-2039-44d6-82eb-6becfc1638a6",
 
   // ---- API Gateway ----
   apiBaseUrl:  "https://h6a2xx1i30.execute-api.ap-northeast-1.amazonaws.com",

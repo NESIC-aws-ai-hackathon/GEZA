@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <title>GEZA — 案件詳細</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* ── レイアウト ── */
+    .detail-wrap {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+    /* ── アバター + 相手情報 ── */
+    .case-hero {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .case-avatar-wrap {
+      flex-shrink: 0;
+    }
+    .case-avatar-wrap .avatar-frame {
+      width: 100px;
+      height: 120px;
+      border-radius: 10px;
+    }
+    .case-meta {
+      flex: 1;
+      min-width: 0;
+    }
+    .case-meta-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e0e0e0;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .badge {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.07);
+      color: #aaa;
+    }
+    .badge.anger { background: rgba(233,69,96,0.15); color: #e94560; }
+    .badge.trust { background: rgba(46,204,113,0.12); color: #2ecc71; }
+    .case-meta-summary {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.5;
+    }
+    /* ── アクションボタン ── */
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .btn-action {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: #ccc;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-action:hover { border-color: #533483; background: rgba(83,52,131,0.15); color: #a78bfa; }
+    .btn-action.rehearsal { border-color: #7c3aed; color: #a78bfa; }
+    .btn-action.rehearsal:hover { background: rgba(124,58,237,0.2); }
+    .btn-action.delete    { color: #e94560; }
+    .btn-action.delete:hover { border-color: #e94560; background: rgba(233,69,96,0.1); }
+    .btn-action-icon  { font-size: 22px; }
+    .btn-action-label { font-size: 12px; font-weight: 700; }
+    .btn-action-desc  { font-size: 10px; color: #888; }
+
+    /* ── プランカード ── */
+    .plan-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .plan-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-bottom: 10px;
+    }
+    .plan-item {
+      margin-bottom: 10px;
+    }
+    .plan-item-label {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 3px;
+    }
+    .plan-item-value {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* ── コンシェルジュ ── */
+    .concierge-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .concierge-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c4b5fd;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-messages {
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 10px;
+      height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .chat-textarea {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      color: #f0f0f0;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: none;
+      min-height: 44px;
+      max-height: 100px;
+      line-height: 1.5;
+    }
+    .chat-textarea:focus { outline: none; border-color: #533483; }
+    .btn-chat-send {
+      background: #533483;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      align-self: flex-end;
+    }
+    .btn-chat-send:hover:not(:disabled) { background: #6d28d9; }
+    .btn-chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .chat-thinking {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 10px; border-radius: 10px;
+      background: rgba(255,255,255,0.05);
+      align-self: flex-start;
+    }
+    .thinking-dot {
+      width: 5px; height: 5px;
+      background: #888; border-radius: 50%;
+      animation: thinkPulse 1.2s ease-in-out infinite;
+    }
+    .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes thinkPulse {
+      0%,80%,100% { opacity: 0.3; transform: scale(0.8); }
+      40%          { opacity: 1;   transform: scale(1); }
+    }
+
+    /* ── 削除モーダル ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal-box {
+      background: #16213e;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 320px;
+      width: calc(100% - 48px);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .modal-title { font-size: 16px; font-weight: 700; color: #eee; }
+    .modal-desc  { font-size: 13px; color: #999; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .modal-actions button {
+      flex: 1; padding: 10px; border-radius: 8px;
+      border: none; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn-modal-cancel { background: rgba(255,255,255,0.1); color: #ccc; }
+    .btn-modal-cancel:hover { background: rgba(255,255,255,0.15); }
+    .btn-modal-delete { background: #e94560; color: #fff; }
+    .btn-modal-delete:hover { background: #c0392b; }
+  </style>
+</head>
+<body>
+  <div id="global-banner" class="global-banner" role="alert" aria-live="assertive"></div>
+
+  <div class="app-container">
+    <!-- ヘッダー -->
+    <header class="app-header" data-testid="app-header">
+      <button id="back-btn" class="app-header-logout" type="button"
+        style="left:16px; right:auto;" aria-label="戻る">← 戻る</button>
+      <div class="app-header-brand">
+        <img src="../icons/geza_icon.png" alt="GEZA" class="app-header-icon" />
+        <span class="app-header-title">GEZA</span>
+      </div>
+      <button id="logout-btn" class="app-header-logout" type="button"
+        data-testid="logout-btn">ログアウト</button>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main id="detail-main" style="overflow-y:auto; flex:1;">
+      <div class="detail-wrap">
+
+        <!-- ① ボスアバター + 相手情報 -->
+        <div class="case-hero" id="case-hero">
+          <div class="case-avatar-wrap">
+            <div class="avatar-frame">
+              <div id="case-boss-avatar" class="facesjs-container"
+                role="img" aria-label="案件ボスアバター"></div>
+            </div>
+          </div>
+          <div class="case-meta">
+            <div class="case-meta-title" id="case-title">読み込み中...</div>
+            <div class="badge-row" id="case-badges"></div>
+            <div class="case-meta-summary" id="case-summary"></div>
+          </div>
+        </div>
+
+        <!-- ② アクションボタン -->
+        <div class="action-row">
+          <button class="btn-action rehearsal" id="btn-rehearsal" type="button">
+            <span class="btn-action-icon">🎙️</span>
+            <span class="btn-action-label">リハーサル</span>
+            <span class="btn-action-desc">この案件で練習</span>
+          </button>
+          <button class="btn-action delete" id="btn-delete" type="button">
+            <span class="btn-action-icon">🗑️</span>
+            <span class="btn-action-label">案件を削除</span>
+            <span class="btn-action-desc">削除後は戻せません</span>
+          </button>
+        </div>
+
+        <!-- ③ 謝罪プランサマリー -->
+        <div class="plan-section" id="plan-section">
+          <div class="plan-section-title">📋 謝罪プラン</div>
+          <div class="plan-item">
+            <div class="plan-item-label">第一声</div>
+            <div class="plan-item-value" id="plan-first-words"></div>
+          </div>
+          <div class="plan-item">
+            <div class="plan-item-label">タイミング</div>
+            <div class="plan-item-value" id="plan-timing"></div>
+          </div>
+          <div class="plan-item">
+            <div class="plan-item-label">手土産</div>
+            <div class="plan-item-value" id="plan-gift"></div>
+          </div>
+        </div>
+
+        <!-- ④ GEZAコンシェルジュ（案件コンテキスト付き） -->
+        <div class="concierge-section">
+          <div class="concierge-title">
+            🤖 GEZAコンシェルジュ
+            <span style="margin-left:auto;font-size:11px;color:#666;" id="chat-turn-label"></span>
+          </div>
+          <div id="chat-messages" class="chat-messages"
+            role="log" aria-live="polite" aria-label="チャット履歴"></div>
+          <div class="chat-input-row">
+            <textarea id="chat-input" class="chat-textarea"
+              placeholder="例: 謝罪のタイミングをもっと早める方がいいか相談したい"
+              rows="2" maxlength="500" aria-label="メッセージを入力"></textarea>
+            <button id="btn-chat-send" class="btn-chat-send" type="button">
+              <span id="send-label">送信</span>
+              <span class="loading-spinner" id="send-spinner"
+                style="display:none;" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- 削除確認モーダル -->
+  <div id="delete-modal" class="modal-overlay" role="dialog"
+    aria-modal="true" aria-labelledby="modal-title-text">
+    <div class="modal-box">
+      <p class="modal-title" id="modal-title-text">案件を削除しますか？</p>
+      <p class="modal-desc">この操作は取り消せません。ダッシュボードに戻ります。</p>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" id="btn-modal-cancel">キャンセル</button>
+        <button class="btn-modal-delete" id="btn-modal-delete">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="../assets/facesjs.min.js"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="../shared/avatar-animator.js"></script>
+  <script src="case-detail.js"></script>
+</body>
+</html>

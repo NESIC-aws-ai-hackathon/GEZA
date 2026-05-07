@@ -1,4 +1,4 @@
-/**
+﻿/**
  * top.js — GEZA トップページコントローラー（U1）
  *
  * 依存: config.js / auth.js / state.js / avatar.js / anger-gauge.js
@@ -23,8 +23,8 @@
       id: "real",
       label: "実案件モード",
       icon: "💼",
-      desc: "実際の謝罪の練習",
-      target: "pages/inception.html",
+      desc: "実際の謝罪を管理",
+      target: "pages/dashboard.html",
       available: true,
     },
     {
@@ -34,6 +34,14 @@
       desc: "物語の謝罪シナリオ",
       target: "pages/story.html",
       available: false,
+    },
+    {
+      id: "rehearsal",
+      label: "リハーサルモード",
+      icon: "🎙️",
+      desc: "AI相手に謝罪練習",
+      target: "pages/practice.html",
+      available: true,
     },
     {
       id: "karte",
@@ -143,8 +151,6 @@
   }
 
   // ================================================================
-  // ログイン成功時のアバター拡大トランジション（W-2）
-  // ================================================================
   function _expandAvatar() {
     const loginContainer = document.getElementById("avatar-container-login");
     if (loginContainer) {
@@ -192,6 +198,11 @@
       const boss = StateManager.get("bossAvatar");
       if (boss && boss.faceConfig) {
         _renderAvatar("avatar-container-top", boss.faceConfig);
+        // AvatarAnimator で自然なアニメーション開始
+        if (window.AvatarAnimator) {
+          var anim = window.AvatarAnimator.create("avatar-container-top", boss.faceConfig);
+          anim.start();
+        }
       }
     });
   }

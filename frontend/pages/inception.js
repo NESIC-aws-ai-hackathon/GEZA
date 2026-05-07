@@ -676,6 +676,15 @@
       _withLoading("btn-retry-plan", () => _submitPlanJob()).catch(() => {});
     });
 
+    // ── 案件を保存してダッシュボードへ ──
+    const btnSave = document.getElementById("btn-save-to-dashboard");
+    if (btnSave) {
+      btnSave.addEventListener("click", () => {
+        _saveCaseToLocal();
+        window.location.assign("dashboard.html");
+      });
+    }
+
     // ── 相談パネル toggle ──
     document.getElementById("consult-toggle").addEventListener("click", () => {
       const body = document.getElementById("consult-body");
@@ -794,8 +803,44 @@
         apology_plan: JSON.stringify(_apologyPlan),
       });
       _sessionId = result.sessionId;
+      // 案件をlocalStorageにも保存
+      _saveCaseToLocal();
     } catch (err) {
       console.error("Session save failed", err);
+    }
+  }
+
+  /** 案件データを localStorage の geza_cases 配列に保存・更新する */
+  function _saveCaseToLocal() {
+    if (!_apologyPlan || !_opponentProfile) return;
+    try {
+      const raw = localStorage.getItem("geza_cases");
+      const cases = raw ? JSON.parse(raw) : [];
+
+      const caseData = {
+        id: _sessionId || ("local_" + Date.now()),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        incidentSummary: _incidentSummary || "",
+        enrichedSummary: _enrichedSummary || "",
+        opponentProfile: _opponentProfile,
+        apologyPlan: _apologyPlan,
+        faceConfig: _faceConfig || null,
+        assessmentResult: _assessmentResult || null,
+      };
+
+      // 同一 ID があれば更新、なければ追加
+      const idx = cases.findIndex((c) => c.id === caseData.id);
+      if (idx >= 0) {
+        caseData.createdAt = cases[idx].createdAt;
+        cases[idx] = caseData;
+      } else {
+        cases.unshift(caseData);   // 新着を先頭に
+      }
+
+      localStorage.setItem("geza_cases", JSON.stringify(cases));
+    } catch (err) {
+      console.warn("Case save to localStorage failed", err);
     }
   }
 
