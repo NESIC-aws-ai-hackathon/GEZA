@@ -126,6 +126,7 @@ var AvatarAnimator = (function () {
 
     var _shuffled = EXPRESSION_PRESETS.slice().sort(function () { return Math.random() - 0.5; });
     var _presetIdx = 0;
+    var _isSpeaking = false;  // 発話中は口ループを停止
 
     // ── タイマー管理 ──
     function _schedule(fn, delay) {
@@ -270,37 +271,7 @@ var AvatarAnimator = (function () {
 
     // ── 表情変化（眉・目・口の transform を変更）──
     function _doExpression() {
-      var preset = _shuffled[_presetIdx % _shuffled.length];
-      _presetIdx++;
-      if (_presetIdx >= _shuffled.length) {
-        _shuffled.sort(function () { return Math.random() - 0.5; });
-        _presetIdx = 0;
-      }
-
-      // 眉
-      if (_refs.browLWrap) {
-        _refs.browLWrap.style.transition = "transform 0.6s ease";
-        _refs.browLWrap.style.transform = preset.browL;
-      }
-      if (_refs.browRWrap) {
-        _refs.browRWrap.style.transition = "transform 0.6s ease";
-        _refs.browRWrap.style.transform = preset.browR;
-      }
-
-      // 目
-      _refs._eyeBaseTransform = preset.eyeScale;
-      [_refs.eyeLWrap, _refs.eyeRWrap].forEach(function (w) {
-        if (!w) return;
-        w.style.transition = "transform 0.5s ease";
-        w.style.transform = preset.eyeScale;
-      });
-
-      // 口（scaleX + scaleY + translateY の組み合わせ）
-      if (_refs.mouthWrap && preset.mouthX) {
-        var mouthTf = preset.mouthX + " " + preset.mouthY + " " + (preset.mouthTY || "translateY(0)");
-        _refs.mouthWrap.style.transition = "transform 0.5s ease";
-        _refs.mouthWrap.style.transform = mouthTf;
-      }
+      _doExpressionFromGroup();
     }
 
     function _loopExpression() {
@@ -361,7 +332,108 @@ var AvatarAnimator = (function () {
       _base = newFaceConfig;
     }
 
-    return { start: start, stop: stop, updateBase: updateBase };
+    /**
+     * リップシンク用 口パク（facesjs 再描画なしで mouthWrap を直接操作）
+     * PollySyncController の avatarController.setMouthViseme と互換
+     */
+    function setMouthViseme(viseme) {
+      if (!_refs.mouthWrap) return;
+      var sy, sx;
+      if (viseme === "a" || viseme === "e") {
+        sy = "scaleY(1.9)"; sx = "scaleX(1.1)";
+      } else if (viseme === "o") {
+        sy = "scaleY(1.7)"; sx = "scaleX(0.9)";
+      } else if (viseme === "i") {
+        sy = "scaleY(1.2)"; sx = "scaleX(1.2)";
+      } else if (viseme === "u") {
+        sy = "scaleY(1.1)"; sx = "scaleX(0.85)";
+      } else {
+        sy = "scaleY(1.0)"; sx = "scaleX(1.0)";
+      }
+      _refs.mouthWrap.style.transition = "transform 0.05s ease-out";
+      _refs.mouthWrap.style.transform = sx + " " + sy;
+    }
+
+    /**
+     * 感情カテゴリに応じてそのグループ内のプリセットをランダムローテーション
+     * evaluate-apology の emotion_label（15カテゴリ）に対応
+     */
+    var _emotionGroupIndices = null; // null = 全プリセットから選択
+
+    // EXPRESSION_PRESETS のインデックスを感情グループに対応させる
+    // プリセット配列の順序: 激怒(0-1) 怒り(2-3) 苛立ち(4-6) 失望/悲(7-10) 驚き(11-14)
+    //                      納得/嬉(15-16) 穏やか(17-18) 困惑(19-21) ニュートラル(22-25) 軽蔑(26-27)
+    var EMOTION_GROUP_MAP = {
+      anger:          [0, 1, 2, 3],
+      contempt:       [26, 27],
+      disgust:        [26, 27, 4, 5],
+      frustration:    [4, 5, 6, 2, 3],
+      irritation:     [4, 5, 6],
+      disappointment: [7, 8, 9, 10],
+      sadness:        [7, 8, 9, 10],
+      confusion:      [19, 20, 21],
+      surprise:       [11, 12, 13, 14],
+      suspicion:      [4, 5, 19, 20],
+      relief:         [15, 16, 17, 18],
+      acceptance:     [15, 16, 17, 18],
+      trust:          [15, 16, 17, 18],
+      satisfaction:   [15, 16],
+      neutral:        [22, 23, 24, 25],
+    };
+
+    function setCategoryEmotion(emotionLabel) {
+      var indices = EMOTION_GROUP_MAP[emotionLabel] || EMOTION_GROUP_MAP["neutral"];
+      _emotionGroupIndices = indices.slice().sort(function () { return Math.random() - 0.5; });
+      _presetIdx = 0;
+      // 即座に表情を適用
+      _doExpressionFromGroup();
+    }
+
+    function _doExpressionFromGroup() {
+      var preset;
+      if (_emotionGroupIndices !== null) {
+        preset = EXPRESSION_PRESETS[_emotionGroupIndices[_presetIdx % _emotionGroupIndices.length]];
+      } else {
+        if (_presetIdx >= _shuffled.length) {
+          _shuffled.sort(function () { return Math.random() - 0.5; });
+          _presetIdx = 0;
+        }
+        preset = _shuffled[_presetIdx];
+      }
+      _presetIdx++;
+
+      if (_refs.browLWrap) {
+        _refs.browLWrap.style.transition = "transform 0.6s ease";
+        _refs.browLWrap.style.transform = preset.browL;
+      }
+      if (_refs.browRWrap) {
+        _refs.browRWrap.style.transition = "transform 0.6s ease";
+        _refs.browRWrap.style.transform = preset.browR;
+      }
+      _refs._eyeBaseTransform = preset.eyeScale;
+      [_refs.eyeLWrap, _refs.eyeRWrap].forEach(function (w) {
+        if (!w) return;
+        w.style.transition = "transform 0.5s ease";
+        w.style.transform = preset.eyeScale;
+      });
+      // 口（発話中はループ中の口更新をスキップ。setMouthViseme が担当）
+      if (!_isSpeaking && _refs.mouthWrap && preset.mouthX) {
+        var mouthTf = preset.mouthX + " " + preset.mouthY + " " + (preset.mouthTY || "translateY(0)");
+        _refs.mouthWrap.style.transition = "transform 0.5s ease";
+        _refs.mouthWrap.style.transform = mouthTf;
+      }
+    }
+
+    function setSpeaking(speaking) {
+      _isSpeaking = !!speaking;
+      // 発話終了時に口をアイドル位置に戻す
+      if (!_isSpeaking && _refs.mouthWrap) {
+        _refs.mouthWrap.style.transition = "transform 0.2s ease";
+        _refs.mouthWrap.style.transform = "scaleX(1) scaleY(1) translateY(0)";
+      }
+    }
+
+    return { start: start, stop: stop, updateBase: updateBase, setMouthViseme: setMouthViseme, setCategoryEmotion: setCategoryEmotion, setSpeaking: setSpeaking };
   }
 
   return { create: create, EXPRESSION_PRESETS: EXPRESSION_PRESETS };

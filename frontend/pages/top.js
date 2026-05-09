@@ -114,9 +114,24 @@
       console.warn("facesjs not loaded");
       return;
     }
-    const arr = new Uint32Array(1);
-    crypto.getRandomValues(arr);
-    const faceConfig = window.facesjs.generate({ seed: arr[0] });
+    // 登録済み案件があればそのボスをランダムに使用
+    let faceConfig = null;
+    try {
+      const raw = localStorage.getItem("geza_cases");
+      const cases = raw ? JSON.parse(raw) : [];
+      const withFace = cases.filter((c) => c.faceConfig);
+      if (withFace.length > 0) {
+        const picked = withFace[Math.floor(Math.random() * withFace.length)];
+        faceConfig = picked.faceConfig;
+      }
+    } catch { /* ignore */ }
+
+    // 案件がなければランダム生成
+    if (!faceConfig) {
+      const arr = new Uint32Array(1);
+      crypto.getRandomValues(arr);
+      faceConfig = window.facesjs.generate({ seed: arr[0] });
+    }
     StateManager.set("bossAvatar", Object.assign({}, StateManager.get("bossAvatar"), { faceConfig }));
     // 描画は _onLoginSuccess() → requestAnimationFrame で実施
   }

@@ -11,6 +11,7 @@
   "use strict";
 
   const STORAGE_KEY = "geza_cases";
+  const TODOS_KEY   = "geza_todos";   // { [caseId]: [{id, text, done}] }
   const MAX_TURNS   = 10;
 
   // ── 状態 ──
@@ -33,7 +34,114 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       const cases = raw ? JSON.parse(raw) : [];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cases.filter((c) => c.id !== id)));
+      // Todoも一緒に削除
+      try {
+        const allTodos = JSON.parse(localStorage.getItem(TODOS_KEY) || "{}");
+        delete allTodos[id];
+        localStorage.setItem(TODOS_KEY, JSON.stringify(allTodos));
+      } catch { /* ignore */ }
     } catch { /* ignore */ }
+  }
+
+  // ── Todo ──
+  // apologyPlan.todo_list (要素: {task, deadline, priority}) をベースに表示。
+  // 完了状態は localStorage "geza_todos" に保存。
+  function _loadTodoDone() {
+    if (!_case) return {};
+    try {
+      const all = JSON.parse(localStorage.getItem(TODOS_KEY) || "{}");
+      return typeof all[_case.id] === "object" && !Array.isArray(all[_case.id]) ? all[_case.id] : {};
+    } catch { return {}; }
+  }
+
+  function _saveTodoDone(doneMap) {
+    if (!_case) return;
+    try {
+      const all = JSON.parse(localStorage.getItem(TODOS_KEY) || "{}");
+      all[_case.id] = doneMap;
+      localStorage.setItem(TODOS_KEY, JSON.stringify(all));
+    } catch { /* ignore */ }
+  }
+
+  function _getTodoItems() {
+    const list = (_case && _case.apologyPlan && Array.isArray(_case.apologyPlan.todo_list))
+      ? _case.apologyPlan.todo_list
+      : [];
+    const doneMap = _loadTodoDone();
+    return list.map(function (t, i) {
+      const id = "todo_" + i;
+      return { id, task: t.task || "", deadline: t.deadline || "", priority: t.priority || "中", done: !!doneMap[id] };
+    });
+  }
+
+  function _renderTodos() {
+    const listEl   = document.getElementById("todo-list");
+    const emptyEl  = document.getElementById("todo-empty");
+    const badge    = document.getElementById("todo-count-badge");
+    const progress = document.getElementById("todo-progress");
+    if (!listEl) return;
+
+    const todos = _getTodoItems();
+    const total = todos.length;
+    const done  = todos.filter(function (t) { return t.done; }).length;
+
+    if (badge)    badge.textContent = total + "件";
+    if (progress) progress.textContent = total ? (done + "/" + total + " 完了") : "";
+
+    listEl.textContent = "";
+    if (total === 0) {
+      const msg = document.createElement("div");
+      msg.className = "todo-empty";
+      msg.textContent = "謝罪プランに Todo が含まれません";  // XSS-01
+      listEl.appendChild(msg);
+      return;
+    }
+    if (emptyEl) emptyEl.remove();
+
+    todos.forEach(function (todo) {
+      const item = document.createElement("div");
+      item.className = "todo-item" + (todo.done ? " done" : "");
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "todo-checkbox";
+      cb.checked = todo.done;
+      cb.setAttribute("aria-label", todo.task + " 完了トグル");
+      cb.addEventListener("change", function () {
+        const dm = _loadTodoDone();
+        dm[todo.id] = cb.checked;
+        _saveTodoDone(dm);
+        _renderTodos();
+      });
+
+      const txt = document.createElement("div");
+      txt.style.flex = "1";
+      const taskSpan = document.createElement("span");
+      taskSpan.className = "todo-text";
+      taskSpan.textContent = todo.task;  // XSS-01
+      txt.appendChild(taskSpan);
+
+      if (todo.deadline || todo.priority) {
+        const meta = document.createElement("div");
+        meta.style.cssText = "font-size:10px;color:#666;margin-top:2px;";
+        const parts = [];
+        if (todo.deadline) parts.push("期限: " + todo.deadline);
+        if (todo.priority) parts.push("優先度: " + todo.priority);
+        meta.textContent = parts.join(" / ");  // XSS-01
+        txt.appendChild(meta);
+      }
+
+      item.appendChild(cb);
+      item.appendChild(txt);
+      listEl.appendChild(item);
+    });
+  }
+
+  function _setupTodo() {
+    _renderTodos();
+    // 入力欄は不要（AI生成Todoのみ表示）ので非表示に
+    const addRow = document.getElementById("todo-add-row");
+    if (addRow) addRow.style.display = "none";
   }
 
   // ── ページ描画 ──
@@ -81,6 +189,21 @@
     _setText("plan-timing",      plan.timing      || "（未設定）");
     _setText("plan-gift",        plan.gift         || "（未設定）");
 
+    // フルスクリプト（折りたたみ）
+    const fullScript = plan.full_script || "";
+    const scriptEl = document.getElementById("plan-full-script");
+    if (scriptEl) scriptEl.textContent = fullScript || "（台本データなし）";
+    const toggleBtn = document.getElementById("btn-toggle-script");
+    const scriptWrap = document.getElementById("plan-full-script-wrap");
+    if (toggleBtn && scriptWrap) {
+      toggleBtn.textContent = "▶ 謝罪台本全文を見る";
+      toggleBtn.addEventListener("click", function () {
+        const isOpen = scriptWrap.style.display !== "none";
+        scriptWrap.style.display = isOpen ? "none" : "block";
+        toggleBtn.textContent = isOpen ? "▶ 謝罪台本全文を見る" : "▼ 閉じる";
+      });
+    }
+
     // アバター描画
     _initAvatar(c);
   }
@@ -125,15 +248,22 @@
 
   // ── リハーサル起動 ──
   function _launchRehearsal() {
-    if (!_case || !_case.opponentProfile) {
-      alert("案件データが不完全です。");
+    if (!_case) {
+      alert("案件データが見つかりません。");
       return;
     }
-    const profile = Object.assign({}, _case.opponentProfile, {
+    const op = _case.opponentProfile || {};
+    // opponentProfileに少なくともtypeが必要
+    if (!op.type && !op.anger_level) {
+      alert("相手情報が不完全です。インセプションの最後まで完了してください。");
+      return;
+    }
+    const profile = Object.assign({}, op, {
       faceConfig: _case.faceConfig || null,
     });
     StateManager.setPersistent("opponentProfile", profile);
     StateManager.setPersistent("apologyPlan", _case.apologyPlan || null);
+    if (_animator) _animator.stop();
     window.location.assign("practice.html");
   }
 
@@ -168,6 +298,32 @@
         if (e.target === modal) modal.classList.remove("visible");
       });
     }
+  }
+
+  // ── 直前確認 ──
+  function _setupPrecheck() {
+    const btn = document.getElementById("btn-precheck");
+    if (!btn || !_case) return;
+    btn.addEventListener("click", function () {
+      // プランセクションへスクロールしてハイライト
+      const planEl = document.getElementById("plan-section");
+      if (planEl) {
+        planEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        planEl.style.outline = "2px solid #7c3aed";
+        setTimeout(function () { planEl.style.outline = ""; }, 1500);
+      }
+      // プランコンテンツが空の場合はコンシェルジュに直前確認を依頼
+      const apPlan = _case.apologyPlan || {};
+      if (!apPlan.first_words && !apPlan.timing) {
+        const chatInput = document.getElementById("chat-input");
+        if (chatInput) {
+          chatInput.value = "直前確認をおねがいします。当日のチェックリストを教えてください。";
+          chatInput.dispatchEvent(new Event("input"));
+          const chatEl = document.querySelector(".concierge-section");
+          if (chatEl) chatEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    });
   }
 
   // ── コンシェルジュチャット ──
@@ -243,11 +399,18 @@
     const histCopy = _conversationHistory.slice();
 
     try {
+      // 現在のTODOリストを文字列化してコンテキストとして渡す
+      const todoItems = _getTodoItems();
+      const todoSummary = todoItems.length > 0
+        ? todoItems.map((t, i) => `${i + 1}. [${t.priority}] ${t.task}（期限: ${t.deadline}）${t.done ? " ✓完了" : ""}`).join("\n")
+        : "（TODOなし）";
+
       const resp = await ApiClient.post("/plan/consult", {
         incident_summary:     _case ? (_case.enrichedSummary || _case.incidentSummary || "") : "",
         opponent_type:        op.type        || "不明",
         opponent_anger_level: op.anger_level || 50,
         current_plan_summary: plan.first_words || "",
+        current_todo_list:    todoSummary,
         conversation_history: histCopy,
         user_message:         text,
       });
@@ -265,6 +428,7 @@
         if (rp.first_words) _setText("plan-first-words", rp.first_words);
         if (rp.timing)      _setText("plan-timing",      rp.timing);
         if (rp.gift)        _setText("plan-gift",        rp.gift);
+        if (rp.todo_list)   _renderTodos();  // Todo を再描画
         // localStorageも更新
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
@@ -279,9 +443,18 @@
       }
     } catch (err) {
       _removeThinking();
-      const msg = (err && err.message && err.message.includes("401"))
-        ? "セッションが切れました。ページを再読み込みしてください。"
-        : "エラーが発生しました。もう一度お試しください。";
+      let msg;
+      if (err && err.message) {
+        if (err.message.includes("401")) {
+          msg = "セッションが切れました。ページを再読み込みしてください。";
+        } else if (err.message.includes("500") || err.message.includes("502") || err.message.includes("503")) {
+          msg = "サーバーエラーが発生しました。しばらくしてから再度お試しください。";
+        } else {
+          msg = "通信エラーが発生しました。インターネット接続をご確認の上、再度お試しください。";
+        }
+      } else {
+        msg = "エラーが発生しました。もう一度お試しください。";
+      }
       _appendBubble("assistant", msg);
     } finally {
       _isSending = false;
@@ -354,8 +527,10 @@
 
     _setupNavigation();
     _setupDeleteModal();
+    _setupPrecheck();
     _renderPage(_case);
     _setupChat();
+    _setupTodo();
 
     // 初回挨拶
     setTimeout(function () {

@@ -4,7 +4,7 @@
 - **プロジェクト名**: GEZA（謝罪丸投げコンシェルジュ）
 - **プロジェクトタイプ**: Greenfield
 - **開始日**: 2026-04-29
-- **現在のステージ**: CONSTRUCTION - U3 完了 / 次ユニット未定
+- **現在のステージ**: CONSTRUCTION - U4 Functional Design（Part 1: Planning）
 - **コンセプト**: 謝罪丸投げコンシェルジュ（コア: 謝罪角度アセスメント・台本フル生成、謝罪中支援: 怒り残量スキャナー・GEZA耳打ちモード【決勝拡張】、継続支援: 送る前チェック・返信分析・謝罪カルテ・傾向診断、オプション: リハーサルモード）
 
 ## ワークスペース状態
@@ -66,6 +66,8 @@
 - [x] Infrastructure Design — U3 ✅ 承認済み
 - [x] Code Generation — U3 ✅ 完了
 - [x] Deploy & Test — U3 ✅ 完了（2026-05-07）✅ sam deploy成功 / S3 sync 13ファイル / CloudFront Invalidation / スモークテスト全PASS（API 401×3・CF 200×3・DynamoDB ACTIVE・Lambda 1024MB/29s）
+  - **Post-Deploy 修正（2026-05-09）**: get-sessions Decimal修正 + html.unescape / input_validator no_html_escape / save-session 4フィールド no_html_escape / evaluate-apology max_tokens 2048 + 正規表現フォールバック
+  - **機能追加（2026-05-09）**: consult-plan current_todo_list連携 / case-detail.js TODO送信対応
 
 ---
 

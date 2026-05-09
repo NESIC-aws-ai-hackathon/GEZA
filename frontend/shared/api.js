@@ -46,8 +46,8 @@ const ApiClient = (() => {
   }
 
   /** POST リクエスト */
-  function post(path, body) {
-    return _fetch(path, { method: "POST", body: JSON.stringify(body) });
+  function post(path, body, extraOptions = {}) {
+    return _fetch(path, Object.assign({ method: "POST", body: JSON.stringify(body) }, extraOptions));
   }
 
   /**

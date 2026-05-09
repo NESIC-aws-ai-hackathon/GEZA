@@ -1531,3 +1531,64 @@ prototype/
   - 会話履歴: フロントエンドメモリのみ（DynamoDB 保存なし）
   - 新規インフラ: CognitoIdentityPool + GezaAuthenticatedRole（Transcribe 権限）
 - **次のステージ**: U3 NFR Requirements
+
+---
+
+## エントリ 098 - U3 デプロイ後バグ修正（別端末案件共有・謝罪プラン表示・フォールバック動作）
+- **日時**: 2026-05-09T13:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Post-Deploy Bug Fix
+- **トリガー**: ユーザー報告（①別端末から案件が見えない ②謝罪プランが表示されない ③「少し考えさせてください」+メーター上昇）
+- **修正内容**:
+
+### Bug 1: 別端末で案件が見えない（TypeError: Object of type Decimal is not JSON serializable）
+- **原因**: DynamoDB が `practice_count` 属性を `Decimal` 型で返却 → `json.dumps` 失敗
+- **修正**: `get-sessions/lambda_function.py` で `int(item.get("practice_count", 0) or 0)` に変更
+- **デプロイ**: 2026-05-09T13:54:47 UTC / CodeSize: 12627
+
+### Bug 2: 謝罪プランが表示されない（JSON文字列の html.escape 破損）
+- **原因**: `backend/shared/input_validator.py` の `html.escape()` が JSON 中の `"` を `&quot;` に変換して保存
+- **修正1**: `input_validator.py` に `no_html_escape` オプション追加（True の場合 html.escape をスキップ）
+- **修正2**: `save-session` Lambda の `_SCHEMA_CREATE` で `opponent_profile` / `apology_plan` / `face_config` / `assessment_result` の4フィールドに `"no_html_escape": True` 追加
+- **修正3**: `get-sessions` Lambda に `_parse()` ヘルパー追加（`&quot;` / `&amp;` / `&#` 含む既存データを `html.unescape()` してから `json.loads()`）
+- **デプロイ**: save-session 2026-05-09T13:53:53 UTC（CodeSize: 13048）/ get-sessions 2026-05-09T13:54:47 UTC（CodeSize: 12627）
+
+### Bug 3: 「少し考えさせてください」+ メーター上昇
+- **原因**: `evaluate-apology` の `max_tokens=1024` が日本語レスポンスに不足 → JSON 途中切れ → パース失敗 → フォールバック発動 → 前ターン値のまま更新
+- **修正1**: `max_tokens` 1024 → **2048** に変更
+- **修正2**: JSON パース失敗時の正規表現フォールバック追加: `response_text` / `anger_level` / `trust_level` / `emotion_label` を部分 JSON から抽出。`response_text` が取得できた場合は `is_fallback = False` で返却しメーター誤更新を防止
+- **デプロイ**: 2026-05-09T14:08:13 UTC / CodeSize: 12990
+- **修正ファイル一覧**:
+  - `backend/shared/input_validator.py`（no_html_escape オプション追加）
+  - `backend/functions/save-session/lambda_function.py`（4フィールドに no_html_escape 追加）
+  - `backend/functions/get-sessions/lambda_function.py`（_parse ヘルパー + int 変換）
+  - `backend/functions/evaluate-apology/lambda_function.py`（max_tokens 2048 + 正規表現フォールバック）
+  - `aidlc-docs/construction/U3/functional-design.md`（Step 5 / Step 7 に実装差分追記）
+
+---
+
+## エントリ 099 - コンシェルジュTODO/プラン反映機能追加
+- **日時**: 2026-05-09T14:15:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Enhancement（U2-EXT 連携強化）
+- **トリガー**: ユーザー要求「GEZAコンシェルジュに相談した内容については必要に応じてTODOリストや謝罪プランに反映されるようにしてほしい」
+- **変更内容**:
+
+### Lambda: consult-plan 拡張
+- `_SCHEMA` に `current_todo_list: {type: str, required: False}` 追加
+- `variables` に `current_todo_list: validated.get("current_todo_list", "（TODOなし）")` 追加
+- **デプロイ**: 2026-05-09T14:15:51 UTC / CodeSize: 13148
+
+### プロンプト: consult_plan.txt 更新（S3アップロード済み）
+- `## 現在のTODOリスト\n{{current_todo_list}}` セクション追加
+- ルール追加: 「相談内容がTODOやプランに影響する場合は revised_plan で積極的に反映すること」
+- TODO形式: `{"task": "...", "deadline": "今日|明日|3日以内|1週以内", "priority": "高|中|低"}`
+
+### フロントエンド: case-detail.js 更新（S3アップロード + CF Invalidation 完了）
+- `_sendMessage()` 内で `_getTodoItems()` を呼び出し TODO 一覧を整形
+- `/plan/consult` POST ボディに `current_todo_list` フィールドを追加
+- LLM が `revised_plan.todo_list` を返した場合に TODO を再描画
+
+- **修正ファイル一覧**:
+  - `backend/functions/consult-plan/lambda_function.py`（current_todo_list フィールド追加）
+  - `backend/prompts/consult_plan.txt`（TODOリストセクション + 更新ルール追加）
+  - `frontend/pages/case-detail.js`（_sendMessage でTODO連携）
+  - `aidlc-docs/construction/U3/functional-design.md`（Step 5 に /plan/consult 拡張仕様追記）

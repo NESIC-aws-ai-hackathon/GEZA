@@ -21,8 +21,10 @@ _SCHEMA_CREATE = {
     "enriched_summary":  {"type": "str",  "required": False},
     "ai_degree":         {"type": "int",  "required": False},
     "user_degree":       {"type": "int",  "required": False},
-    "opponent_profile":  {"type": "str",  "required": False},
-    "apology_plan":      {"type": "str",  "required": False},
+    "opponent_profile":  {"type": "str",  "required": False, "no_html_escape": True},
+    "apology_plan":      {"type": "str",  "required": False, "no_html_escape": True},
+    "face_config":       {"type": "str",  "required": False, "no_html_escape": True},
+    "assessment_result": {"type": "str",  "required": False, "no_html_escape": True},
 }
 
 _SCHEMA_UPDATE = {
@@ -109,6 +111,8 @@ def lambda_handler(event, context):
         "user_degree":      validated.get("user_degree", 0),
         "opponent_profile": validated.get("opponent_profile", ""),
         "apology_plan":     validated.get("apology_plan", ""),
+        "face_config":      validated.get("face_config", ""),
+        "assessment_result": validated.get("assessment_result", ""),
         "practice_count":   0,
         "created_at":       now_iso,
         "updated_at":       now_iso,

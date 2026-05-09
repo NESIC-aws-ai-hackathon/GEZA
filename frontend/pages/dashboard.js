@@ -1,8 +1,8 @@
 /**
  * dashboard.js — GEZA 実案件一覧コントローラー
  *
- * 案件データは localStorage の "geza_cases" に保存
- * [ { id, createdAt, updatedAt, incidentSummary, opponentProfile, apologyPlan, faceConfig, assessmentResult } ]
+ * 案件データは GET /sessions API（DynamoDB）から取得（Cognito ユーザー単位）。
+ * localStorage "geza_cases" はキャッシュ兼ローカル削除マーク用として併用。
  *
  * XSS-01 準拠: ユーザーデータは全て textContent で挿入
  * AUTH: requireAuth() で認証ガード
@@ -13,7 +13,7 @@
   const STORAGE_KEY = "geza_cases";
 
   // ── データ操作 ──────────────────────────────────────────────────────────
-  function _loadCases() {
+  function _loadCasesFromCache() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : [];
@@ -22,17 +22,34 @@
     }
   }
 
-  function _saveCases(cases) {
+  function _saveCasesToCache(cases) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cases));
     } catch (err) {
-      console.warn("Failed to save cases", err);
+      console.warn("Failed to cache cases", err);
+    }
+  }
+
+  /** API から案件一覧を取得し、キャッシュも更新する。失敗時はキャッシュにフォールバック。 */
+  async function _fetchCases() {
+    try {
+      await AuthModule.silentRefresh();
+    } catch { /* トークン既に有効な場合は無視 */ }
+    try {
+      const data = await ApiClient.get("/sessions");
+      const cases = (data && Array.isArray(data.sessions)) ? data.sessions : [];
+      _saveCasesToCache(cases);
+      return cases;
+    } catch (err) {
+      console.warn("API fetch failed, using cache", err);
+      return _loadCasesFromCache();
     }
   }
 
   function _deleteCase(id) {
-    const cases = _loadCases().filter((c) => c.id !== id);
-    _saveCases(cases);
+    // キャッシュからも削除
+    const cases = _loadCasesFromCache().filter((c) => c.id !== id);
+    _saveCasesToCache(cases);
   }
 
   // ── 日付フォーマット ──────────────────────────────────────────────────────
@@ -63,14 +80,12 @@
   }
 
   // ── カード描画 ────────────────────────────────────────────────────────────
-  function _renderCases() {
+  function _renderCases(cases) {
     const list = document.getElementById("cases-list");
     if (!list) return;
     list.textContent = "";
 
-    const cases = _loadCases();
-
-    if (cases.length === 0) {
+    if (!cases || cases.length === 0) {
       const empty = document.createElement("div");
       empty.className = "empty-state";
       empty.setAttribute("aria-label", "案件なし");
@@ -241,13 +256,14 @@
       });
     }
     if (btnDelete) {
-      btnDelete.addEventListener("click", function () {
+      btnDelete.addEventListener("click", async function () {
         if (_pendingDeleteId) {
           _deleteCase(_pendingDeleteId);
           _pendingDeleteId = null;
         }
         modal.classList.remove("visible");
-        _renderCases();
+        const freshCases = await _fetchCases();
+        _renderCases(freshCases);
       });
     }
     // 背景クリックでキャンセル
@@ -291,7 +307,24 @@
     if (!AuthModule.requireAuth()) return;
     _setupNavigation();
     _setupDeleteModal();
-    _renderCases();
+
+    // まずキャッシュで即時描画し、API 完了後に再描画
+    const cached = _loadCasesFromCache();
+    _renderCases(cached);
+
+    const list = document.getElementById("cases-list");
+    if (list) {
+      const loadingMsg = document.createElement("div");
+      loadingMsg.id = "cases-loading-msg";
+      loadingMsg.style.cssText = "font-size:12px;color:#666;text-align:center;padding:8px 0;";
+      loadingMsg.textContent = "最新の案件を取得中...";
+      list.prepend(loadingMsg);
+    }
+
+    const freshCases = await _fetchCases();
+    const msg = document.getElementById("cases-loading-msg");
+    if (msg) msg.remove();
+    _renderCases(freshCases);
   }
 
   if (document.readyState === "loading") {

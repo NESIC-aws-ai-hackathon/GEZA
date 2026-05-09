@@ -39,15 +39,9 @@
     }
     .btn-end:hover { border-color: #e74c3c; color: #e74c3c; }
 
-    /* アバターエリア */
-    .avatar-area {
-      display: flex;
-      justify-content: center;
-      padding: 20px 0 10px;
-    }
-    #practice-avatar-container {
-      width: 180px;
-      height: 180px;
+    /* アバターエリア（TOP画面と同じ avatar-frame large 方式を使用） */
+    .avatar-section {
+      padding: 12px 24px 8px;
     }
 
     /* ゲージエリア */
@@ -86,6 +80,34 @@
     }
     .gauge-anger .gauge-bar-fill { background: linear-gradient(90deg, #f39c12, #e74c3c); }
     .gauge-trust .gauge-bar-fill { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+
+    /* クリティカル謝罪エフェクト */
+    @keyframes criticalBarPulse {
+      0%   { filter: brightness(1); box-shadow: none; }
+      25%  { filter: brightness(2.5) saturate(2); box-shadow: 0 0 18px 4px rgba(46,204,113,.8); }
+      60%  { filter: brightness(1.4) saturate(1.5); box-shadow: 0 0 8px 2px rgba(46,204,113,.4); }
+      100% { filter: brightness(1); box-shadow: none; }
+    }
+    .anger-bar-critical {
+      animation: criticalBarPulse 0.9s ease-out forwards !important;
+      transition: none !important;
+    }
+    /* 画面フラッシュオーバーレイ */
+    #critical-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      background: radial-gradient(ellipse at center, rgba(46,204,113,.35) 0%, transparent 70%);
+      opacity: 0;
+    }
+    #critical-flash.active {
+      animation: flashFade 0.7s ease-out forwards;
+    }
+    @keyframes flashFade {
+      0%   { opacity: 1; }
+      100% { opacity: 0; }
+    }
     .gauge-meta {
       font-size: .7rem;
       color: rgba(255,255,255,.4);
@@ -170,9 +192,17 @@
       color: #e0e0e0;
       padding: 10px 14px;
       cursor: pointer;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       transition: background .2s;
+      /* スマホタップ時のサイズを指定しタップエリアを拡大 */
+      min-width: 48px;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
     }
+    .btn-mic:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-mic.recording {
       background: rgba(231,76,60,.25);
       border-color: #e74c3c;
@@ -293,9 +323,14 @@
       font-size: .83rem;
       color: #f39c12;
     }
+    /* hidden 属性を CSS display より優先させる（CSS display:flex が hidden を上書きするのを防ぐ） */
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
+<!-- クリティカル謝罪フラッシュオーバーレイ -->
+<div id="critical-flash"></div>
+
 <div class="practice-layout">
 
   <!-- ヘッダー -->
@@ -304,9 +339,11 @@
     <button class="btn-end" id="btn-end">練習を終了する</button>
   </header>
 
-  <!-- アバターエリア -->
-  <div class="avatar-area">
-    <div id="practice-avatar-container"></div>
+  <!-- アバターエリア（TOP画面と同じ構造） -->
+  <div class="avatar-section">
+    <div class="avatar-frame large">
+      <div id="practice-avatar-container" class="facesjs-container" role="img" aria-label="上司アバター"></div>
+    </div>
   </div>
 
   <!-- ゲージエリア -->
@@ -367,6 +404,7 @@
 <script src="../shared/state.js"></script>
 <script src="../shared/api.js"></script>
 <script src="../shared/avatar.js"></script>
+<script src="../shared/avatar-animator.js"></script>
 <script src="../shared/transcribe.js"></script>
 <script src="../shared/polly-sync.js"></script>
 <script src="practice.js"></script>

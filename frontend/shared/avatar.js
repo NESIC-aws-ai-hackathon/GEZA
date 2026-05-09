@@ -23,7 +23,7 @@ const AvatarController = (() => {
   function setEmotion(emotionKey) {
     if (!_currentFace) return;
     const overrides = _emotionOverrides(emotionKey);
-    const updated = window.faces.override(_currentFace, overrides);
+    const updated = window.facesjs.override(_currentFace, overrides);
     _currentFace = updated;
     _render();
   }

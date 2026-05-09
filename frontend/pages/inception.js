@@ -801,6 +801,8 @@
         user_degree: _selfDegree,
         opponent_profile: JSON.stringify(_opponentProfile),
         apology_plan: JSON.stringify(_apologyPlan),
+        face_config: _faceConfig ? JSON.stringify(_faceConfig) : "",
+        assessment_result: _assessmentResult ? JSON.stringify(_assessmentResult) : "",
       });
       _sessionId = result.sessionId;
       // 案件をlocalStorageにも保存

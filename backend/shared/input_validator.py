@@ -69,7 +69,9 @@ def validate(body: dict, schema: dict) -> dict:
             for pattern in INJECTION_PATTERNS:
                 if pattern.search(value):
                     raise ValidationError("不正な入力が含まれています")
-            value = html.escape(value, quote=True)
+            # no_html_escape=True のフィールド（JSON文字列など）はHTMLエスケープしない
+            if not rules.get("no_html_escape", False):
+                value = html.escape(value, quote=True)
 
         sanitized[field] = value
 

@@ -2,7 +2,8 @@
 > AI-DLC CONSTRUCTION Phase — Functional Design 成果物  
 > ユニット: U3 リハーサルモード（AI台本の読み合わせ）  
 > 生成日: 2026-05-07  
-> ステータス: 承認待ち
+> 最終更新: 2026-05-09（デプロイ後バグ修正・コンシェルジュTODO連携反映）  
+> ステータス: 承認済み・実装完了
 
 ---
 
@@ -403,6 +404,11 @@ class PollySyncController {
 | LLM モデル | amazon.nova-lite-v1:0（fast プロファイル） |
 | タイムアウト | 10s（fast Lambda） |
 | 同期/非同期 | 同期 |
+| **max_tokens** | **2048**（日本語レスポンス途中切れ防止。実装時 1024→2048 に修正） |
+
+**実装ノート（デプロイ後修正 2026-05-09）:**
+- `max_tokens` を 1024 → **2048** に変更。日本語レスポンスが 1024 トークンで途中切れして JSON パース失敗し、フォールバック「少し考えさせてください」が発動していた問題を解消。
+- JSON パース失敗時のフォールバック強化: 正規表現で部分 JSON から `response_text` / `anger_level` / `trust_level` / `emotion_label` を抽出。`response_text` が取得できた場合は `is_fallback = False` で返却し、メーター誤更新を防止。
 
 **Request:**
 ```json
@@ -480,6 +486,31 @@ class PollySyncController {
 
 ---
 
+### POST `/plan/consult`（U2-EXT 定義。U3 期間中に拡張）
+
+**実装ノート（U3 期間中機能拡張 2026-05-09）:**  
+コンシェルジュに相談した内容を TODO リスト・謝罪プランに反映するため、以下のフィールドを追加した。
+
+**Request（追加フィールド）:**
+```json
+{
+  "message": "どんな謝り方をすればいいですか？",
+  "session_id": "...",
+  "current_todo_list": "1. [高] 謝罪文の草稿を作成する（期限: 明日）\n2. [中] 相手の反応を確認する（期限: 3日以内）"
+}
+```
+
+| フィールド | 型 | 変更 |
+|-----------|:--:|------|
+| `current_todo_list` | string | **新規追加**（現在のTODO一覧を番号付き文字列で送信。なければ「（TODOなし）」） |
+
+- Lambda `consult-plan` が `current_todo_list` を `variables` に渡しプロンプトに挿入
+- プロンプト `backend/prompts/consult_plan.txt` に「## 現在のTODOリスト」セクション追加
+- LLM が相談内容に応じて `revised_plan.todo_list` を更新することを明示したルールを追加
+- フロントエンド `case-detail.js` の `_sendMessage()` で `_getTodoItems()` を呼び出し、TODO一覧を整形して送信
+
+---
+
 ## Step 6: StateManager 拡張（practice ネームスペース）
 
 ```javascript
@@ -507,6 +538,15 @@ StateManager.practice = {
 | CORS-01 | API Gateway CORS 設定済み（U0 template.yaml）。追加変更なし | template.yaml |
 | PROMPT-01 | `input_validator.INJECTION_PATTERNS` によるプロンプトインジェクション対策を Lambda 側で適用 | backend |
 | PRIVACY-01 | Transcribe 音声は WebSocket で直接送信。Lambda / DynamoDB には保存しない | transcribe.js |
+
+**実装ノート（input_validator.py 修正 2026-05-09）:**
+- `no_html_escape` オプションを追加。`True` の場合は `html.escape()` をスキップしてインジェクション検知と文字数制限のみ適用する。
+- 適用フィールド（`save-session` Lambda の `_SCHEMA_CREATE`）:
+  - `opponent_profile` / `apology_plan` / `face_config` / `assessment_result`
+  - これらは JSON 文字列をそのまま保存・復元する必要があるため、`html.escape()` による `"` → `&quot;` 変換を抑制する必要があった。
+- 既存データ対応（`get-sessions` Lambda 修正 2026-05-09）:
+  - `&quot;` / `&amp;` / `&#` を含む既存保存データを `html.unescape()` で復元してから `json.loads()` する `_parse()` ヘルパーを追加。
+  - DynamoDB の `practice_count` 属性が `Decimal` 型で返却される問題を `int()` 変換で解消（`json.dumps` 失敗の原因だった）。
 
 ---
 
