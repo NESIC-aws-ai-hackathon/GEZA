@@ -20,7 +20,7 @@ Globals:
 
 Resources:
 
-  # ── Lambda Layer ──────────────────────────────
+  # -- Lambda Layer ------------------------------
   GezaSharedLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -34,7 +34,7 @@ Resources:
       BuildMethod: python3.13
       BuildArchitecture: arm64
 
-  # ── DynamoDB ──────────────────────────────────
+  # -- DynamoDB ----------------------------------
   GezaDataTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -54,7 +54,7 @@ Resources:
         AttributeName: ttl
         Enabled: true
 
-  # ── SQS ───────────────────────────────────────
+  # -- SQS ---------------------------------------
   GezaAsyncJobsDlq:
     Type: AWS::SQS::Queue
     Properties:
@@ -71,7 +71,7 @@ Resources:
         deadLetterTargetArn: !GetAtt GezaAsyncJobsDlq.Arn
         maxReceiveCount: 3
 
-  # ── S3 ────────────────────────────────────────
+  # -- S3 ----------------------------------------
   GezaStaticBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -121,7 +121,7 @@ Resources:
             Action: s3:GetObject
             Resource: !Sub "${GezaPromptsBucket.Arn}/*"
 
-  # ── CloudFront ────────────────────────────────
+  # -- CloudFront --------------------------------
   GezaCloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -197,7 +197,7 @@ Resources:
             ErrorCachingMinTTL: 0
         HttpVersion: http2
 
-  # ── Cognito ───────────────────────────────────
+  # -- Cognito -----------------------------------
   GezaUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -287,7 +287,7 @@ Resources:
       Roles:
         authenticated: !GetAtt GezaIdentityPoolAuthRole.Arn
 
-  # ── API Gateway HTTP API ───────────────────────
+  # -- API Gateway HTTP API -----------------------
   GezaHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -324,7 +324,7 @@ Resources:
       LogGroupName: /aws/apigateway/geza-http-api
       RetentionInDays: 7
 
-  # ── Lambda Functions ───────────────────────────
+  # -- Lambda Functions ---------------------------
 
   # fast (256MB / 10s / Nova Lite)
   AssessApologyFunction:
@@ -544,7 +544,7 @@ Resources:
             Method: POST
             Path: /incident/probe
 
-  # fast trigger (256MB / 10s / SQS only)  EU2: generate-plan enqueues to SQS, bedrock-dispatcher handles LLM
+  # fast trigger (256MB / 10s / SQS only)  EU2: generate-plan enqueues to SQS, bedrock-dispatcher handles LLM
   GeneratePlanFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -569,7 +569,7 @@ Resources:
             Method: POST
             Path: /plan/generate
 
-  # standard sync (512MB / 30s / Haiku 4.5)  EU2: generate-opponent is synchronous
+  # standard sync (512MB / 30s / Haiku 4.5)  EU2: generate-opponent is synchronous
   GenerateOpponentFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -651,16 +651,16 @@ Resources:
       FunctionName: generate-prevention
       Handler: lambda_function.lambda_handler
       CodeUri: backend/functions/generate-prevention/
-      MemorySize: 256
-      Timeout: 10
+      MemorySize: 1024
+      Timeout: 29
       Policies:
         - Statement:
             - Effect: Allow
-              Action: dynamodb:PutItem
-              Resource: !GetAtt GezaDataTable.Arn
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
-              Action: sqs:SendMessage
-              Resource: !GetAtt GezaAsyncJobsQueue.Arn
+              Action: s3:GetObject
+              Resource: !Sub "${GezaPromptsBucket.Arn}/*"
       Events:
         Api:
           Type: HttpApi
@@ -675,16 +675,16 @@ Resources:
       FunctionName: generate-follow-mail
       Handler: lambda_function.lambda_handler
       CodeUri: backend/functions/generate-follow-mail/
-      MemorySize: 256
-      Timeout: 10
+      MemorySize: 1024
+      Timeout: 29
       Policies:
         - Statement:
             - Effect: Allow
-              Action: dynamodb:PutItem
-              Resource: !GetAtt GezaDataTable.Arn
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
             - Effect: Allow
-              Action: sqs:SendMessage
-              Resource: !GetAtt GezaAsyncJobsQueue.Arn
+              Action: s3:GetObject
+              Resource: !Sub "${GezaPromptsBucket.Arn}/*"
       Events:
         Api:
           Type: HttpApi
@@ -716,6 +716,30 @@ Resources:
             ApiId: !Ref GezaHttpApi
             Method: POST
             Path: /reply/analyze
+
+  GenerateMailReplyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: generate-mail-reply
+      Handler: lambda_function.lambda_handler
+      CodeUri: backend/functions/generate-mail-reply/
+      MemorySize: 1024
+      Timeout: 29
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: [bedrock:InvokeModel, bedrock:Converse]
+              Resource: "*"
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub "${GezaPromptsBucket.Arn}/*"
+      Events:
+        Api:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref GezaHttpApi
+            Method: POST
+            Path: /mail/reply
 
   DiagnoseTendencyFunction:
     Type: AWS::Serverless::Function
@@ -955,7 +979,7 @@ Resources:
             FunctionResponseTypes:
               - ReportBatchItemFailures
 
-  # ── CloudWatch Log Groups (all Lambda, 7-day retention) ──
+  # -- CloudWatch Log Groups (all Lambda, 7-day retention) --
   AssessApologyLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -1008,6 +1032,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/lambda/analyze-reply
+      RetentionInDays: 7
+
+  GenerateMailReplyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/generate-mail-reply
       RetentionInDays: 7
 
   DiagnoseTendencyLogGroup:

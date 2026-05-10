@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <title>GEZA — カルテ詳細</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .kd-layout {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 16px 16px 60px;
+    }
+
+    /* ヒーローヘッダー */
+    .kd-hero {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .kd-hero-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .kd-status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+    }
+    .kd-status-badge.planned   { background: rgba(255,255,255,0.07); color: #888; }
+    .kd-status-badge.practiced { background: rgba(243,156,18,0.15); color: #f39c12; }
+    .kd-status-badge.completed { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .kd-degree-badge {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .degree-0   { background: #27ae60; }
+    .degree-45  { background: #f39c12; }
+    .degree-75  { background: #e67e22; }
+    .degree-100 { background: #e74c3c; }
+    .degree-135 { background: #8e44ad; }
+    .degree-165 { background: #2c3e50; }
+    .kd-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #e0e0e0;
+      margin: 0 0 6px;
+      line-height: 1.4;
+    }
+    .kd-meta-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 11px;
+      color: #666;
+    }
+
+    /* セクション */
+    .kd-section {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .kd-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kd-text {
+      font-size: 13px;
+      color: #ccc;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* スタッツグリッド */
+    .kd-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .kd-stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .kd-stat-label {
+      font-size: 10px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    .kd-stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #e0e0e0;
+    }
+    .kd-stat-unit {
+      font-size: 11px;
+      color: #888;
+      margin-left: 2px;
+    }
+
+    /* 相手プロフィール */
+    .kd-profile-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .kd-profile-chip {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(124,58,237,0.1);
+      border: 1px solid rgba(124,58,237,0.2);
+      color: #c4b5fd;
+    }
+
+    /* 謝罪結果 */
+    .kd-outcome-badge {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .kd-outcome-badge.success   { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .kd-outcome-badge.partial   { background: rgba(243,156,18,0.15);  color: #f39c12; }
+    .kd-outcome-badge.difficult { background: rgba(233,69,96,0.12);   color: #e94560; }
+
+    /* メールスレッド */
+    .kd-mail-card {
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .kd-mail-card.received {
+      background: rgba(233,69,96,0.07);
+      border: 1px solid rgba(233,69,96,0.2);
+      border-left: 3px solid #e94560;
+    }
+    .kd-mail-card.sent {
+      background: rgba(46,204,113,0.07);
+      border: 1px solid rgba(46,204,113,0.2);
+      border-left: 3px solid #2ecc71;
+    }
+    .kd-mail-label {
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .kd-mail-card.received .kd-mail-label { color: #e94560; }
+    .kd-mail-card.sent .kd-mail-label { color: #2ecc71; }
+    .kd-mail-subject {
+      font-weight: 600;
+      color: #ddd;
+      margin-bottom: 4px;
+    }
+    .kd-mail-body {
+      color: #bbb;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .kd-mail-time {
+      font-size: 10px;
+      color: #555;
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* セクション見出しのサブ */
+    .kd-empty-sub {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      padding: 12px 0 4px;
+    }
+
+    /* 削除ボタン */
+    .btn-danger {
+      width: 100%;
+      background: rgba(233,69,96,0.07);
+      border: 1px solid rgba(233,69,96,0.25);
+      color: #e94560;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-danger:hover { background: rgba(233,69,96,0.12); }
+
+    /* 実案件リンク */
+    .btn-go-case {
+      width: 100%;
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.25);
+      color: #c4b5fd;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .btn-go-case:hover { background: rgba(124,58,237,0.14); }
+  </style>
+</head>
+<body>
+  <div id="global-banner" class="global-banner" role="alert" aria-live="assertive"></div>
+
+  <div class="app-container">
+    <header class="app-header" data-testid="app-header">
+      <button id="back-btn" class="app-header-logout" type="button"
+        style="left:16px; right:auto;" aria-label="戻る">← 戻る</button>
+      <div class="app-header-brand">
+        <img src="../icons/geza_icon.png" alt="GEZA" class="app-header-icon" />
+        <span class="app-header-title">GEZA</span>
+      </div>
+      <button id="logout-btn" class="app-header-logout" type="button">ログアウト</button>
+    </header>
+
+    <main style="overflow-y:auto; flex:1;">
+      <div class="kd-layout">
+
+        <!-- ヒーロー -->
+        <div class="kd-hero">
+          <div class="kd-hero-top">
+            <div class="kd-degree-badge" id="kd-degree-badge"></div>
+            <div class="kd-status-badge" id="kd-status-badge"></div>
+          </div>
+          <h1 class="kd-title" id="kd-title"></h1>
+          <div class="kd-meta-row">
+            <span id="kd-created"></span>
+            <span id="kd-updated"></span>
+          </div>
+        </div>
+
+        <!-- 事案概要 -->
+        <div class="kd-section" id="sec-summary">
+          <div class="kd-section-title">📋 事案概要</div>
+          <div class="kd-text" id="kd-summary"></div>
+        </div>
+
+        <!-- 謝罪情報（相手プロフィール） -->
+        <div class="kd-section" id="sec-opponent">
+          <div class="kd-section-title">👤 相手プロフィール</div>
+          <div class="kd-profile-row" id="kd-profile-chips"></div>
+        </div>
+
+        <!-- リハーサル記録 -->
+        <div class="kd-section" id="sec-practice" style="display:none;">
+          <div class="kd-section-title">🎙️ リハーサル記録</div>
+          <div class="kd-stat-grid" id="kd-practice-grid"></div>
+        </div>
+
+        <!-- 実際の謝罪記録 -->
+        <div class="kd-section" id="sec-actual" style="display:none;">
+          <div class="kd-section-title">✅ 実際の謝罪記録</div>
+          <div id="kd-actual-content"></div>
+        </div>
+
+        <!-- メールやり取り -->
+        <div class="kd-section" id="sec-mail" style="display:none;">
+          <div class="kd-section-title">✉️ メールやり取り</div>
+          <div id="kd-mail-list"></div>
+        </div>
+
+        <!-- アクション -->
+        <div style="margin-top: 8px;">
+          <button id="btn-go-case" class="btn-go-case" type="button" style="display:none;">
+            📂 実案件モードで開く
+          </button>
+          <button id="btn-delete" class="btn-danger" type="button">
+            🗑️ このカルテを削除
+          </button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="karte-detail.js"></script>
+</body>
+</html>

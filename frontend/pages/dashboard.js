@@ -11,6 +11,7 @@
   "use strict";
 
   const STORAGE_KEY = "geza_cases";
+  const DELETED_KEY = "geza_deleted_cases";
 
   // ── データ操作 ──────────────────────────────────────────────────────────
   function _loadCasesFromCache() {
@@ -30,6 +31,26 @@
     }
   }
 
+  function _getDeletedIds() {
+    try {
+      return JSON.parse(localStorage.getItem(DELETED_KEY) || "[]");
+    } catch { return []; }
+  }
+
+  function _isCompleted(c) {
+    return localStorage.getItem("geza_completed_" + c.id) === "1";
+  }
+
+  /** 表示用にフィルタ: 削除済み・完了済みを除外 */
+  function _filterCases(cases) {
+    const deletedIds = _getDeletedIds();
+    return cases.filter(function (c) {
+      if (deletedIds.includes(c.id)) return false;
+      if (_isCompleted(c)) return false;
+      return true;
+    });
+  }
+
   /** API から案件一覧を取得し、キャッシュも更新する。失敗時はキャッシュにフォールバック。 */
   async function _fetchCases() {
     try {
@@ -39,17 +60,23 @@
       const data = await ApiClient.get("/sessions");
       const cases = (data && Array.isArray(data.sessions)) ? data.sessions : [];
       _saveCasesToCache(cases);
-      return cases;
+      return _filterCases(cases);
     } catch (err) {
       console.warn("API fetch failed, using cache", err);
-      return _loadCasesFromCache();
+      return _filterCases(_loadCasesFromCache());
     }
   }
 
   function _deleteCase(id) {
-    // キャッシュからも削除
+    // キャッシュから削除
     const cases = _loadCasesFromCache().filter((c) => c.id !== id);
     _saveCasesToCache(cases);
+    // 削除済みリストに追加（API再取得時にも非表示にするため）
+    const deletedIds = _getDeletedIds();
+    if (!deletedIds.includes(id)) {
+      deletedIds.push(id);
+      localStorage.setItem(DELETED_KEY, JSON.stringify(deletedIds));
+    }
   }
 
   // ── 日付フォーマット ──────────────────────────────────────────────────────
@@ -309,7 +336,7 @@
     _setupDeleteModal();
 
     // まずキャッシュで即時描画し、API 完了後に再描画
-    const cached = _loadCasesFromCache();
+    const cached = _filterCases(_loadCasesFromCache());
     _renderCases(cached);
 
     const list = document.getElementById("cases-list");

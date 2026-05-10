@@ -13,9 +13,14 @@
 ## 現在のTODOリスト
 {{current_todo_list}}
 
+## メールやり取り状況
+{{mail_thread_summary}}
+
 ## ルール
 - ユーザーの現在の状況に寄り添い、実践的なアドバイスを提供すること
 - 相談内容がTODOやプランに影響する場合は revised_plan で積極的に反映すること
+- メールの状況が報告された場合、それを踏まえてプラン・TODOを修正すること
+- 例: 「メールで○○と言われた」→ 相手の温度感の変化に応じたプラン修正を提案
 - revised_plan は変更が必要なフィールドのみ含める（全フィールド不要）
 - revised_plan の対象フィールド: first_words, full_script, timing, gift, todo_list
 - todo_list を更新する場合は既存のTODOを引き継ぎつつ、相談内容を踏まえて追加・変更・削除すること

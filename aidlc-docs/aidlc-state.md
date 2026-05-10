@@ -4,7 +4,7 @@
 - **プロジェクト名**: GEZA（謝罪丸投げコンシェルジュ）
 - **プロジェクトタイプ**: Greenfield
 - **開始日**: 2026-04-29
-- **現在のステージ**: CONSTRUCTION - U4 Functional Design（Part 1: Planning）
+- **現在のステージ**: CONSTRUCTION - U5 Functional Design 開始
 - **コンセプト**: 謝罪丸投げコンシェルジュ（コア: 謝罪角度アセスメント・台本フル生成、謝罪中支援: 怒り残量スキャナー・GEZA耳打ちモード【決勝拡張】、継続支援: 送る前チェック・返信分析・謝罪カルテ・傾向診断、オプション: リハーサルモード）
 
 ## ワークスペース状態
@@ -68,6 +68,23 @@
 - [x] Deploy & Test — U3 ✅ 完了（2026-05-07）✅ sam deploy成功 / S3 sync 13ファイル / CloudFront Invalidation / スモークテスト全PASS（API 401×3・CF 200×3・DynamoDB ACTIVE・Lambda 1024MB/29s）
   - **Post-Deploy 修正（2026-05-09）**: get-sessions Decimal修正 + html.unescape / input_validator no_html_escape / save-session 4フィールド no_html_escape / evaluate-apology max_tokens 2048 + 正規表現フォールバック
   - **機能追加（2026-05-09）**: consult-plan current_todo_list連携 / case-detail.js TODO送信対応
+- [x] Functional Design — U4 ✅ 承認済み（2026-05-10）
+- [x] NFR Requirements — U4 ✅ 承認済み（2026-05-10）
+- [x] NFR Design — U4 ✅ 承認済み（2026-05-10）
+- [x] Infrastructure Design — U4 ✅ 承認済み（2026-05-10）
+- [x] Code Generation — U4 ✅ 完了（2026-05-10）
+- [x] Deploy & Test — U4 ✅ 完了（2026-05-10）✅ sam deploy UPDATE_COMPLETE / GenerateMailReplyFunction CREATE_COMPLETE / スモークテスト PASS
+  - **Post-Code-Generation 追加実装（2026-05-10）**:
+    - バグ修正: カルテリンク / 謝罪完了保存 / フォローメール到達性 / case-detail APIフォールバック / _setupCompleteModal 修正
+    - 新機能: メールスレッド管理（generate-mail-reply Lambda / mail-thread.html・js 新規 / mail_thread DynamoDB保存）
+    - カルテ専用UI: karte-detail.html・js 新規 / carte.js 削除機能・フィルタ・ステータス修正
+    - 設計外追加: get-sessions に apologyStatus・mailThread フィールド追加 / get-karte に mail_thread フィールド追加 / consult-plan に mail_thread_summary 対応
+- [ ] Functional Design — U5（開始予定）
+- [ ] NFR Requirements — U5
+- [ ] NFR Design — U5
+- [ ] Infrastructure Design — U5
+- [ ] Code Generation — U5
+- [ ] Deploy & Test — U5
 
 ---
 

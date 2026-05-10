@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <title>GEZA — 再発防止・フォローメール</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .fd-layout {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 16px 16px 48px;
+    }
+    .fd-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .fd-header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #e0d4f7;
+      margin: 0;
+      flex: 1;
+    }
+    /* タブ */
+    .fd-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+    .fd-tab {
+      flex: 1;
+      padding: 10px 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      font-family: inherit;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .fd-tab.active {
+      color: #c4b5fd;
+      border-bottom-color: #7c3aed;
+    }
+    .fd-tab-panel { display: none; }
+    .fd-tab-panel.active { display: block; }
+
+    /* チェックリスト */
+    .checklist-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .checklist-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .checklist-item input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: #7c3aed;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .checklist-item label {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.5;
+      cursor: pointer;
+      flex: 1;
+    }
+    .checklist-item.done label { color: #666; text-decoration: line-through; }
+
+    /* 再発防止策 */
+    .prevention-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .prevention-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-bottom: 12px;
+    }
+    .prevention-step {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: #533483;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-detail {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.5;
+      flex: 1;
+    }
+    .prevention-summary {
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(124,58,237,0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(124,58,237,0.2);
+      font-size: 12px;
+      color: #c4b5fd;
+      line-height: 1.5;
+    }
+
+    /* フォローメール */
+    .mail-field {
+      margin-bottom: 14px;
+    }
+    .mail-field-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .mail-field-value {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* 生成ボタン共通 */
+    .btn-generate {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      background: #533483;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .btn-generate:hover:not(:disabled) { background: #6d28d9; }
+    .btn-generate:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* コピーボタン */
+    .btn-copy {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: #ddd;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-copy:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* エラー */
+    .error-card {
+      padding: 14px;
+      background: rgba(233,69,96,0.1);
+      border: 1px solid rgba(233,69,96,0.3);
+      border-radius: 10px;
+      font-size: 13px;
+      color: #e94560;
+    }
+    /* スピナー */
+    .loading-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="global-banner" class="global-banner" role="alert" aria-live="assertive"></div>
+
+  <div class="app-container">
+    <header class="app-header" data-testid="app-header">
+      <button id="back-btn" class="app-header-logout" type="button"
+        style="left:16px; right:auto;" aria-label="戻る">← 戻る</button>
+      <div class="app-header-brand">
+        <img src="../icons/geza_icon.png" alt="GEZA" class="app-header-icon" />
+        <span class="app-header-title">GEZA</span>
+      </div>
+      <button id="logout-btn" class="app-header-logout" type="button">ログアウト</button>
+    </header>
+
+    <main style="overflow-y:auto; flex:1;">
+      <div class="fd-layout">
+        <div class="fd-header">
+          <h1>📋 謝罪準備サポート</h1>
+        </div>
+
+        <!-- タブ -->
+        <div class="fd-tabs" role="tablist">
+          <button class="fd-tab active" id="tab-checklist" role="tab"
+            aria-selected="true" aria-controls="panel-checklist">
+            ✅ チェックリスト
+          </button>
+          <button class="fd-tab" id="tab-prevention" role="tab"
+            aria-selected="false" aria-controls="panel-prevention">
+            🛡️ 再発防止策
+          </button>
+          <button class="fd-tab" id="tab-mail" role="tab"
+            aria-selected="false" aria-controls="panel-mail">
+            ✉️ フォローメール
+          </button>
+        </div>
+
+        <!-- チェックリストタブ -->
+        <div id="panel-checklist" class="fd-tab-panel active" role="tabpanel">
+          <div class="checklist-section">
+            <div class="checklist-title">📌 直前確認チェックリスト</div>
+            <div id="checklist-fixed">
+              <!-- 固定5項目 -->
+              <div class="checklist-item" id="cl-fix-0">
+                <input type="checkbox" id="cl-fix-0-cb" aria-label="謝罪の言葉を頭に入れた" />
+                <label for="cl-fix-0-cb">謝罪の言葉を頭に入れた</label>
+              </div>
+              <div class="checklist-item" id="cl-fix-1">
+                <input type="checkbox" id="cl-fix-1-cb" aria-label="相手の都合を確認した" />
+                <label for="cl-fix-1-cb">相手の都合を確認した</label>
+              </div>
+              <div class="checklist-item" id="cl-fix-2">
+                <input type="checkbox" id="cl-fix-2-cb" aria-label="謝罪場所・状況を整えた" />
+                <label for="cl-fix-2-cb">謝罪場所・状況を整えた</label>
+              </div>
+              <div class="checklist-item" id="cl-fix-3">
+                <input type="checkbox" id="cl-fix-3-cb" aria-label="再発防止策を考えた" />
+                <label for="cl-fix-3-cb">再発防止策を考えた</label>
+              </div>
+              <div class="checklist-item" id="cl-fix-4">
+                <input type="checkbox" id="cl-fix-4-cb" aria-label="追加質問への回答を準備した" />
+                <label for="cl-fix-4-cb">追加質問への回答を準備した</label>
+              </div>
+            </div>
+            <div id="checklist-ai">
+              <!-- AI生成項目（generate-prevention 完了後に追記） -->
+            </div>
+          </div>
+
+          <button class="btn-generate" id="btn-generate-prevention" type="button">
+            <span class="loading-spinner" id="spinner-prevention" style="display:none;"></span>
+            <span id="label-prevention">🤖 AI追加チェック項目・再発防止策を生成する</span>
+          </button>
+          <div id="prevention-error" style="display:none;"></div>
+        </div>
+
+        <!-- 再発防止策タブ -->
+        <div id="panel-prevention" class="fd-tab-panel" role="tabpanel">
+          <div id="prevention-steps-wrap">
+            <div class="prevention-section" id="prevention-not-generated"
+              style="text-align:center; color:#888; font-size:13px; padding:24px;">
+              「チェックリスト」タブから先に再発防止策を生成してください。
+            </div>
+            <div id="prevention-steps-content" style="display:none;">
+              <div class="prevention-section">
+                <div class="prevention-title">🛡️ 再発防止ステップ</div>
+                <div id="prevention-steps-list"></div>
+              </div>
+              <div class="prevention-section">
+                <div class="prevention-title">📝 まとめ</div>
+                <div class="prevention-summary" id="prevention-summary"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- フォローメールタブ -->
+        <div id="panel-mail" class="fd-tab-panel" role="tabpanel">
+          <button class="btn-generate" id="btn-generate-mail" type="button">
+            <span class="loading-spinner" id="spinner-mail" style="display:none;"></span>
+            <span id="label-mail">✉️ フォローメールを生成する</span>
+          </button>
+          <div id="mail-error" style="display:none;"></div>
+          <div id="mail-content" style="display:none;">
+            <div class="mail-field">
+              <div class="mail-field-label">件名</div>
+              <div class="mail-field-value" id="mail-subject"></div>
+            </div>
+            <div class="mail-field">
+              <div class="mail-field-label">本文</div>
+              <div class="mail-field-value" id="mail-body"></div>
+            </div>
+            <div style="text-align:right;">
+              <button class="btn-copy" id="btn-copy-mail" type="button">📋 クリップボードにコピー</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="feedback-detail.js"></script>
+</body>
+</html>

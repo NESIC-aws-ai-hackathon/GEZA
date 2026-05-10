@@ -48,61 +48,62 @@
     .cases-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .case-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
       border-radius: 14px;
       padding: 14px 16px;
       cursor: pointer;
       transition: all 0.2s;
     }
     .case-card:hover {
-      border-color: #533483;
-      background: rgba(83,52,131,0.12);
+      border-color: rgba(124,58,237,0.4);
+      background: rgba(83,52,131,0.10);
       transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(83,52,131,0.2);
+      box-shadow: 0 4px 20px rgba(83,52,131,0.15);
     }
     .case-card-header {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     .case-card-title {
       font-size: 14px;
       font-weight: 700;
-      color: #e0e0e0;
-      line-height: 1.4;
+      color: #f0f0f0;
+      line-height: 1.3;
       flex: 1;
     }
     .case-card-date {
-      font-size: 11px;
-      color: #666;
+      font-size: 10px;
+      color: #555;
       white-space: nowrap;
     }
     .case-card-meta {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
       margin-bottom: 6px;
     }
     .case-meta-badge {
       font-size: 10px;
-      background: rgba(255,255,255,0.07);
-      border-radius: 4px;
-      padding: 2px 6px;
-      color: #aaa;
+      background: rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 2px 8px;
+      color: #999;
+      font-weight: 600;
     }
     .case-meta-badge.anger {
-      background: rgba(233,69,96,0.15);
+      background: rgba(233,69,96,0.12);
       color: #e94560;
     }
     .case-card-summary {
       font-size: 12px;
-      color: #888;
+      color: #777;
       line-height: 1.5;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -111,26 +112,26 @@
     }
     .case-card-footer {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       margin-top: 10px;
     }
     .btn-case-action {
       flex: 1;
       padding: 8px;
       border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.10);
       background: transparent;
-      color: #ccc;
+      color: #aaa;
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .btn-case-action:hover { border-color: #533483; color: #a78bfa; background: rgba(83,52,131,0.2); }
-    .btn-case-action.rehearsal { border-color: #7c3aed; color: #a78bfa; }
-    .btn-case-action.rehearsal:hover { background: rgba(124,58,237,0.2); }
-    .btn-case-action.delete { color: #e94560; }
-    .btn-case-action.delete:hover { border-color: #e94560; background: rgba(233,69,96,0.1); }
+    .btn-case-action:hover { border-color: #533483; color: #a78bfa; background: rgba(83,52,131,0.15); }
+    .btn-case-action.rehearsal { border-color: rgba(124,58,237,0.3); color: #a78bfa; }
+    .btn-case-action.rehearsal:hover { background: rgba(124,58,237,0.15); }
+    .btn-case-action.delete { color: #777; }
+    .btn-case-action.delete:hover { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.08); }
 
     /* ── 空状態 ── */
     .empty-state {

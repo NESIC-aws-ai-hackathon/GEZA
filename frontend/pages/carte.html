@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <title>GEZA — 謝罪カルテ</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .carte-layout {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 16px 16px 48px;
+    }
+    .carte-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .carte-header h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #e0d4f7;
+      margin: 0;
+      flex: 1;
+    }
+    /* 傾向分析セクション */
+    .analysis-section {
+      background: rgba(124,58,237,0.06);
+      border: 1px solid rgba(124,58,237,0.2);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .analysis-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .analysis-comment {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .analysis-points {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .point-group { flex: 1; min-width: 130px; }
+    .point-group-title {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .point-chip {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin: 2px 2px 2px 0;
+    }
+    .point-chip.weak  { background: rgba(233,69,96,0.12); color: #e94560; border: 1px solid rgba(233,69,96,0.2); }
+    .point-chip.strong { background: rgba(46,204,113,0.1); color: #2ecc71; border: 1px solid rgba(46,204,113,0.2); }
+    .analysis-advice {
+      font-size: 12px;
+      color: #a78bfa;
+      line-height: 1.5;
+      padding: 8px 10px;
+      background: rgba(124,58,237,0.08);
+      border-radius: 8px;
+    }
+    /* カルテカード */
+    .karte-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .karte-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .karte-card:hover {
+      border-color: rgba(124,58,237,0.4);
+      background: rgba(124,58,237,0.05);
+    }
+    .karte-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .karte-degree-badge {
+      flex-shrink: 0;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .karte-meta { flex: 1; min-width: 0; }
+    .karte-summary {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e0e0e0;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .karte-date {
+      font-size: 10px;
+      color: #666;
+    }
+    .karte-status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .status-chip {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .status-chip.planned   { background: rgba(255,255,255,0.07); color: #888; }
+    .status-chip.practiced { background: rgba(243,156,18,0.12); color: #f39c12; }
+    .status-chip.completed { background: rgba(46,204,113,0.12); color: #2ecc71; }
+    .karte-trust {
+      font-size: 10px;
+      color: #888;
+    }
+
+    /* 空状態 */
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: #555;
+    }
+    .empty-state-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-state-text { font-size: 14px; line-height: 1.6; }
+
+    /* ローディング */
+    .loading-state {
+      text-align: center;
+      padding: 32px;
+      color: #888;
+      font-size: 13px;
+    }
+    .loading-spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 謝罪角度カラー */
+    .degree-0   { background: #27ae60; }
+    .degree-45  { background: #f39c12; }
+    .degree-75  { background: #e67e22; }
+    .degree-100 { background: #e74c3c; }
+    .degree-135 { background: #8e44ad; }
+    .degree-165 { background: #2c3e50; }
+
+    /* カルテカードアクション */
+    .karte-card-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .karte-delete-btn {
+      background: none;
+      border: 1px solid rgba(233,69,96,0.2);
+      color: #777;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .karte-delete-btn:hover {
+      background: rgba(233,69,96,0.1);
+      color: #e94560;
+      border-color: rgba(233,69,96,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="global-banner" class="global-banner" role="alert" aria-live="assertive"></div>
+
+  <div class="app-container">
+    <header class="app-header" data-testid="app-header">
+      <button id="back-btn" class="app-header-logout" type="button"
+        style="left:16px; right:auto;" aria-label="戻る">← 戻る</button>
+      <div class="app-header-brand">
+        <img src="../icons/geza_icon.png" alt="GEZA" class="app-header-icon" />
+        <span class="app-header-title">GEZA</span>
+      </div>
+      <button id="logout-btn" class="app-header-logout" type="button">ログアウト</button>
+    </header>
+
+    <main style="overflow-y:auto; flex:1;">
+      <div class="carte-layout">
+        <div class="carte-header">
+          <h1>📁 謝罪カルテ</h1>
+        </div>
+
+        <!-- 傾向分析 -->
+        <div class="analysis-section" id="analysis-section">
+          <div class="analysis-title">🔍 謝罪傾向分析</div>
+          <div id="analysis-content">
+            <div class="loading-state">
+              <span class="loading-spinner"></span>分析中...
+            </div>
+          </div>
+        </div>
+
+        <!-- カルテ一覧 -->
+        <div id="karte-list-container">
+          <div class="loading-state">
+            <span class="loading-spinner"></span>読み込み中...
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="carte.js"></script>
+</body>
+</html>

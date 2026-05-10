@@ -34,6 +34,14 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       const cases = raw ? JSON.parse(raw) : [];
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cases.filter((c) => c.id !== id)));
+      // 削除済みリストに追加（API再取得時にも非表示にするため）
+      try {
+        const deletedIds = JSON.parse(localStorage.getItem("geza_deleted_cases") || "[]");
+        if (!deletedIds.includes(id)) {
+          deletedIds.push(id);
+          localStorage.setItem("geza_deleted_cases", JSON.stringify(deletedIds));
+        }
+      } catch { /* ignore */ }
       // Todoも一緒に削除
       try {
         const allTodos = JSON.parse(localStorage.getItem(TODOS_KEY) || "{}");
@@ -76,29 +84,30 @@
 
   function _renderTodos() {
     const listEl   = document.getElementById("todo-list");
-    const emptyEl  = document.getElementById("todo-empty");
-    const badge    = document.getElementById("todo-count-badge");
     const progress = document.getElementById("todo-progress");
+    const todoDot  = document.getElementById("todo-dot");
     if (!listEl) return;
 
     const todos = _getTodoItems();
     const total = todos.length;
     const done  = todos.filter(function (t) { return t.done; }).length;
 
-    if (badge)    badge.textContent = total + "件";
-    if (progress) progress.textContent = total ? (done + "/" + total + " 完了") : "";
+    if (progress) progress.textContent = total ? (done + "/" + total) : "";
+    if (todoDot) {
+      if (total > 0 && done === total) todoDot.classList.replace("active", "done");
+      else if (todoDot.classList.contains("done")) todoDot.classList.replace("done", "active");
+    }
 
     listEl.textContent = "";
     if (total === 0) {
       const msg = document.createElement("div");
-      msg.className = "todo-empty";
-      msg.textContent = "謝罪プランに Todo が含まれません";  // XSS-01
+      msg.style.cssText = "font-size:12px;color:#555;text-align:center;padding:10px 0;";
+      msg.textContent = "謝罪プランにTodoが含まれません";
       listEl.appendChild(msg);
       return;
     }
-    if (emptyEl) emptyEl.remove();
 
-    todos.forEach(function (todo) {
+    todos.forEach(function (todo, idx) {
       const item = document.createElement("div");
       item.className = "todo-item" + (todo.done ? " done" : "");
 
@@ -107,41 +116,111 @@
       cb.className = "todo-checkbox";
       cb.checked = todo.done;
       cb.setAttribute("aria-label", todo.task + " 完了トグル");
-      cb.addEventListener("change", function () {
+      cb.addEventListener("change", function (e) {
+        e.stopPropagation();
         const dm = _loadTodoDone();
         dm[todo.id] = cb.checked;
         _saveTodoDone(dm);
         _renderTodos();
       });
 
-      const txt = document.createElement("div");
-      txt.style.flex = "1";
+      const main = document.createElement("div");
+      main.className = "todo-main";
       const taskSpan = document.createElement("span");
       taskSpan.className = "todo-text";
-      taskSpan.textContent = todo.task;  // XSS-01
-      txt.appendChild(taskSpan);
+      taskSpan.textContent = todo.task;
+      main.appendChild(taskSpan);
 
       if (todo.deadline || todo.priority) {
         const meta = document.createElement("div");
-        meta.style.cssText = "font-size:10px;color:#666;margin-top:2px;";
+        meta.className = "todo-meta";
         const parts = [];
         if (todo.deadline) parts.push("期限: " + todo.deadline);
-        if (todo.priority) parts.push("優先度: " + todo.priority);
-        meta.textContent = parts.join(" / ");  // XSS-01
-        txt.appendChild(meta);
+        if (todo.priority) parts.push(todo.priority);
+        meta.textContent = parts.join(" / ");
+        main.appendChild(meta);
       }
 
+      // 展開可能な詳細エリア
+      const detail = document.createElement("div");
+      detail.className = "todo-detail";
+      detail.id = "todo-detail-" + idx;
+
+      const detailText = document.createElement("div");
+      detailText.style.cssText = "font-size:11px;color:#999;margin-bottom:6px;";
+      detailText.textContent = "このタスクについてコンシェルジュに相談できます";
+      detail.appendChild(detailText);
+
+      const chatRow = document.createElement("div");
+      chatRow.className = "todo-detail-chat";
+      const chatInput = document.createElement("input");
+      chatInput.type = "text";
+      chatInput.className = "todo-detail-input";
+      chatInput.placeholder = "例: このタスクの進め方は？";
+      chatInput.maxLength = 200;
+      const chatSend = document.createElement("button");
+      chatSend.type = "button";
+      chatSend.className = "todo-detail-send";
+      chatSend.textContent = "相談";
+      chatSend.addEventListener("click", function () {
+        const q = chatInput.value.trim();
+        if (!q) return;
+        // メインのコンシェルジュにTodo文脈付きで送信
+        const chatInputMain = document.getElementById("chat-input");
+        if (chatInputMain) {
+          chatInputMain.value = "【Todo: " + todo.task + "】" + q;
+          chatInputMain.dispatchEvent(new Event("input"));
+          _sendMessage();
+        }
+        chatInput.value = "";
+        // コンシェルジュセクションまでスクロール
+        var concierge = document.querySelector(".concierge-section");
+        if (concierge) concierge.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      chatRow.appendChild(chatInput);
+      chatRow.appendChild(chatSend);
+      detail.appendChild(chatRow);
+      main.appendChild(detail);
+
+      // クリックで展開/折りたたみ
+      item.addEventListener("click", function (e) {
+        if (e.target.tagName === "INPUT") return;
+        const isOpen = detail.classList.contains("open");
+        // 他の全てを閉じる
+        document.querySelectorAll(".todo-detail.open").forEach(function (el) {
+          el.classList.remove("open");
+        });
+        if (!isOpen) detail.classList.add("open");
+      });
+
       item.appendChild(cb);
-      item.appendChild(txt);
+      item.appendChild(main);
       listEl.appendChild(item);
     });
   }
 
   function _setupTodo() {
     _renderTodos();
-    // 入力欄は不要（AI生成Todoのみ表示）ので非表示に
-    const addRow = document.getElementById("todo-add-row");
-    if (addRow) addRow.style.display = "none";
+  }
+
+  // ── タイムライン折りたたみ ──
+  function _setupTimeline() {
+    document.querySelectorAll(".timeline-header[data-toggle]").forEach(function (header) {
+      header.addEventListener("click", function () {
+        var targetId = header.dataset.toggle;
+        var body = document.getElementById(targetId);
+        var icon = header.querySelector(".timeline-expand-icon");
+        if (!body) return;
+        var isCollapsed = body.classList.contains("collapsed");
+        if (isCollapsed) {
+          body.classList.remove("collapsed");
+          if (icon) icon.textContent = "▼";
+        } else {
+          body.classList.add("collapsed");
+          if (icon) icon.textContent = "▶";
+        }
+      });
+    });
   }
 
   // ── ページ描画 ──
@@ -300,31 +379,7 @@
     }
   }
 
-  // ── 直前確認 ──
-  function _setupPrecheck() {
-    const btn = document.getElementById("btn-precheck");
-    if (!btn || !_case) return;
-    btn.addEventListener("click", function () {
-      // プランセクションへスクロールしてハイライト
-      const planEl = document.getElementById("plan-section");
-      if (planEl) {
-        planEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        planEl.style.outline = "2px solid #7c3aed";
-        setTimeout(function () { planEl.style.outline = ""; }, 1500);
-      }
-      // プランコンテンツが空の場合はコンシェルジュに直前確認を依頼
-      const apPlan = _case.apologyPlan || {};
-      if (!apPlan.first_words && !apPlan.timing) {
-        const chatInput = document.getElementById("chat-input");
-        if (chatInput) {
-          chatInput.value = "直前確認をおねがいします。当日のチェックリストを教えてください。";
-          chatInput.dispatchEvent(new Event("input"));
-          const chatEl = document.querySelector(".concierge-section");
-          if (chatEl) chatEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }
-    });
-  }
+  // ── 直前確認 ── （削除済み）
 
   // ── コンシェルジュチャット ──
   function _appendBubble(role, text) {
@@ -405,12 +460,27 @@
         ? todoItems.map((t, i) => `${i + 1}. [${t.priority}] ${t.task}（期限: ${t.deadline}）${t.done ? " ✓完了" : ""}`).join("\n")
         : "（TODOなし）";
 
+      // メールスレッドの要約を生成
+      let mailSummary = "(メールやり取りなし)";
+      try {
+        const mailRaw = localStorage.getItem("geza_mail_thread_" + _case.id);
+        const mailThread = mailRaw ? JSON.parse(mailRaw) : [];
+        if (mailThread.length > 0) {
+          mailSummary = mailThread.map(function (m) {
+            const dir = m.type === "received" ? "【受信】" : "【送信】";
+            const content = (m.content || "").slice(0, 100);
+            return dir + " " + content + (m.content && m.content.length > 100 ? "..." : "");
+          }).join("\n");
+        }
+      } catch (e) { /* ignore */ }
+
       const resp = await ApiClient.post("/plan/consult", {
         incident_summary:     _case ? (_case.enrichedSummary || _case.incidentSummary || "") : "",
         opponent_type:        op.type        || "不明",
         opponent_anger_level: op.anger_level || 50,
         current_plan_summary: plan.first_words || "",
         current_todo_list:    todoSummary,
+        mail_thread_summary:  mailSummary,
         conversation_history: histCopy,
         user_message:         text,
       });
@@ -500,11 +570,164 @@
       btnRehearsal.addEventListener("click", _launchRehearsal);
     }
 
+    // フォローメール・再発防止策ページへ遷移
+    const btnFollowMail = document.getElementById("btn-follow-mail");
+    if (btnFollowMail) {
+      btnFollowMail.addEventListener("click", function () {
+        if (!_case) return;
+        // feedback-detail.js が必要とする practiceResult を最小構成でセット
+        const minimalResult = {
+          opponentProfile:    _case.opponentProfile || {},
+          conversationHistory: [],
+          problems:           [],
+          improvedApologyText: "",
+          finalTrustScore:    30,
+          finalAngryScore:    50,
+          turnCount:          0,
+          ngWordCount:        0,
+          sessionResult:      "give_up",
+        };
+        StateManager.setPersistent("practiceResult", minimalResult);
+        // 戻り先を case-detail として記録
+        StateManager.setPersistent("feedbackDetailSource", "case-detail");
+        if (_animator) _animator.stop();
+        window.location.assign("feedback-detail.html");
+      });
+    }
+
+    // メール対応ページへ遷移
+    const btnMailThread = document.getElementById("btn-mail-thread");
+    if (btnMailThread) {
+      btnMailThread.addEventListener("click", function () {
+        if (_animator) _animator.stop();
+        window.location.assign("mail-thread.html");
+      });
+    }
+
+    // メールスレッドバッジ表示
+    _updateMailThreadBadge();
+
     const logoutBtn = document.getElementById("logout-btn");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", async function () {
         try { await AuthModule.logout(); } catch { /* ignore */ }
         window.location.assign("../index.html");
+      });
+    }
+  }
+
+  // ── メールスレッドバッジ ──
+  function _updateMailThreadBadge() {
+    const badge = document.getElementById("mail-thread-badge");
+    if (!badge || !_case) return;
+    try {
+      const raw = localStorage.getItem("geza_mail_thread_" + _case.id);
+      const thread = raw ? JSON.parse(raw) : [];
+      if (thread.length > 0) {
+        badge.textContent = "📬 " + thread.length + "通のやり取りがあります";
+        badge.style.display = "block";
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  // ── 謝罪完了モーダル ─────────────────────────────────────────────────────
+  let _selectedOutcome = null;
+
+  function _setupCompleteModal() {
+    const btnComplete  = document.getElementById("btn-complete");
+    const modal        = document.getElementById("complete-modal");
+    const btnCancel    = document.getElementById("btn-complete-cancel");
+    const btnSubmit    = document.getElementById("btn-complete-submit");
+    const errEl        = document.getElementById("complete-modal-error");
+    const outcomeButtons = document.querySelectorAll(".outcome-btn");
+
+    if (!btnComplete || !modal) return;
+
+    // 既に完了済みかどうかを localStorage から確認（案件IDベース）
+    const completedKey = "geza_completed_" + (_case ? _case.id : "");
+    const isCompleted  = localStorage.getItem(completedKey) === "1";
+
+    const badgeWrap = document.getElementById("complete-badge-wrap");
+    if (isCompleted) {
+      if (badgeWrap) badgeWrap.style.display = "block";
+    } else {
+      btnComplete.style.display = "block";
+    }
+
+    btnComplete.addEventListener("click", function () {
+      _selectedOutcome = null;
+      outcomeButtons.forEach((b) => b.classList.remove("selected"));
+      if (btnSubmit) btnSubmit.disabled = true;
+      if (errEl) errEl.style.display = "none";
+      const notes = document.getElementById("complete-notes");
+      if (notes) notes.value = "";
+      modal.classList.add("visible");
+    });
+
+    outcomeButtons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        _selectedOutcome = btn.dataset.outcome;
+        outcomeButtons.forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        if (btnSubmit) btnSubmit.disabled = false;
+      });
+    });
+
+    if (btnCancel) {
+      btnCancel.addEventListener("click", function () {
+        modal.classList.remove("visible");
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) modal.classList.remove("visible");
+      });
+    }
+
+    if (btnSubmit) {
+      btnSubmit.addEventListener("click", async function () {
+        if (!_selectedOutcome) return;
+        const notes = (document.getElementById("complete-notes") || {}).value || "";
+
+        btnSubmit.disabled = true;
+        if (errEl) errEl.style.display = "none";
+
+        try {
+          const sessionId = _case ? _case.id : null;
+          if (sessionId) {
+            const actualResult = JSON.stringify({
+              outcome:      _selectedOutcome,
+              notes:        notes.slice(0, 500),
+              completed_at: new Date().toISOString(),
+            });
+            await ApiClient.post("/sessions", {
+              session_id:    sessionId,
+              actual_result: actualResult,
+              apology_status: "completed",
+            });
+          }
+
+          // ローカルに完了フラグを保存
+          if (_case) localStorage.setItem("geza_completed_" + _case.id, "1");
+
+          // analyze-karte キャッシュを破棄（傾向分析を最新化）
+          StateManager.removePersistent("karteAnalysis");
+
+          modal.classList.remove("visible");
+
+          // UI 更新
+          if (btnComplete) btnComplete.style.display = "none";
+          if (badgeWrap)   badgeWrap.style.display = "block";
+
+        } catch (err) {
+          if (errEl) {
+            errEl.textContent = "記録に失敗しました: " + err.message;  // XSS-01
+            errEl.style.display = "block";
+          }
+          btnSubmit.disabled = false;
+          console.error("save-session complete error:", err);
+        }
       });
     }
   }
@@ -521,13 +744,29 @@
 
     _case = _loadCase(caseId);
     if (!_case) {
+      // キャッシュにない場合は API から全件取得してキャッシュを更新する
+      try {
+        await AuthModule.silentRefresh().catch(function () {});
+        const data = await ApiClient.get("/sessions");
+        const sessions = (data && Array.isArray(data.sessions)) ? data.sessions : [];
+        try {
+          localStorage.setItem("geza_cases", JSON.stringify(sessions));
+        } catch (e) { /* ignore */ }
+        _case = sessions.find(function (c) { return c.id === caseId; }) || null;
+      } catch (fetchErr) {
+        console.error("case fetch error:", fetchErr);
+      }
+    }
+
+    if (!_case) {
       window.location.assign("dashboard.html");
       return;
     }
 
     _setupNavigation();
     _setupDeleteModal();
-    _setupPrecheck();
+    _setupCompleteModal();
+    _setupTimeline();
     _renderPage(_case);
     _setupChat();
     _setupTodo();
@@ -548,3 +787,4 @@
     init();
   }
 })();
+

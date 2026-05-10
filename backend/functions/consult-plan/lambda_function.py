@@ -19,6 +19,7 @@ _SCHEMA = {
     "opponent_anger_level": {"type": "int",  "required": False},
     "current_plan_summary": {"type": "str",  "required": False},
     "current_todo_list":    {"type": "str",  "required": False},
+    "mail_thread_summary":  {"type": "str",  "required": False},
     "conversation_history": {"type": "list", "required": False},
     "user_message":         {"type": "str",  "required": True},
     "session_id":           {"type": "str",  "required": False},
@@ -76,8 +77,9 @@ def lambda_handler(event, context):
         "incident_summary":     validated.get("incident_summary", ""),
         "opponent_type":        validated.get("opponent_type", "不明"),
         "opponent_anger_level": str(validated.get("opponent_anger_level", 50)),
-        "current_plan_summary": validated.get("current_plan_summary", "（プランなし）"),
-        "current_todo_list":    validated.get("current_todo_list", "（TODOなし）"),
+        "current_plan_summary": validated.get("current_plan_summary", "(プランなし)"),
+        "current_todo_list":    validated.get("current_todo_list", "(TODOなし)"),
+        "mail_thread_summary":  validated.get("mail_thread_summary", "(メールやり取りなし)"),
         "user_message":         validated.get("user_message", ""),
     }
 

@@ -48,8 +48,8 @@
       label: "謝罪カルテ",
       icon: "📋",
       desc: "謝罪履歴と分析",
-      target: "pages/karte.html",
-      available: false,
+      target: "pages/carte.html",
+      available: true,
     },
     {
       id: "manager",

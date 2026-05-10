@@ -1408,6 +1408,25 @@ prototype/
 
 ---
 
+## エントリ 091 - U3 Functional Design 承認
+- **日時**: 2026-05-07T09:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U3 Functional Design（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **生成ファイル**: `aidlc-docs/construction/U3/functional-design.md`
+- **設計要点**:
+  - practice.html（独立ページ）+ feedback.html（独立ページ・U4拡張土台）
+  - Transcribe Streaming 直接 WebSocket（Cognito Identity Pool 経由）→ U3 で Identity Pool を追加
+  - テキスト入力 + マイクボタン常時並列表示
+  - evaluate-apology: 同期呼び出し（Nova Lite fast プロファイル）
+  - クリア条件: 信頼度 ≥ 80 AND 怒り度 ≤ 20 OR 手動終了ボタン
+  - フォールバック: 1回目固定返答 → 2回連続エラーでエラー通知（C複合型）
+  - フィードバック: generate-feedback Lambda（Claude Sonnet）呼び出し
+  - 会話履歴: フロントエンドメモリのみ（DynamoDB 保存なし）
+  - 新規インフラ: CognitoIdentityPool + GezaAuthenticatedRole（Transcribe 権限）
+- **次のステージ**: U3 NFR Requirements
+
+---
+
 ## エントリ 092 - U3 NFR Requirements 承認
 - **日時**: 2026-05-07T09:45:00+09:00
 - **フェーズ**: CONSTRUCTION - U3 NFR Requirements（承認）
@@ -1461,7 +1480,7 @@ prototype/
 
 ---
 
-## エントリ 096 - U3 Code Generation 完了
+## エントリ 095 - U3 Code Generation 完了
 - **日時**: 2026-05-06T11:00:00+09:00
 - **フェーズ**: CONSTRUCTION - U3 Code Generation
 - **実装内容**:
@@ -1486,7 +1505,7 @@ prototype/
 - **日時**: 2026-05-06T10:20:00+09:00
 - **フェーズ**: CONSTRUCTION - U3 Infrastructure Design（承認）
 
-## エントリ 097 - U3 Deploy & Test 完了
+## エントリ 096 - U3 Deploy & Test 完了
 - **日時**: 2026-05-07T11:00:00+09:00
 - **フェーズ**: CONSTRUCTION - U3 Deploy & Test
 - **実施内容**:
@@ -1515,26 +1534,8 @@ prototype/
 
 ---
 
-## エントリ 091 - U3 Functional Design 承認
-- **日時**: 2026-05-07T09:30:00+09:00
-- **フェーズ**: CONSTRUCTION - U3 Functional Design（承認）
-- **ユーザー入力（原文）**: 「承認します」
-- **生成ファイル**: `aidlc-docs/construction/U3/functional-design.md`
-- **設計要点**:
-  - practice.html（独立ページ）+ feedback.html（独立ページ・U4拡張土台）
-  - Transcribe Streaming 直接 WebSocket（Cognito Identity Pool 経由）→ U3 で Identity Pool を追加
-  - テキスト入力 + マイクボタン常時並列表示
-  - evaluate-apology: 同期呼び出し（Nova Lite fast プロファイル）
-  - クリア条件: 信頼度 ≥ 80 AND 怒り度 ≤ 20 OR 手動終了ボタン
-  - フォールバック: 1回目固定返答 → 2回連続エラーでエラー通知（C複合型）
-  - フィードバック: generate-feedback Lambda（Claude Sonnet）呼び出し
-  - 会話履歴: フロントエンドメモリのみ（DynamoDB 保存なし）
-  - 新規インフラ: CognitoIdentityPool + GezaAuthenticatedRole（Transcribe 権限）
-- **次のステージ**: U3 NFR Requirements
 
----
-
-## エントリ 098 - U3 デプロイ後バグ修正（別端末案件共有・謝罪プラン表示・フォールバック動作）
+## エントリ 097 - U3 デプロイ後バグ修正（別端末案件共有・謝罪プラン表示・フォールバック動作）
 - **日時**: 2026-05-09T13:00:00+09:00
 - **フェーズ**: CONSTRUCTION - U3 Post-Deploy Bug Fix
 - **トリガー**: ユーザー報告（①別端末から案件が見えない ②謝罪プランが表示されない ③「少し考えさせてください」+メーター上昇）
@@ -1566,7 +1567,7 @@ prototype/
 
 ---
 
-## エントリ 099 - コンシェルジュTODO/プラン反映機能追加
+## エントリ 098 - コンシェルジュTODO/プラン反映機能追加
 - **日時**: 2026-05-09T14:15:00+09:00
 - **フェーズ**: CONSTRUCTION - U3 Enhancement（U2-EXT 連携強化）
 - **トリガー**: ユーザー要求「GEZAコンシェルジュに相談した内容については必要に応じてTODOリストや謝罪プランに反映されるようにしてほしい」
@@ -1592,3 +1593,186 @@ prototype/
   - `backend/prompts/consult_plan.txt`（TODOリストセクション + 更新ルール追加）
   - `frontend/pages/case-detail.js`（_sendMessage でTODO連携）
   - `aidlc-docs/construction/U3/functional-design.md`（Step 5 に /plan/consult 拡張仕様追記）
+
+---
+
+## エントリ 100 - U4 Functional Design Plan 作成・ユーザー回答受信
+- **日時**: 2026-05-10T09:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Functional Design（Part 1: Planning）
+- **アクション**: `aidlc-docs/construction/U4/functional-design-plan.md` 作成（Q1〜Q8 埋め込み）
+- **ユーザー回答サマリー**:
+  - Q1=B: feedback.html 保持 + feedback-detail.html 新規作成
+  - Q2=B: generate-prevention / generate-follow-mail を別 Lambda、ボタン押下時に個別呼び出し
+  - Q3=C: 固定5項目 + AI 追加項目の組み合わせチェックリスト
+  - Q4=C: U2完了時（既存） + U3完了時（practice_result/feedback_result） + 謝罪完了ボタン（actual_result）の3段階保存
+  - Q5=Custom: カルテは謝罪後の実際の結果を蓄積。case-detail.html に「謝罪完了を記録する」ボタン追加。outcome（3択）+ notes を DynamoDB に保存する方式
+  - Q6=A: analyze-karte を U4 MVP で実装（Nova Lite による傾向分析コメント生成）
+  - Q7=B: メタデータ + generate-feedback 返却結果（problems / improved_apology_text / overall_comment）を DynamoDB 保存
+  - Q8=A: opponentProfile の情報をもとに AI が適切な敬語レベルで自動判断
+- **曖昧性確認**: Q5 は自由記述だが設計方針明確。ambiguity なし。Functional Design 生成に進む。
+
+## エントリ 101 - U4 Functional Design 成果物生成完了
+- **日時**: 2026-05-10T09:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Functional Design（Part 2: 成果物生成）
+- **生成ファイル**: `aidlc-docs/construction/U4/functional-design.md`
+- **設計要点**:
+  - **画面構成**: feedback-detail.html（新規）+ carte.html（新規）+ feedback.html 拡張 + case-detail.html 拡張
+  - **API**: /prevention/generate（generate-prevention）/ /mail/generate（generate-follow-mail）/ /karte（get-karte）/ /karte/analyze（analyze-karte）/ save-session UPDATE 拡張
+  - **save-session 拡張**: `_SCHEMA_UPDATE` に practice_result / feedback_result / actual_result / apology_status を追加
+  - **チェックリスト**: 固定5項目（静的）+ AI 追加項目（generate-prevention が返却）
+  - **謝罪完了フロー**: case-detail.html の「謝罪完了を記録する」ボタン → モーダル（outcome 3択 + notes）→ save-session UPDATE（apology_status="completed"）
+  - **analyze-karte**: セッション数 ≥ 2 で Nova Lite 分析、1件は固定メッセージ
+  - **セキュリティ**: XSS-01（textContent のみ）/ PRIVACY-01（実名を含めないよう注記）/ PROMPT-01（input_validator 全 Lambda 適用）
+- **成果物ファイル一覧**: 13ファイル（新規6 / 更新7）
+- **次のステージ**: U4 NFR Requirements
+
+## エントリ 102 - U4 Functional Design 承認
+- **日時**: 2026-05-10T09:45:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Functional Design（承認）
+- **ユーザー入力（原文）**: 「承認します」
+- **生成ファイル**: `aidlc-docs/construction/U4/functional-design.md`
+- **次のステージ**: U4 NFR Requirements
+
+## エントリ 103 - U4 NFR Requirements 生成・承認
+- **日時**: 2026-05-10T10:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 NFR Requirements
+- **生成ファイル**: `aidlc-docs/construction/U4/nfr-requirements.md`
+- **主要決定事項**:
+  - Q1: generate-prevention / generate-follow-mail → 同期29s（入力軽量・U3パターン踏襲）
+  - Q2: analyze-karte → sessionStorage キャッシュ（謝罪完了記録時に破棄）
+  - Q3: チェックリスト状態 → localStorage のみ（WCU節約）
+  - Q4: get-karte → 最新50件（≈500KB以下）
+  - Q5: CloudFront 設定変更なし（HTML TTL=0継続）
+  - U4 追加コスト: ≈$1.4/月（合計 ≈$94.4/月）
+- **ユーザー入力（原文）**: 「承認します」
+- **次のステージ**: U4 NFR Design
+
+## エントリ 104 - U4 NFR Design 生成・承認
+- **日時**: 2026-05-10T10:15:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 NFR Design
+- **生成ファイル**: `aidlc-docs/construction/U4/nfr-design.md`
+- **主要設計決定事項**:
+  - generate-prevention / generate-follow-mail: 同期29s・ローディングUI（U3パターン踏襲）
+  - get-karte: ScanIndexForward=False + Limit=50 → Python 側で updated_at 降順ソート
+  - analyze-karte: sessionStorage キャッシュ・sessions < 2 は固定メッセージ（Bedrock 不要）
+  - save-session UPDATE 拡張: _SCHEMA_UPDATE に 4フィールド追加・apology_status 許容値バリデーション（planned/practiced/completed）
+  - エラーハンドリング: practice_result 失敗 → silent fail / actual_result 失敗 → モーダル内エラー
+  - チェックリスト状態: `geza_checklist_{caseId}` localStorage キー規則
+- **ユーザー入力（原文）**: 「承認します」
+- **次のステージ**: U4 Infrastructure Design
+
+## エントリ 105 - U4 Infrastructure Design 生成・承認
+- **日時**: 2026-05-10T10:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Infrastructure Design
+- **生成ファイル**: `aidlc-docs/construction/U4/infrastructure-design.md`
+- **主要設計決定事項**:
+  - 新規 Lambda 4本: generate-prevention（1024MB/29s）/ generate-follow-mail（1024MB/29s）/ get-karte（256MB/10s）/ analyze-karte（256MB/10s）
+  - API GW 4エンドポイント追加（全て Cognito JWT 認証）
+  - save-session: Lambda コード更新のみ（SAM リソース定義変更なし）
+  - S3 prompts: プロンプト3ファイル追加
+  - S3 static: 新規2ページ + 既存3ファイル更新
+  - デプロイ: 初回 `sam deploy`（新規 Lambda 作成）/ 以降 ZIP 直接アップロード
+- **ユーザー入力（原文）**: 「承認します」
+- **次のステージ**: U4 Code Generation
+
+## エントリ 106 - U4 Code Generation 完了
+- **日時**: 2026-05-10T11:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Code Generation
+- **変更ファイル一覧**:
+  - **Backend Lambda（実装）**: `generate-prevention` / `generate-follow-mail` / `get-karte` / `analyze-karte`（stub → 本実装）
+  - **Backend Lambda（更新）**: `save-session`（_SCHEMA_UPDATE 4フィールド追加・apology_status バリデーション追加）
+  - **プロンプト（更新）**: `generate_prevention.txt` / `generate_follow_mail.txt`（U4 仕様に刷新）
+  - **プロンプト（新規）**: `analyze_karte.txt`
+  - **フロントエンド（新規）**: `feedback-detail.html` / `feedback-detail.js` / `carte.html` / `carte.js`
+  - **フロントエンド（更新）**: `case-detail.html`（謝罪完了モーダル追加）/ `case-detail.js`（_setupCompleteModal 追加）/ `feedback.html`（詳細ボタン追加）/ `feedback.js`（save-session 呼び出し + feedback-detail リンク）
+  - **template.yaml**: generate-prevention / generate-follow-mail を 1024MB/29s/正しいポリシーに修正（非ASCII文字除去も実施）
+- **次のステージ**: U4 Deploy & Test
+
+## エントリ 107 - U4 Deploy & Test 完了
+- **日時**: 2026-05-10T12:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Deploy & Test
+- **実施内容**:
+  - `sam deploy` 成功（`UPDATE_COMPLETE`、全リソース更新）
+  - template.yaml 非ASCII文字（U+2500/U+2001）除去・BOM除去・AWSTemplateFormatVersion 修正
+  - S3 プロンプトアップロード: `generate_prevention.txt` / `generate_follow_mail.txt` / `analyze_karte.txt`
+  - `save-session` Lambda ZIP 直接アップロード
+  - 静的ファイル S3 sync: 21ファイル更新
+  - CloudFront Invalidation: `I7QXAUHN7XCL6KIDD64EIF0MJK`
+- **スモークテスト結果**:
+  - `POST /prevention/generate` → 401 ✅
+  - `GET /karte` → 401 ✅
+  - `GET /pages/feedback-detail.html` → 200 ✅
+  - `GET /pages/carte.html` → 200 ✅
+  - DynamoDB `geza-data` → ACTIVE ✅
+- **次のステージ**: U4 完了 → U5 へ
+
+## エントリ 108 - U4 Post-Deploy 追加実装（メールスレッド・カルテUI改善）
+- **日時**: 2026-05-10T13:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Post-Deploy Enhancement
+- **ユーザーリクエスト（原文）**: 「カルテモードから案件を削除できるようにして / 実案件モードで削除したものもカルテでは削除して / 謝罪完了済みのものもカルテで完了済みにならない / カルテでは実案件モードの案件詳細に行くのではなく、カルテ専用のUIに行くようにして」
+- **追加実装内容**:
+  - **メールスレッド機能**:
+    - `backend/functions/generate-mail-reply/lambda_function.py` 新規（POST /mail/reply, Claude Sonnet premium）
+    - `backend/prompts/generate_mail_reply.txt` 新規
+    - `frontend/pages/mail-thread.html / mail-thread.js` 新規（受信メール入力 → AI 返信生成 → 編集 → 保存 → スレッド表示）
+    - `frontend/pages/case-detail.html / case-detail.js` 更新（フォローメール・メール対応ボタン追加 / _updateMailThreadBadge / mail_thread_summary 送信）
+    - `frontend/pages/feedback-detail.html / feedback-detail.js` 更新（_saveFollowMailToThread / feedbackDetailSource 制御）
+    - `backend/functions/consult-plan/lambda_function.py` 更新（mail_thread_summary 対応）
+    - `backend/prompts/consult_plan.txt` 更新（メールスレッド要約セクション追加）
+    - `template.yaml` 更新（GenerateMailReplyFunction / GenerateMailReplyLogGroup 追加）
+  - **カルテUI 4要件**:
+    - `frontend/pages/carte.js` 更新（_getDeletedIds / フィルタ / effectiveStatus 計算 / _deleteKarteEntry / karte-detail 遷移）
+    - `frontend/pages/carte.html` 更新（.karte-card-actions / .karte-delete-btn CSS 追加）
+    - `frontend/pages/karte-detail.html` 新規（読み取り専用カルテ詳細ビュー）
+    - `frontend/pages/karte-detail.js` 新規（KarteDetailController）
+  - **バックエンド修正**:
+    - `backend/functions/get-sessions/lambda_function.py` 更新（apologyStatus / mailThread フィールド追加）
+    - `backend/functions/get-karte/lambda_function.py` 更新（mail_thread フィールド追加）
+    - `backend/functions/case-detail.js` 更新（ApiClient.put → post 修正 / APIフォールバック追加）
+- **デプロイ**: S3 sync 16ファイル / CloudFront Invalidation `IANADV4KBIYI67UW81FZ6A9073`
+- **スモークテスト**: CloudFront 200 / API 401 / DynamoDB ACTIVE ✅
+
+## エントリ 109 - U4 スコープ完了確認
+
+- **日時**: 2026-05-10T14:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 Scope Verification
+
+### U4 対象ストーリー検証
+
+| ストーリーID | タイトル | AC確認 | 実装ファイル |
+|------------|---------|:------:|------------|
+| US-501 | 再発防止策を生成する | ✅ | generate-prevention Lambda / feedback-detail.js |
+| US-502 | フォローメール案を生成する | ✅ | generate-follow-mail Lambda / feedback-detail.js |
+| US-209 | 謝罪準備チェックリストを生成する | ✅ | feedback-detail.js（固定5項目 + AI 追加項目） |
+| US-601 | 謝罪カルテに結果が保存される | ✅ | save-session（practice_result / actual_result / apology_status）/ case-detail 完了モーダル |
+| US-602 | 謝罪カルテを閲覧する | ✅ | get-karte / carte.html / karte-detail.html |
+| US-502 (EXT) | フォローメール返信・スレッド管理 | ✅ | generate-mail-reply / mail-thread.html / mail-thread.js |
+
+### セキュリティ対応確認
+- XSS-01（全 DOM 挿入は textContent のみ）: ✅ karte-detail.js / feedback-detail.js 含む全画面対応
+- SECURITY-08（input_validator.validate()）: ✅ generate-prevention / generate-follow-mail / generate-mail-reply 全 Lambda 適用
+- AUTH-05（requireAuth()）: ✅ feedback-detail.js / carte.js / karte-detail.js 全ページ先頭で呼び出し
+
+**結論**: U4 スコープ（US-501 / US-502 / US-209 / US-601 / US-602）全件完了 ✅（メールスレッド機能は追加実装として含む）
+
+## エントリ 110 - U4 承認
+
+- **日時**: 2026-05-10T14:30:00+09:00
+- **フェーズ**: CONSTRUCTION - U4 完了・承認
+- **ユーザー入力（原文）**: 「U4については承認します。AI-DLCに従って変更があった部分は成果物に反映、auditも更新しスコープの漏れがないことを確認してU5に進んでください」
+- **対応アクション**:
+  - `aidlc-docs/construction/U4/functional-design.md` に Post-Code-Generation 追加実装セクションを追記
+  - `aidlc-docs/inception/application-design/unit-of-work.md` の U4 ステータスを「完了（2026-05-10）」に更新
+  - `aidlc-docs/aidlc-state.md` の現在のステージを「U5 Functional Design 開始」に更新。U4 全ステージに [x] を付与
+  - `docs/requirements.md` の U4 完了状況を反映
+  - U4 スコープ完了確認（エントリ 109）
+  - U5 Functional Design Plan 作成・開始（エントリ 111）
+
+## エントリ 111 - U5 Functional Design 開始
+
+- **日時**: 2026-05-10T15:00:00+09:00
+- **フェーズ**: CONSTRUCTION - U5 Functional Design（Part 1: Planning）
+- **アクション**: `aidlc-docs/construction/U5/functional-design-plan.md` 作成。Q1〜Q8（設計確認事項）を含む計画ファイルをユーザーへ提示。ユーザーの回答待ち。
+- **対象ストーリー**: US-301（謝罪ストーリーを選択・生成する / 8SP）/ US-302（高難度の謝罪ボスに挑戦する / 5SP）
+- **対象 Lambda**: generate-story（Claude Sonnet premium）
+

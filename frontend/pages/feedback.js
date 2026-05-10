@@ -34,6 +34,12 @@
     document.getElementById("btn-top").addEventListener("click", () => {
       window.location.href = "../index.html";
     });
+    const btnDetail = document.getElementById("btn-detail");
+    if (btnDetail) {
+      btnDetail.addEventListener("click", () => {
+        window.location.href = "feedback-detail.html";
+      });
+    }
 
     // フィードバック生成（feedback.html 表示直後に自動呼び出し）
     await _loadAndRenderFeedback(feedbackData);
@@ -117,6 +123,42 @@
         card.textContent = result.overall_comment;
         section.appendChild(card);
         container.appendChild(section);
+      }
+
+      // U4: practice_result / feedback_result を save-session に保存（silent fail）
+      try {
+        const sessionId = StateManager.getPersistent("geza_current_case_id");
+        if (sessionId) {
+          const practiceResult = JSON.stringify({
+            final_angry:  data.finalAngryScore  ?? 50,
+            final_trust:  data.finalTrustScore  ?? 30,
+            turn_count:   data.turnCount        ?? 0,
+            ng_count:     data.ngWordCount       ?? 0,
+            session_result: data.sessionResult  ?? "give_up",
+          });
+          const feedbackResult = JSON.stringify({
+            problems:              result.problems              ?? [],
+            improved_apology_text: result.improved_apology_text ?? "",
+            overall_comment:       result.overall_comment       ?? "",
+          });
+          // 戻り値は無視（失敗してもサイレントに継続）
+          ApiClient.post("/sessions", {
+            session_id:      sessionId,
+            practice_result: practiceResult,
+            feedback_result: feedbackResult,
+            apology_status:  "practiced",
+          }).catch(function (e) {
+            console.warn("save-session silent fail:", e);
+          });
+          // feedback-detail.html 用に problems / improvedApologyText を保存
+          const merged = Object.assign({}, data, {
+            problems:             result.problems              ?? [],
+            improvedApologyText:  result.improved_apology_text ?? "",
+          });
+          StateManager.setPersistent("practiceResult", merged);
+        }
+      } catch (saveErr) {
+        console.warn("save-session setup error:", saveErr);
       }
 
     } catch (err) {

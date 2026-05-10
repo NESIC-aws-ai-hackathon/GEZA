@@ -65,6 +65,8 @@ def lambda_handler(event, context):
             "assessmentResult": _parse(item.get("assessment_result"), None),
             "practiceCount":    int(item.get("practice_count", 0) or 0),
             "apologyDate":      item.get("apology_date", ""),
+            "apologyStatus":    item.get("apology_status", "planned"),
+            "mailThread":       _parse(item.get("mail_thread"), []),
         })
 
     logger.info("Sessions listed", extra={"count": len(sessions)})

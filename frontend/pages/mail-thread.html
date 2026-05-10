@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <title>GEZA — メール対応</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon.png">
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .mt-layout {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px 16px 48px;
+    }
+    .mt-header {
+      margin-bottom: 20px;
+    }
+    .mt-header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0;
+    }
+    .mt-header-sub {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    /* コンセプトバナー */
+    .concept-banner {
+      background: linear-gradient(135deg, rgba(100,180,255,0.08), rgba(46,204,113,0.08));
+      border: 1px solid rgba(100,180,255,0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .concept-banner strong {
+      color: #7ecfff;
+    }
+
+    /* メールスレッドタイムライン */
+    .thread-section {
+      margin-bottom: 24px;
+    }
+    .thread-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .thread-empty {
+      text-align: center;
+      color: #666;
+      font-size: 13px;
+      padding: 24px;
+    }
+    .thread-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .mail-card {
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.7;
+      position: relative;
+    }
+    .mail-card.received {
+      background: rgba(233,69,96,0.08);
+      border: 1px solid rgba(233,69,96,0.25);
+      border-left: 3px solid #e94560;
+    }
+    .mail-card.sent {
+      background: rgba(46,204,113,0.08);
+      border: 1px solid rgba(46,204,113,0.25);
+      border-left: 3px solid #2ecc71;
+    }
+    .mail-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .mail-card-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .mail-card.received .mail-card-label { color: #e94560; }
+    .mail-card.sent .mail-card-label { color: #2ecc71; }
+    .mail-card-time {
+      font-size: 10px;
+      color: #666;
+    }
+    .mail-card-subject {
+      font-weight: 600;
+      color: #ddd;
+      margin-bottom: 4px;
+    }
+    .mail-card-body {
+      color: #bbb;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .mail-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      justify-content: flex-end;
+    }
+    .mail-card-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #aaa;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .mail-card-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* 受信メール入力 */
+    .input-section {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .input-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .input-area {
+      width: 100%;
+      min-height: 120px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: #eee;
+      font-size: 13px;
+      padding: 12px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.6;
+      box-sizing: border-box;
+    }
+    .input-area:focus {
+      outline: none;
+      border-color: rgba(100,180,255,0.4);
+    }
+    .input-area::placeholder { color: #555; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .btn-primary {
+      flex: 1;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #ccc;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+    /* AI返信プレビュー */
+    .reply-preview {
+      background: rgba(46,204,113,0.05);
+      border: 1px solid rgba(46,204,113,0.2);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .reply-preview.visible { display: block; }
+    .reply-preview-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2ecc71;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .reply-field-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .reply-subject-input {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #eee;
+      font-size: 13px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    .reply-subject-input:focus { outline: none; border-color: rgba(46,204,113,0.4); }
+    .reply-body-input {
+      width: 100%;
+      min-height: 160px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: #eee;
+      font-size: 13px;
+      padding: 12px;
+      resize: vertical;
+      font-family: inherit;
+      line-height: 1.6;
+      box-sizing: border-box;
+    }
+    .reply-body-input:focus { outline: none; border-color: rgba(46,204,113,0.4); }
+    .tone-advice {
+      font-size: 12px;
+      color: #7ecfff;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(100,180,255,0.06);
+      border-radius: 8px;
+    }
+    .reply-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-save-reply {
+      flex: 1;
+      background: #2ecc71;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save-reply:hover { background: #27ae60; }
+    .btn-copy-reply {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #ccc;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-copy-reply:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* コンシェルジュ連携 */
+    .consult-hint {
+      background: rgba(255,180,50,0.06);
+      border: 1px solid rgba(255,180,50,0.2);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #d4a853;
+      line-height: 1.6;
+    }
+
+    /* スピナー */
+    .loading-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* エラー */
+    .error-card {
+      padding: 14px;
+      background: rgba(233,69,96,0.1);
+      border: 1px solid rgba(233,69,96,0.3);
+      border-radius: 10px;
+      font-size: 13px;
+      color: #e94560;
+    }
+
+    /* スレッド統計 */
+    .thread-stats {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .stat-chip {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #aaa;
+    }
+    .stat-chip strong {
+      color: #ddd;
+      font-size: 16px;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="global-banner" class="global-banner" role="alert" aria-live="assertive"></div>
+
+  <div class="app-container">
+    <header class="app-header" data-testid="app-header">
+      <button id="back-btn" class="app-header-logout" type="button"
+        style="left:16px; right:auto;" aria-label="戻る">← 戻る</button>
+      <div class="app-header-brand">
+        <img src="../icons/geza_icon.png" alt="GEZA" class="app-header-icon" />
+        <span class="app-header-title">GEZA</span>
+      </div>
+      <button id="logout-btn" class="app-header-logout" type="button">ログアウト</button>
+    </header>
+
+    <main style="overflow-y:auto; flex:1;">
+      <div class="mt-layout">
+        <div class="mt-header">
+          <h1>✉️ メール対応アシスタント</h1>
+          <div class="mt-header-sub" id="case-summary-label"></div>
+        </div>
+
+        <!-- コンセプト -->
+        <div class="concept-banner">
+          <strong>人間がやるのは土下座だけ。</strong><br>
+          メールの返信もGEZAにおまかせ。貼り付けて送るだけ。
+        </div>
+
+        <!-- スレッド統計 -->
+        <div class="thread-stats" id="thread-stats" style="display:none;">
+          <div class="stat-chip"><strong id="stat-total">0</strong>通</div>
+          <div class="stat-chip"><strong id="stat-received">0</strong>受信</div>
+          <div class="stat-chip"><strong id="stat-sent">0</strong>送信</div>
+        </div>
+
+        <!-- 受信メール入力 -->
+        <div class="input-section">
+          <div class="input-section-title">📨 相手からのメールを貼り付け</div>
+          <textarea id="received-mail-input" class="input-area"
+            placeholder="相手から届いたメールの本文をここに貼り付けてください。&#10;件名も含めるとより適切な返信を生成できます。"></textarea>
+          <div class="btn-row">
+            <button id="btn-generate-reply" class="btn-primary" type="button">
+              <span class="loading-spinner" id="spinner-reply" style="display:none;"></span>
+              <span id="label-reply">🤖 AI返信を自動生成</span>
+            </button>
+            <button id="btn-save-received" class="btn-secondary" type="button">
+              📥 受信だけ保存
+            </button>
+          </div>
+          <div id="generate-error" style="display:none;"></div>
+        </div>
+
+        <!-- AI返信プレビュー（編集可能） -->
+        <div class="reply-preview" id="reply-preview">
+          <div class="reply-preview-title">🤖 AI生成の返信案（自由に編集できます）</div>
+          <div class="reply-field-label">件名</div>
+          <input type="text" id="reply-subject" class="reply-subject-input" maxlength="100" />
+          <div class="reply-field-label">本文</div>
+          <textarea id="reply-body" class="reply-body-input"></textarea>
+          <div class="tone-advice" id="tone-advice" style="display:none;"></div>
+          <div class="reply-actions">
+            <button id="btn-save-reply" class="btn-save-reply" type="button">
+              💾 保存してスレッドに追加
+            </button>
+            <button id="btn-copy-reply" class="btn-copy-reply" type="button">
+              📋 コピー
+            </button>
+          </div>
+        </div>
+
+        <!-- コンシェルジュ連携ヒント -->
+        <div class="consult-hint">
+          💡 <strong>ヒント:</strong> メールの状況をコンシェルジュに伝えると、
+          謝罪プランを自動修正してくれます。案件詳細ページの「GEZAコンシェルジュ」で
+          「メールで〇〇と言われた」と相談してみてください。
+        </div>
+
+        <!-- メールスレッド表示 -->
+        <div class="thread-section">
+          <div class="thread-title">📬 メールスレッド</div>
+          <div id="thread-list">
+            <div class="thread-empty" id="thread-empty">
+              まだメールのやり取りはありません。<br>
+              相手からのメールを入力して、AIに返信を任せましょう。
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="../shared/state.js"></script>
+  <script src="../shared/auth.js"></script>
+  <script src="../shared/api.js"></script>
+  <script src="mail-thread.js"></script>
+</body>
+</html>

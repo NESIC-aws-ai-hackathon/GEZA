@@ -13,50 +13,51 @@
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       flex: 1;
     }
     /* ── アバター + 相手情報 ── */
     .case-hero {
       display: flex;
-      gap: 16px;
-      align-items: flex-start;
-      background: rgba(255,255,255,0.03);
+      gap: 14px;
+      align-items: center;
+      background: linear-gradient(135deg, rgba(83,52,131,0.12) 0%, rgba(255,255,255,0.03) 100%);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 14px;
     }
     .case-avatar-wrap {
       flex-shrink: 0;
     }
     .case-avatar-wrap .avatar-frame {
-      width: 100px;
-      height: 120px;
-      border-radius: 10px;
+      width: 80px;
+      height: 96px;
+      border-radius: 12px;
     }
     .case-meta {
       flex: 1;
       min-width: 0;
     }
     .case-meta-title {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
-      color: #e0e0e0;
+      color: #f0f0f0;
       margin-bottom: 6px;
-      line-height: 1.4;
+      line-height: 1.3;
     }
     .badge-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 8px;
+      gap: 5px;
+      margin-bottom: 6px;
     }
     .badge {
       font-size: 10px;
-      padding: 3px 7px;
-      border-radius: 4px;
+      padding: 3px 8px;
+      border-radius: 20px;
       background: rgba(255,255,255,0.07);
       color: #aaa;
+      font-weight: 600;
     }
     .badge.anger { background: rgba(233,69,96,0.15); color: #e94560; }
     .badge.trust { background: rgba(46,204,113,0.12); color: #2ecc71; }
@@ -64,158 +65,226 @@
       font-size: 12px;
       color: #888;
       line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     /* ── アクションボタン ── */
     .action-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      display: flex;
+      gap: 8px;
     }
     .btn-action {
+      flex: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 12px 8px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.04);
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
       color: #ccc;
       cursor: pointer;
       font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
       transition: all 0.2s;
     }
     .btn-action:hover { border-color: #533483; background: rgba(83,52,131,0.15); color: #a78bfa; }
-    .btn-action.rehearsal { border-color: #7c3aed; color: #a78bfa; }
+    .btn-action.rehearsal { border-color: rgba(124,58,237,0.4); color: #a78bfa; }
     .btn-action.rehearsal:hover { background: rgba(124,58,237,0.2); }
-    .btn-action.delete    { color: #e94560; }
-    .btn-action.delete:hover { border-color: #e94560; background: rgba(233,69,96,0.1); }
-    .btn-action-icon  { font-size: 22px; }
-    .btn-action-label { font-size: 12px; font-weight: 700; }
-    .btn-action-desc  { font-size: 10px; color: #888; }
+    .btn-action.delete { color: #777; }
+    .btn-action.delete:hover { border-color: #e94560; color: #e94560; background: rgba(233,69,96,0.08); }
 
-    /* ── Todoリスト ── */
-    .todo-section {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 14px 16px;
+    /* ── タイムライン ── */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
     }
-    .todo-section-header {
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      position: relative;
+    }
+    .timeline-rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 24px;
+      flex-shrink: 0;
+    }
+    .timeline-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #533483;
+      border: 2px solid #7c3aed;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .timeline-dot.done { background: #2ecc71; border-color: #27ae60; }
+    .timeline-dot.active { background: #7c3aed; border-color: #a78bfa; box-shadow: 0 0 8px rgba(124,58,237,0.5); }
+    .timeline-line {
+      flex: 1;
+      width: 2px;
+      background: rgba(255,255,255,0.08);
+      min-height: 12px;
+    }
+    .timeline-content {
+      flex: 1;
+      min-width: 0;
+      padding-bottom: 14px;
+    }
+    .timeline-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
+      gap: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
     }
-    .todo-section-title {
+    .timeline-label {
       font-size: 13px;
       font-weight: 700;
       color: #c4b5fd;
     }
-    .todo-add-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
+    .timeline-time {
+      font-size: 10px;
+      color: #555;
+      margin-left: auto;
     }
-    .todo-input {
-      flex: 1;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 8px;
-      color: #f0f0f0;
-      padding: 8px 10px;
+    .timeline-expand-icon {
+      font-size: 10px;
+      color: #666;
+      transition: transform 0.2s;
+    }
+    .timeline-body {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      padding: 12px;
       font-size: 12px;
-      font-family: inherit;
+      color: #ccc;
+      line-height: 1.6;
     }
-    .todo-input:focus { outline: none; border-color: #533483; }
-    .btn-todo-add {
-      background: #533483;
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 12px;
-      padding: 8px 12px;
-      cursor: pointer;
-      white-space: nowrap;
+    .timeline-body.collapsed {
+      display: none;
     }
-    .btn-todo-add:hover { background: #6d28d9; }
+
+    /* ── Todo セクション（タイムライン内） ── */
     .todo-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 200px;
-      overflow-y: auto;
     }
     .todo-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 8px;
-      padding: 7px 10px;
+      padding: 8px 10px;
       background: rgba(255,255,255,0.03);
       border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      transition: all 0.2s;
     }
-    .todo-item.done { opacity: 0.45; }
+    .todo-item:hover { border-color: rgba(124,58,237,0.3); background: rgba(83,52,131,0.08); }
+    .todo-item.done { opacity: 0.5; }
     .todo-item.done .todo-text { text-decoration: line-through; color: #666; }
     .todo-checkbox {
       width: 16px; height: 16px;
       accent-color: #7c3aed;
       cursor: pointer;
       flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .todo-main {
+      flex: 1;
+      min-width: 0;
     }
     .todo-text {
-      flex: 1;
       font-size: 12px;
       color: #ddd;
       line-height: 1.4;
       word-break: break-word;
     }
-    .btn-todo-del {
-      background: none;
+    .todo-meta {
+      font-size: 10px;
+      color: #666;
+      margin-top: 2px;
+    }
+    .todo-detail {
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      display: none;
+    }
+    .todo-detail.open { display: block; }
+    .todo-detail-chat {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .todo-detail-input {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #f0f0f0;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-family: inherit;
+    }
+    .todo-detail-input:focus { outline: none; border-color: #533483; }
+    .todo-detail-send {
+      background: #533483;
       border: none;
-      color: #555;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 11px;
+      padding: 6px 10px;
       cursor: pointer;
-      font-size: 14px;
-      padding: 0 2px;
-      flex-shrink: 0;
+      white-space: nowrap;
     }
-    .btn-todo-del:hover { color: #e94560; }
-    .todo-empty {
-      font-size: 12px;
-      color: #555;
-      text-align: center;
-      padding: 10px 0;
-    }
+    .todo-detail-send:hover { background: #6d28d9; }
 
     /* ── プランカード ── */
-    .plan-section {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 14px 16px;
+    .plan-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
     }
-    .plan-section-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #c4b5fd;
-      margin-bottom: 10px;
+    .plan-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      padding: 10px;
     }
-    .plan-item {
-      margin-bottom: 10px;
-    }
-    .plan-item-label {
-      font-size: 11px;
+    .plan-card-label {
+      font-size: 10px;
       color: #666;
       margin-bottom: 3px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .plan-item-value {
-      font-size: 13px;
+    .plan-card-value {
+      font-size: 12px;
       color: #ddd;
       line-height: 1.5;
       white-space: pre-wrap;
       word-break: break-word;
     }
-    /* フルスクリプト折りたたみ */
+    .plan-script-wrap {
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
     .plan-script-toggle {
       display: flex;
       align-items: center;
@@ -227,23 +296,15 @@
       border: none;
       padding: 0;
       font-family: inherit;
-      margin-top: 4px;
     }
     .plan-script-toggle:hover { color: #c4b5fd; }
-    #plan-full-script-wrap {
-      margin-top: 8px;
-      padding: 10px;
-      background: rgba(255,255,255,0.04);
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.07);
-    }
 
     /* ── コンシェルジュ ── */
     .concierge-section {
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 14px;
-      padding: 14px 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -260,7 +321,7 @@
       background: rgba(0,0,0,0.2);
       border-radius: 10px;
       padding: 10px;
-      height: 200px;
+      height: 180px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -282,8 +343,8 @@
       font-size: 13px;
       font-family: inherit;
       resize: none;
-      min-height: 44px;
-      max-height: 100px;
+      min-height: 40px;
+      max-height: 80px;
       line-height: 1.5;
     }
     .chat-textarea:focus { outline: none; border-color: #533483; }
@@ -301,7 +362,6 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      align-self: flex-end;
     }
     .btn-chat-send:hover:not(:disabled) { background: #6d28d9; }
     .btn-chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -352,6 +412,72 @@
     .btn-modal-cancel:hover { background: rgba(255,255,255,0.15); }
     .btn-modal-delete { background: #e94560; color: #fff; }
     .btn-modal-delete:hover { background: #c0392b; }
+
+    /* ── 謝罪完了モーダル ── */
+    .complete-modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .complete-modal-overlay.visible { display: flex; }
+    .complete-modal-box {
+      background: #16213e;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 340px;
+      width: calc(100% - 48px);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .complete-modal-title { font-size: 16px; font-weight: 700; color: #eee; }
+    .complete-modal-label { font-size: 12px; color: #aaa; margin-bottom: 4px; }
+    .outcome-row { display: flex; gap: 8px; }
+    .outcome-btn {
+      flex: 1; padding: 10px 4px;
+      border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05); color: #ccc;
+      font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: all 0.2s; text-align: center;
+    }
+    .outcome-btn:hover { border-color: #7c3aed; color: #c4b5fd; }
+    .outcome-btn.selected { border-color: #7c3aed; background: rgba(124,58,237,0.2); color: #c4b5fd; }
+    .complete-notes {
+      width: 100%; box-sizing: border-box;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; color: #f0f0f0; padding: 8px 10px;
+      font-size: 12px; font-family: inherit; resize: vertical; min-height: 60px;
+    }
+    .complete-notes:focus { outline: none; border-color: #533483; }
+    .complete-modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+    .complete-modal-actions button {
+      flex: 1; padding: 10px; border-radius: 8px;
+      border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-complete-cancel { background: rgba(255,255,255,0.1); color: #ccc; }
+    .btn-complete-cancel:hover { background: rgba(255,255,255,0.15); }
+    .btn-complete-submit { background: #2ecc71; color: #fff; }
+    .btn-complete-submit:hover:not(:disabled) { background: #27ae60; }
+    .btn-complete-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .complete-modal-error {
+      font-size: 12px; color: #e94560; display: none;
+    }
+    .apology-complete-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 700;
+      padding: 4px 10px; border-radius: 20px;
+      background: rgba(46,204,113,0.12); color: #2ecc71;
+      border: 1px solid rgba(46,204,113,0.2);
+    }
+    .btn-complete {
+      width: 100%; padding: 12px;
+      border-radius: 12px; border: 1px solid rgba(46,204,113,0.4);
+      background: rgba(46,204,113,0.08); color: #2ecc71;
+      font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: all 0.2s;
+    }
+    .btn-complete:hover { background: rgba(46,204,113,0.15); }
   </style>
 </head>
 <body>
@@ -389,90 +515,126 @@
           </div>
         </div>
 
-        <!-- ② アクションボタン（4つ） -->
-        <div class="action-row" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+        <!-- ② アクションボタン（リハーサル＋完了＋削除） -->
+        <div class="action-row">
           <button class="btn-action rehearsal" id="btn-rehearsal" type="button">
-            <span class="btn-action-icon">🎙️</span>
-            <span class="btn-action-label">リハーサル</span>
-            <span class="btn-action-desc">この案件で練習</span>
+            🎙️ リハーサル
           </button>
-          <button class="btn-action" id="btn-precheck" type="button">
-            <span class="btn-action-icon">✅</span>
-            <span class="btn-action-label">直前確認</span>
-            <span class="btn-action-desc">本番前チェック</span>
-          </button>
-          <button class="btn-action" id="btn-todo-toggle" type="button">
-            <span class="btn-action-icon">📝</span>
-            <span class="btn-action-label">Todo</span>
-            <span class="btn-action-desc" id="todo-count-badge">0件</span>
+          <button class="btn-action" id="btn-complete" type="button" style="display:none;border-color:rgba(46,204,113,0.4);color:#2ecc71;">
+            ✅ 謝罪完了
           </button>
           <button class="btn-action delete" id="btn-delete" type="button">
-            <span class="btn-action-icon">🗑️</span>
-            <span class="btn-action-label">削除</span>
-            <span class="btn-action-desc">取り消せません</span>
+            🗑️ 削除
           </button>
         </div>
 
-        <!-- ③-a Todoリスト（常時表示・折りたたみ可） -->
-        <div class="todo-section" id="todo-section">
-          <div class="todo-section-header">
-            <span class="todo-section-title">📝 Todoリスト</span>
-            <span style="font-size:11px;color:#666;" id="todo-progress"></span>
-          </div>
-          <div class="todo-add-row" id="todo-add-row">
-            <input type="text" id="todo-input" class="todo-input"
-              placeholder="新しいTodoを入力…" maxlength="100" aria-label="Todo入力" />
-            <button class="btn-todo-add" id="btn-todo-add" type="button">追加</button>
-          </div>
-          <div id="todo-list" class="todo-list">
-            <div class="todo-empty" id="todo-empty">Todoはまだありません</div>
-          </div>
+        <!-- フォローメール・再発防止ボタン -->
+        <div style="margin-top:10px; text-align:center;">
+          <button id="btn-follow-mail" type="button"
+            style="background:rgba(100,180,255,0.12);border:1px solid rgba(100,180,255,0.35);color:#7ecfff;border-radius:10px;padding:10px 20px;font-size:13px;cursor:pointer;width:100%;font-weight:600;">
+            📋 再発防止策・フォローメールを準備する
+          </button>
         </div>
 
-        <!-- ④ 謝罪プランサマリー -->
-        <div class="plan-section" id="plan-section">
-          <div class="plan-section-title">📋 謝罪プラン</div>
-          <div class="plan-item">
-            <div class="plan-item-label">第一声</div>
-            <div class="plan-item-value" id="plan-first-words"></div>
-          </div>
-          <div class="plan-item">
-            <div class="plan-item-label">タイミング</div>
-            <div class="plan-item-value" id="plan-timing"></div>
-          </div>
-          <div class="plan-item">
-            <div class="plan-item-label">手土産</div>
-            <div class="plan-item-value" id="plan-gift"></div>
-          </div>
-          <div class="plan-item">
-            <button class="plan-script-toggle" id="btn-toggle-script" type="button">
-              ▶ 謝罪台本全文を見る
-            </button>
-            <div id="plan-full-script-wrap" style="display:none;">
-              <div class="plan-item-label">全セリフ台本</div>
-              <div class="plan-item-value" id="plan-full-script"></div>
+        <!-- メール対応ボタン -->
+        <div style="margin-top:10px; text-align:center;">
+          <button id="btn-mail-thread" type="button"
+            style="background:rgba(255,180,50,0.10);border:1px solid rgba(255,180,50,0.35);color:#d4a853;border-radius:10px;padding:10px 20px;font-size:13px;cursor:pointer;width:100%;font-weight:600;">
+            ✉️ メール対応（受信→AI返信→スレッド管理）
+          </button>
+          <div id="mail-thread-badge" style="display:none; font-size:11px; color:#888; margin-top:4px;"></div>
+        </div>
+
+        <!-- 完了済みバッジ -->
+        <div id="complete-badge-wrap" style="display:none;">
+          <div class="apology-complete-badge">✅ 謝罪完了済み</div>
+        </div>
+
+        <!-- ③ タイムライン表示 -->
+        <div class="timeline" id="case-timeline">
+          <!-- 謝罪プラン -->
+          <div class="timeline-item" data-section="plan">
+            <div class="timeline-rail">
+              <div class="timeline-dot done"></div>
+              <div class="timeline-line"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header" data-toggle="plan-body">
+                <span class="timeline-label">📋 謝罪プラン</span>
+                <span class="timeline-expand-icon">▼</span>
+              </div>
+              <div class="timeline-body" id="plan-body">
+                <div class="plan-grid">
+                  <div class="plan-card">
+                    <div class="plan-card-label">第一声</div>
+                    <div class="plan-card-value" id="plan-first-words"></div>
+                  </div>
+                  <div class="plan-card">
+                    <div class="plan-card-label">タイミング</div>
+                    <div class="plan-card-value" id="plan-timing"></div>
+                  </div>
+                  <div class="plan-card">
+                    <div class="plan-card-label">手土産</div>
+                    <div class="plan-card-value" id="plan-gift"></div>
+                  </div>
+                </div>
+                <div style="margin-top:8px;">
+                  <button class="plan-script-toggle" id="btn-toggle-script" type="button">
+                    ▶ 謝罪台本全文を見る
+                  </button>
+                  <div id="plan-full-script-wrap" class="plan-script-wrap" style="display:none;">
+                    <div class="plan-card-label">全セリフ台本</div>
+                    <div class="plan-card-value" id="plan-full-script"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ⑤ GEZAコンシェルジュ（案件コンテキスト付き） -->
-        <div class="concierge-section">
-          <div class="concierge-title">
-            <img src="../icons/geza_icon.png" alt="GEZA" style="width:20px;height:20px;border-radius:4px;" />
-            GEZAコンシェルジュ
-            <span style="margin-left:auto;font-size:11px;color:#666;" id="chat-turn-label"></span>
+          <!-- Todoリスト -->
+          <div class="timeline-item" data-section="todo">
+            <div class="timeline-rail">
+              <div class="timeline-dot active" id="todo-dot"></div>
+              <div class="timeline-line"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header" data-toggle="todo-body">
+                <span class="timeline-label">📝 やることリスト</span>
+                <span style="font-size:10px;color:#666;" id="todo-progress"></span>
+                <span class="timeline-expand-icon">▼</span>
+              </div>
+              <div class="timeline-body" id="todo-body">
+                <div id="todo-list" class="todo-list"></div>
+              </div>
+            </div>
           </div>
-          <div id="chat-messages" class="chat-messages"
-            role="log" aria-live="polite" aria-label="チャット履歴"></div>
-          <div class="chat-input-row">
-            <textarea id="chat-input" class="chat-textarea"
-              placeholder="例: 謝罪のタイミングをもっと早める方がいいか相談したい"
-              rows="2" maxlength="500" aria-label="メッセージを入力"></textarea>
-            <button id="btn-chat-send" class="btn-chat-send" type="button">
-              <span id="send-label">送信</span>
-              <span class="loading-spinner" id="send-spinner"
-                style="display:none;" aria-hidden="true"></span>
-            </button>
+
+          <!-- コンシェルジュ -->
+          <div class="timeline-item" data-section="concierge">
+            <div class="timeline-rail">
+              <div class="timeline-dot active"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="concierge-section">
+                <div class="concierge-title">
+                  <img src="../icons/geza_icon.png" alt="GEZA" style="width:18px;height:18px;border-radius:4px;" />
+                  GEZAコンシェルジュ
+                  <span style="margin-left:auto;font-size:10px;color:#555;" id="chat-turn-label"></span>
+                </div>
+                <div id="chat-messages" class="chat-messages"
+                  role="log" aria-live="polite" aria-label="チャット履歴"></div>
+                <div class="chat-input-row">
+                  <textarea id="chat-input" class="chat-textarea"
+                    placeholder="Todoの進め方やプランの相談など…"
+                    rows="1" maxlength="500" aria-label="メッセージを入力"></textarea>
+                  <button id="btn-chat-send" class="btn-chat-send" type="button">
+                    <span id="send-label">送信</span>
+                    <span class="loading-spinner" id="send-spinner"
+                      style="display:none;" aria-hidden="true"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -489,6 +651,33 @@
       <div class="modal-actions">
         <button class="btn-modal-cancel" id="btn-modal-cancel">キャンセル</button>
         <button class="btn-modal-delete" id="btn-modal-delete">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 謝罪完了モーダル -->
+  <div id="complete-modal" class="complete-modal-overlay" role="dialog"
+    aria-modal="true" aria-labelledby="complete-modal-title">
+    <div class="complete-modal-box">
+      <p class="complete-modal-title" id="complete-modal-title">✅ 謝罪完了を記録する</p>
+      <div>
+        <div class="complete-modal-label">結果を選択してください</div>
+        <div class="outcome-row">
+          <button class="outcome-btn" data-outcome="success">😊<br>成功</button>
+          <button class="outcome-btn" data-outcome="partial">😐<br>部分的</button>
+          <button class="outcome-btn" data-outcome="failed">😞<br>失敗</button>
+        </div>
+      </div>
+      <div>
+        <div class="complete-modal-label">メモ（任意・500文字以内）</div>
+        <textarea class="complete-notes" id="complete-notes"
+          placeholder="実際の謝罪でどうだったか記録しておきましょう…"
+          maxlength="500" aria-label="謝罪完了メモ"></textarea>
+      </div>
+      <div id="complete-modal-error" class="complete-modal-error"></div>
+      <div class="complete-modal-actions">
+        <button class="btn-complete-cancel" id="btn-complete-cancel" type="button">キャンセル</button>
+        <button class="btn-complete-submit" id="btn-complete-submit" type="button" disabled>記録する</button>
       </div>
     </div>
   </div>
